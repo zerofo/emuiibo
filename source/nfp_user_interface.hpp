@@ -150,6 +150,10 @@ class NfpUserInterface : public IServiceObject {
             MakeServiceCommandMeta<NfpUserInterfaceCmd_Unmount, &NfpUserInterface::Unmount>(),
             MakeServiceCommandMeta<NfpUserInterfaceCmd_OpenApplicationArea, &NfpUserInterface::OpenApplicationArea>(),
             MakeServiceCommandMeta<NfpUserInterfaceCmd_GetApplicationArea, &NfpUserInterface::GetApplicationArea>(),
+            MakeServiceCommandMeta<NfpUserInterfaceCmd_SetApplicationArea, &NfpUserInterface::SetApplicationArea>(),
+            MakeServiceCommandMeta<NfpUserInterfaceCmd_Flush, &NfpUserInterface::Flush>(),
+            MakeServiceCommandMeta<NfpUserInterfaceCmd_Restore, &NfpUserInterface::Restore>(),
+            MakeServiceCommandMeta<NfpUserInterfaceCmd_CreateApplicationArea, &NfpUserInterface::CreateApplicationArea>(),
             MakeServiceCommandMeta<NfpUserInterfaceCmd_GetTagInfo, &NfpUserInterface::GetTagInfo>(),
             MakeServiceCommandMeta<NfpUserInterfaceCmd_GetRegisterInfo, &NfpUserInterface::GetRegisterInfo>(),
             MakeServiceCommandMeta<NfpUserInterfaceCmd_GetCommonInfo, &NfpUserInterface::GetCommonInfo>(),
@@ -161,5 +165,7 @@ class NfpUserInterface : public IServiceObject {
             MakeServiceCommandMeta<NfpUserInterfaceCmd_GetNpadId, &NfpUserInterface::GetNpadId>(),
             MakeServiceCommandMeta<NfpUserInterfaceCmd_GetApplicationAreaSize, &NfpUserInterface::GetApplicationAreaSize>(),            
             MakeServiceCommandMeta<NfpUserInterfaceCmd_AttachAvailabilityChangeEvent, &NfpUserInterface::AttachAvailabilityChangeEvent>(),
+            MakeServiceCommandMeta<NfpUserInterfaceCmd_GetApplicationAreaSize, &NfpUserInterface::GetApplicationAreaSize>(),
+            MakeServiceCommandMeta<NfpUserInterfaceCmd_RecreateApplicationArea, &NfpUserInterface::RecreateApplicationArea, FirmwareVersion_500>(), /* TODO: What version was this added in? */
         };
 };
