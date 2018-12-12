@@ -163,7 +163,6 @@ class NfpUserInterface : public IServiceObject {
             MakeServiceCommandMeta<NfpUserInterfaceCmd_GetState, &NfpUserInterface::GetState>(),
             MakeServiceCommandMeta<NfpUserInterfaceCmd_GetDeviceState, &NfpUserInterface::GetDeviceState>(),
             MakeServiceCommandMeta<NfpUserInterfaceCmd_GetNpadId, &NfpUserInterface::GetNpadId>(),
-            MakeServiceCommandMeta<NfpUserInterfaceCmd_GetApplicationAreaSize, &NfpUserInterface::GetApplicationAreaSize>(),            
             MakeServiceCommandMeta<NfpUserInterfaceCmd_AttachAvailabilityChangeEvent, &NfpUserInterface::AttachAvailabilityChangeEvent>(),
             MakeServiceCommandMeta<NfpUserInterfaceCmd_GetApplicationAreaSize, &NfpUserInterface::GetApplicationAreaSize>(),
             MakeServiceCommandMeta<NfpUserInterfaceCmd_RecreateApplicationArea, &NfpUserInterface::RecreateApplicationArea, FirmwareVersion_500>(), /* TODO: What version was this added in? */
