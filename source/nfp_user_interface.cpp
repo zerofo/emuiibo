@@ -26,11 +26,10 @@ extern std::atomic_bool g_key_combo_triggered;
 extern IEvent* g_activate_event;
 extern FILE* g_logging_file;
 
-struct ModelInfo {
-    std::array<u8, 0x8> amiibo_identification_block;
-    u8 padding[0x38];
-};
-static_assert(sizeof(ModelInfo) == 0x40, "ModelInfo is an invalid size");
+static HosMutex g_event_creation_lock;
+static bool g_created_events = false;
+static IEvent* g_deactivate_event = nullptr;
+static IEvent* g_availability_change_event = nullptr;
 
 struct AmiiboFile {
     std::array<u8, 10> uuid;
@@ -55,24 +54,30 @@ static AmiiboFile GetAmiibo() {
     return amiibo;
 }
 
-NfpUserInterface::NfpUserInterface() {
+NfpUserInterface::NfpUserInterface(NfpUser *u) {
     fprintf(g_logging_file, "Creating NfpUserInterface\n");
     fflush(g_logging_file);
+    this->forward_intf = u;
 
-    deactivate_event = CreateWriteOnlySystemEvent<true>();
-    availability_change_event = CreateWriteOnlySystemEvent<true>();
+    {
+        std::scoped_lock<HosMutex> lk(g_event_creation_lock);
+        if (!g_created_events) {
+            g_deactivate_event = CreateWriteOnlySystemEvent();
+            g_availability_change_event = CreateWriteOnlySystemEvent();
+        }
+    }
 }
 
 NfpUserInterface::~NfpUserInterface() {
     fprintf(g_logging_file, "Destroying NfpUserInterface\n");
     fflush(g_logging_file);
 
-    delete deactivate_event;
-    delete availability_change_event;
+    nfpuserClose(this->forward_intf);
+    delete this->forward_intf;
 }
 
-Result NfpUserInterface::Initialize(u64 unk, u64 unk2, PidDescriptor pid_desc, InBuffer<u8> buf) {
-    fprintf(g_logging_file, "Calling initialize\n");
+Result NfpUserInterface::Initialize(u64 aruid, PidDescriptor pid_desc, InBuffer<u8> buf) {
+    fprintf(g_logging_file, "Calling initialize(0x%016lx, 0x%016lx)\n", aruid, pid_desc.pid);
     fflush(g_logging_file);
 
     state = State::Initialized;
@@ -88,25 +93,136 @@ Result NfpUserInterface::Finalize() {
     return 0;
 }
 
-Result NfpUserInterface::GetState(Out<u32> out_state) {
-    fprintf(g_logging_file, "In GetState\n");
-    fflush(g_logging_file);
-    out_state.SetValue(static_cast<u32>(state));
-    return 0;
-}
-
-Result NfpUserInterface::ListDevices(OutBuffer<u8> buffer, Out<u32> size) {
+Result NfpUserInterface::ListDevices(OutPointerWithClientSize<u64> out_devices, Out<u32> out_count) {
     fprintf(g_logging_file, "In ListDevices\n");
     fflush(g_logging_file);
-    memcpy(buffer.buffer, &device_handle, sizeof(device_handle));
-    size.SetValue(1);
+    if (out_devices.num_elements >= 1) {
+        memcpy(out_devices.pointer, &device_handle, sizeof(device_handle));
+        out_count.SetValue(1);
+    } else {
+        out_count.SetValue(0);
+    }
     return 0;
 }
 
-Result NfpUserInterface::GetNpadId(u64 handle, Out<u32> out_npad_id) {
-    fprintf(g_logging_file, "In GetNpadId\n");
+Result NfpUserInterface::StartDetection(u64 handle) {
+    fprintf(g_logging_file, "In StartDetection\n");
     fflush(g_logging_file);
-    out_npad_id.SetValue(npad_id);
+    if (device_state == DeviceState::Initialized || device_state == DeviceState::TagRemoved) {
+        device_state = DeviceState::SearchingForTag;
+    }
+    return 0;
+}
+
+Result NfpUserInterface::StopDetection(u64 handle) {
+    fprintf(g_logging_file, "In StopDetection\n");
+    fflush(g_logging_file);
+    switch (device_state) {
+    case DeviceState::TagFound:
+    case DeviceState::TagNearby:
+        g_deactivate_event->Signal();
+        device_state = DeviceState::Initialized;
+        break;
+    case DeviceState::SearchingForTag:
+    case DeviceState::TagRemoved:
+        device_state = DeviceState::Initialized;
+        break;
+    }
+    return 0;
+}
+
+Result NfpUserInterface::Mount(u64 handle, u32 type, u32 target) {
+    fprintf(g_logging_file, "In Mount\n");
+    fflush(g_logging_file);
+    device_state = DeviceState::TagNearby;
+    return 0;
+}
+
+Result NfpUserInterface::Unmount(u64 handle) {
+    fprintf(g_logging_file, "In Unmount\n");
+    fflush(g_logging_file);
+    device_state = DeviceState::TagFound;
+    return 0;
+}
+
+Result NfpUserInterface::OpenApplicationArea(u64 handle, u32 access_id) {
+    fprintf(g_logging_file, "In OpenApplicationArea\n");
+    fflush(g_logging_file);
+    return 0;
+}
+
+Result NfpUserInterface::GetApplicationArea(u64 handle, OutBuffer<u8> out_area, Out<u32> out_area_size) {
+    fprintf(g_logging_file, "In GetApplicationArea\n");
+    fflush(g_logging_file);
+    out_area_size.SetValue(0);
+    return 0;
+}
+
+Result NfpUserInterface::SetApplicationArea(u64 handle, InBuffer<u8> area) {
+    fprintf(g_logging_file, "In SetApplicationArea\n");
+    fflush(g_logging_file);
+    return 0;
+}
+
+Result NfpUserInterface::Flush(u64 handle) {
+    fprintf(g_logging_file, "In Flush\n");
+    fflush(g_logging_file);
+    device_state = DeviceState::TagFound;
+    return 0;
+}
+
+Result NfpUserInterface::Restore(u64 handle) {
+    fprintf(g_logging_file, "In Restore\n");
+    fflush(g_logging_file);
+    device_state = DeviceState::TagFound;
+    return 0;
+}
+
+Result NfpUserInterface::CreateApplicationArea(u64 handle, u32 access_id, InBuffer<u8> area) {
+    fprintf(g_logging_file, "In CreateApplicationArea\n");
+    fflush(g_logging_file);
+    return 0;
+}
+
+Result NfpUserInterface::GetTagInfo(OutPointerWithServerSize<TagInfo, 0x1> out_info) {
+    fprintf(g_logging_file, "In GetTagInfo\n");
+    fflush(g_logging_file);
+    
+    auto amiibo = GetAmiibo();
+
+    TagInfo tag_info{};
+    tag_info.uuid = amiibo.uuid;
+    tag_info.uuid_length = static_cast<u8>(tag_info.uuid.size());
+
+    tag_info.protocol = 1; // TODO(ogniK): Figure out actual values
+    tag_info.tag_type = 2;
+
+    *out_info.pointer = tag_info;
+    return 0;
+}
+
+Result NfpUserInterface::GetRegisterInfo(OutPointerWithServerSize<RegisterInfo, 0x1> out_info) {
+    fprintf(g_logging_file, "In GetRegisterInfo\n");
+    fflush(g_logging_file);
+    return 0;
+}
+
+Result NfpUserInterface::GetModelInfo(OutPointerWithServerSize<ModelInfo, 0x1> out_info) {
+    fprintf(g_logging_file, "In GetModelInfo\n");
+    fflush(g_logging_file);
+    auto amiibo = GetAmiibo();
+    
+    *out_info.pointer = amiibo.model_info;
+    return 0;
+}
+
+Result NfpUserInterface::GetCommonInfo(OutPointerWithServerSize<CommonInfo, 0x1> out_info) {
+    fprintf(g_logging_file, "In GetCommonInfo\n");
+    fflush(g_logging_file);
+    CommonInfo common_info{};
+    common_info.application_area_size = 0;
+    
+    *out_info.pointer = common_info;
     return 0;
 }
 
@@ -121,28 +237,18 @@ Result NfpUserInterface::AttachActivateEvent(u64 handle, Out<CopiedHandle> event
 Result NfpUserInterface::AttachDeactivateEvent(u64 handle, Out<CopiedHandle> event) {
     fprintf(g_logging_file, "In AttachDeactivateEvent\n");
     fflush(g_logging_file);
-    event.SetValue(deactivate_event->GetHandle());
+    event.SetValue(g_deactivate_event->GetHandle());
     return 0;
 }
 
-Result NfpUserInterface::StopDetection() {
-    fprintf(g_logging_file, "In StopDetection\n");
+Result NfpUserInterface::GetState(Out<u32> out_state) {
+    fprintf(g_logging_file, "In GetState\n");
     fflush(g_logging_file);
-    switch (device_state) {
-    case DeviceState::TagFound:
-    case DeviceState::TagNearby:
-        deactivate_event->Signal();
-        device_state = DeviceState::Initialized;
-        break;
-    case DeviceState::SearchingForTag:
-    case DeviceState::TagRemoved:
-        device_state = DeviceState::Initialized;
-        break;
-    }
+    out_state.SetValue(static_cast<u32>(state));
     return 0;
 }
 
-Result NfpUserInterface::GetDeviceState(Out<u32> out_state) {
+Result NfpUserInterface::GetDeviceState(u64 handle, Out<u32> out_state) {
     fprintf(g_logging_file, "In GetDeviceState\n");
     fflush(g_logging_file);
     if (g_key_combo_triggered && !has_attached_handle) {
@@ -158,71 +264,29 @@ Result NfpUserInterface::GetDeviceState(Out<u32> out_state) {
     return 0;
 }
 
-Result NfpUserInterface::StartDetection() {
-    fprintf(g_logging_file, "In StartDetection\n");
+Result NfpUserInterface::GetNpadId(u64 handle, Out<u32> out_npad_id) {
+    fprintf(g_logging_file, "In GetNpadId\n");
     fflush(g_logging_file);
-    if (device_state == DeviceState::Initialized || device_state == DeviceState::TagRemoved) {
-        device_state = DeviceState::SearchingForTag;
-    }
-    return 0;
-}
-
-Result NfpUserInterface::GetTagInfo(OutBuffer<u8> buffer) {
-    auto amiibo = GetAmiibo();
-
-    TagInfo tag_info{};
-    tag_info.uuid = amiibo.uuid;
-    tag_info.uuid_length = static_cast<u8>(tag_info.uuid.size());
-
-    tag_info.protocol = 1; // TODO(ogniK): Figure out actual values
-    tag_info.tag_type = 2;
-
-    memcpy(buffer.buffer, &tag_info, sizeof(tag_info));
-    return 0;
-}
-
-Result NfpUserInterface::Mount() {
-    device_state = DeviceState::TagNearby;
-    return 0;
-}
-
-Result NfpUserInterface::GetModelInfo(OutBuffer<u8> buffer) {
-    auto amiibo = GetAmiibo();
-    memcpy(buffer.buffer, &amiibo.model_info, sizeof(amiibo.model_info));
-    return 0;
-}
-
-Result NfpUserInterface::Unmount() {
-    device_state = DeviceState::TagFound;
+    out_npad_id.SetValue(npad_id);
     return 0;
 }
 
 Result NfpUserInterface::AttachAvailabilityChangeEvent(Out<CopiedHandle> event) {
-    event.SetValue(availability_change_event->GetHandle());
-    return 0;
-}
-
-Result NfpUserInterface::GetRegisterInfo() {
-    return 0;
-}
-
-Result NfpUserInterface::GetCommonInfo(OutBuffer<u8> buffer) {
-    CommonInfo common_info{};
-    common_info.application_area_size = 0;
-    memcpy(buffer.buffer, &common_info, sizeof(CommonInfo));
-    return 0;
-}
-
-Result NfpUserInterface::OpenApplicationArea() {
+    fprintf(g_logging_file, "In AttachAvailabilityChangeEvent\n");
+    fflush(g_logging_file);
+    event.SetValue(g_availability_change_event->GetHandle());
     return 0;
 }
 
 Result NfpUserInterface::GetApplicationAreaSize(Out<u32> size) {
+    fprintf(g_logging_file, "In GetApplicationAreaSize\n");
+    fflush(g_logging_file);
     size.SetValue(0);
     return 0;
 }
 
-Result NfpUserInterface::GetApplicationArea(Out<u32> unk) {
-    unk.SetValue(0);
+Result NfpUserInterface::RecreateApplicationArea(u64 handle, u32 access_id, InBuffer<u8> area) {
+    fprintf(g_logging_file, "In RecreateApplicationArea\n");
+    fflush(g_logging_file);
     return 0;
 }

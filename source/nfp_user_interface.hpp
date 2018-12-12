@@ -18,6 +18,7 @@
 #include <array>
 #include <switch.h>
 #include <stratosphere.hpp>
+#include "nfp_shim.h"
 
 enum NfpUserInterfaceCmd : u32 {
     NfpUserInterfaceCmd_Initialize = 0,
@@ -29,10 +30,10 @@ enum NfpUserInterfaceCmd : u32 {
     NfpUserInterfaceCmd_Unmount = 6,
     NfpUserInterfaceCmd_OpenApplicationArea = 7,
     NfpUserInterfaceCmd_GetApplicationArea = 8,
-
-
-
-
+    NfpUserInterfaceCmd_SetApplicationArea = 9,
+    NfpUserInterfaceCmd_Flush = 10,
+    NfpUserInterfaceCmd_Restore = 11,
+    NfpUserInterfaceCmd_CreateApplicationArea = 12,
     NfpUserInterfaceCmd_GetTagInfo = 13,
     NfpUserInterfaceCmd_GetRegisterInfo = 14,
     NfpUserInterfaceCmd_GetCommonInfo = 15,
@@ -44,6 +45,7 @@ enum NfpUserInterfaceCmd : u32 {
     NfpUserInterfaceCmd_GetNpadId = 21,
     NfpUserInterfaceCmd_GetApplicationAreaSize = 22,
     NfpUserInterfaceCmd_AttachAvailabilityChangeEvent = 23,
+    NfpUserInterfaceCmd_RecreateApplicationArea = 24,
 };
 
 struct TagInfo {
@@ -56,6 +58,28 @@ struct TagInfo {
     u8 pad2[0x2c];
 };
 static_assert(sizeof(TagInfo) == 0x54, "TagInfo is an invalid size");
+
+struct RegisterInfo {
+    std::array<u8, 0x100> data; /* TODO: Struct layout */
+};
+static_assert(sizeof(RegisterInfo) == 0x100, "RegisterInfo is an invalid size");
+
+struct CommonInfo {
+    u16 last_write_year; // be
+    u8 last_write_month;
+    u8 last_write_day;
+    u16 write_counter; // be
+    u16 version; // be
+    u32 application_area_size; // be
+    u8 padding[0x34];
+};
+static_assert(sizeof(CommonInfo) == 0x40, "CommonInfo is an invalid size");
+
+struct ModelInfo {
+    std::array<u8, 0x8> amiibo_identification_block;
+    u8 padding[0x38];
+};
+static_assert(sizeof(ModelInfo) == 0x40, "ModelInfo is an invalid size");
 
 enum class State : u32 {
     NonInitialized = 0,
@@ -72,44 +96,40 @@ enum class DeviceState : u32 {
     Finalized = 6
 };
 
-struct CommonInfo {
-    u16 last_write_year; // be
-    u8 last_write_month;
-    u8 last_write_day;
-    u16 write_counter; // be
-    u16 version; // be
-    u32 application_area_size; // be
-    u8 padding[0x34];
-};
-static_assert(sizeof(CommonInfo) == 0x40, "CommonInfo is an invalid size");
-
 class NfpUserInterface : public IServiceObject {
+    private:
+        NfpUser *forward_intf;
     public:
-        NfpUserInterface();
+        NfpUserInterface(NfpUser *u);
         ~NfpUserInterface();
         
     private:
         /* Actual command API. */
-        virtual Result Initialize(u64 unk, u64 unk2, PidDescriptor pid_desc, InBuffer<u8> buf) final;
-        virtual Result GetState(Out<u32> state) final;
-        virtual Result ListDevices(OutBuffer<u8> buffer, Out<u32> size) final;
-        virtual Result GetNpadId(u64 handle, Out<u32> npad_id) final;
+        virtual Result Initialize(u64 aruid, PidDescriptor pid_desc, InBuffer<u8> buf) final;
+        virtual Result Finalize() final;
+        virtual Result ListDevices(OutPointerWithClientSize<u64> out_devices, Out<u32> out_count) final;
+        virtual Result StartDetection(u64 handle) final;
+        virtual Result StopDetection(u64 handle) final;
+        virtual Result Mount(u64 handle, u32 type, u32 target) final;
+        virtual Result Unmount(u64 handle) final;
+        virtual Result OpenApplicationArea(u64 handle, u32 access_id) final;
+        virtual Result GetApplicationArea(u64 handle, OutBuffer<u8> out_area, Out<u32> out_area_size) final;
+        virtual Result SetApplicationArea(u64 handle, InBuffer<u8> area) final;
+        virtual Result Flush(u64 handle) final;
+        virtual Result Restore(u64 handle) final;
+        virtual Result CreateApplicationArea(u64 handle, u32 access_id, InBuffer<u8> area) final;
+        virtual Result GetTagInfo(OutPointerWithServerSize<TagInfo, 0x1> out_info) final;
+        virtual Result GetRegisterInfo(OutPointerWithServerSize<RegisterInfo, 0x1> out_info) final;
+        virtual Result GetCommonInfo(OutPointerWithServerSize<CommonInfo, 0x1> out_info) final;
+        virtual Result GetModelInfo(OutPointerWithServerSize<ModelInfo, 0x1> out_info) final;
         virtual Result AttachActivateEvent(u64 handle, Out<CopiedHandle> event) final;
         virtual Result AttachDeactivateEvent(u64 handle, Out<CopiedHandle> event) final;
-        virtual Result StopDetection() final;
-        virtual Result GetDeviceState(Out<u32> state) final;
-        virtual Result StartDetection() final;
-        virtual Result GetTagInfo(OutBuffer<u8> buffer) final;
-        virtual Result Mount() final;
-        virtual Result GetModelInfo(OutBuffer<u8> buffer) final;
-        virtual Result Unmount() final;
-        virtual Result Finalize() final;
+        virtual Result GetState(Out<u32> state) final;
+        virtual Result GetDeviceState(u64 handle, Out<u32> state) final;
+        virtual Result GetNpadId(u64 handle, Out<u32> npad_id) final;
         virtual Result AttachAvailabilityChangeEvent(Out<CopiedHandle> event) final;
-        virtual Result GetRegisterInfo() final;
-        virtual Result GetCommonInfo(OutBuffer<u8> buffer) final;
-        virtual Result OpenApplicationArea() final;
         virtual Result GetApplicationAreaSize(Out<u32> size) final;
-        virtual Result GetApplicationArea(Out<u32> unk) final;
+        virtual Result RecreateApplicationArea(u64 handle, u32 access_id, InBuffer<u8> area) final;
 
         bool has_attached_handle{};
         const u64 device_handle{0x555A5559}; // 'YUZU'

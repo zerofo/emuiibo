@@ -32,13 +32,14 @@ extern "C" {
 
     u32 __nx_applet_type = AppletType_None;
 
-    #define INNER_HEAP_SIZE 0x20000
+    #define INNER_HEAP_SIZE 0x30000
     size_t nx_inner_heap_size = INNER_HEAP_SIZE;
     char   nx_inner_heap[INNER_HEAP_SIZE];
     
     void __libnx_initheap(void);
     void __appInit(void);
     void __appExit(void);
+    void __libnx_exception_handler(ThreadExceptionDump *ctx);
 }
 
 
@@ -82,6 +83,12 @@ void __appExit(void) {
     smExit();
 }
 
+void __libnx_exception_handler(ThreadExceptionDump *ctx) {
+    //fprintf(g_logging_file, "An exception occurred!\n");
+    //fflush(g_logging_file);
+    RebootToRcm();
+}
+
 struct NfpUserManagerOptions {
     static const size_t PointerBufferSize = 0x100;
     static const size_t MaxDomains = 4;
@@ -107,7 +114,7 @@ void HidLoop(void* arg) {
             fflush(g_logging_file);
             g_key_combo_triggered = true;
             g_activate_event->Signal();
-            // RebootToRcm();
+            RebootToRcm();
         }
         
         hidExit();
