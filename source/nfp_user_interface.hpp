@@ -49,7 +49,7 @@ enum NfpUserInterfaceCmd : u32 {
 };
 
 struct TagInfo {
-    std::array<u8, 10> uuid;
+    u8 uuid[10];
     u8 uuid_length; // TODO(ogniK): Figure out if this is actual the uuid length or does it
                     // mean something else
     u8 pad1[0x15];
@@ -76,7 +76,7 @@ struct CommonInfo {
 static_assert(sizeof(CommonInfo) == 0x40, "CommonInfo is an invalid size");
 
 struct ModelInfo {
-    std::array<u8, 0x8> amiibo_identification_block;
+    u8 amiibo_identification_block[0x8];
     u8 padding[0x38];
 };
 static_assert(sizeof(ModelInfo) == 0x40, "ModelInfo is an invalid size");

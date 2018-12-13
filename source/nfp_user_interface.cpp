@@ -34,7 +34,7 @@ static IEvent *g_availability_change_event = nullptr;
 
 struct AmiiboFile
 {
-    std::array<u8, 10> uuid;
+    u8 uuid[10];
     u8 padding[0x4a];
     ModelInfo model_info;
 };
@@ -108,7 +108,12 @@ static AmiiboFile GetAmiibo()
     long fsize = ftell(file);
     fseek(file, 0, SEEK_SET);
 
-    fread(&amiibo, fsize, 1, file);
+    if(fsize < sizeof(AmiiboFile)) {
+        return amiibo;
+    }
+
+
+    fread(&amiibo, sizeof(AmiiboFile), 1, file);
     fclose(file);
 
     DumpHex(&amiibo, fsize);
@@ -287,8 +292,8 @@ Result NfpUserInterface::GetTagInfo(OutPointerWithServerSize<TagInfo, 0x1> out_i
     auto amiibo = GetAmiibo();
 
     TagInfo tag_info{};
-    tag_info.uuid = amiibo.uuid;
-    tag_info.uuid_length = static_cast<u8>(tag_info.uuid.size());
+    memcpy(&tag_info.uuid[0], &amiibo.uuid[0], 10);
+    tag_info.uuid_length = static_cast<u8>(10);
 
     tag_info.protocol = 8; // TODO(ogniK): Figure out actual values
     tag_info.tag_type = 2;
@@ -299,6 +304,8 @@ Result NfpUserInterface::GetTagInfo(OutPointerWithServerSize<TagInfo, 0x1> out_i
     DumpHex(&tag_info, sizeof(TagInfo));
     fprintf(g_logging_file, "})\n");
     fflush(g_logging_file);
+    DumpHex(out_info.pointer, sizeof(TagInfo));
+    
     return 0;
 }
 
