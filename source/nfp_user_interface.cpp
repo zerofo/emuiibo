@@ -26,6 +26,8 @@ extern IEvent *g_activate_event;
 extern FILE *g_logging_file;
 
 static HosMutex g_event_creation_lock;
+static HosMutex g_device_state_lock;
+static HosMutex g_state_lock;
 static bool g_created_events = false;
 static IEvent *g_deactivate_event = nullptr;
 static IEvent *g_availability_change_event = nullptr;
@@ -79,6 +81,16 @@ static void DumpHex(const void *data, size_t size)
         }
     }
     fflush(g_logging_file);
+}
+
+void NfpUserInterface::SetDeviceState(DeviceState _state) {
+    std::scoped_lock<HosMutex> lk(g_device_state_lock);
+    device_state = _state;
+}
+
+void NfpUserInterface::SetState(State _state) {
+    std::scoped_lock<HosMutex> lk(g_state_lock);
+    state = _state;
 }
 
 static AmiiboFile GetAmiibo()
@@ -139,8 +151,9 @@ Result NfpUserInterface::Initialize(u64 aruid, PidDescriptor pid_desc, InBuffer<
     fprintf(g_logging_file, "});\n");
     fflush(g_logging_file);
 
-    state = State::Initialized;
-    device_state = DeviceState::Initialized;
+    SetDeviceState(DeviceState::Initialized);
+    SetState(State::Initialized);
+
     return 0;
 }
 
@@ -177,9 +190,13 @@ Result NfpUserInterface::StartDetection(u64 handle)
     fflush(g_logging_file);
     if (device_state == DeviceState::Initialized || device_state == DeviceState::TagRemoved)
     {
-        device_state = DeviceState::SearchingForTag;
+        SetDeviceState(DeviceState::SearchingForTag);
+        return 0;
+    } else {
+        fprintf(g_logging_file, "Bad State\n");
+        fflush(g_logging_file);
+        return 0xdead;
     }
-    return 0;
 }
 
 Result NfpUserInterface::StopDetection(u64 handle)
@@ -273,12 +290,14 @@ Result NfpUserInterface::GetTagInfo(OutPointerWithServerSize<TagInfo, 0x1> out_i
     tag_info.uuid = amiibo.uuid;
     tag_info.uuid_length = static_cast<u8>(tag_info.uuid.size());
 
-    tag_info.protocol = 1; // TODO(ogniK): Figure out actual values
+    tag_info.protocol = 8; // TODO(ogniK): Figure out actual values
     tag_info.tag_type = 2;
 
-    memcpy(out_info.pointer, &tag_info, sizeof(TagInfo));
-    //*out_info.pointer = tag_info;
-    fprintf(g_logging_file, "NfpUserInterface::EndOfTagInfo()\n");
+    *out_info.pointer = tag_info;
+    fprintf(g_logging_file, "NfpUserInterface::EndOfTagInfo(tag_info[0x%lx]{\n", sizeof(TagInfo));
+    fflush(g_logging_file);
+    DumpHex(&tag_info, sizeof(TagInfo));
+    fprintf(g_logging_file, "})\n");
     fflush(g_logging_file);
     return 0;
 }
