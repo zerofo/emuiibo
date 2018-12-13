@@ -114,7 +114,7 @@ void HidLoop(void* arg) {
             fflush(g_logging_file);
             g_key_combo_triggered = true;
             g_activate_event->Signal();
-            RebootToRcm();
+            //RebootToRcm();
         }
         
         hidExit();
@@ -146,4 +146,3 @@ int main(int argc, char **argv) {
 
     return 0;
 }
-

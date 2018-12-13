@@ -107,7 +107,7 @@ class NfpUserInterface : public IServiceObject {
         /* Actual command API. */
         virtual Result Initialize(u64 aruid, PidDescriptor pid_desc, InBuffer<u8> buf) final;
         virtual Result Finalize() final;
-        virtual Result ListDevices(OutPointerWithClientSize<u64> out_devices, Out<u32> out_count) final;
+        virtual Result ListDevices(OutPointerWithClientSize<u64> out_devices, Out<u64> out_count) final;
         virtual Result StartDetection(u64 handle) final;
         virtual Result StopDetection(u64 handle) final;
         virtual Result Mount(u64 handle, u32 type, u32 target) final;
@@ -132,8 +132,8 @@ class NfpUserInterface : public IServiceObject {
         virtual Result RecreateApplicationArea(u64 handle, u32 access_id, InBuffer<u8> area) final;
 
         bool has_attached_handle{};
-        const u64 device_handle{0x555A5559}; // 'YUZU'
-        const u32 npad_id{0}; // Player 1 controller
+        const u64 device_handle{0xcafebabe}; // 'YUZU'
+        const u32 npad_id{0x20}; // Player 1 controller
         State state{State::NonInitialized};
         DeviceState device_state{DeviceState::Initialized};
         IEvent* deactivate_event;
