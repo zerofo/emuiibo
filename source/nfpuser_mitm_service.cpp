@@ -26,7 +26,7 @@ void NfpUserMitmService::PostProcess(IMitmServiceObject *obj, IpcResponseContext
 }
 
 Result NfpUserMitmService::CreateUserInterface(Out<std::shared_ptr<NfpUserInterface>> out) {
-    fprintf(g_logging_file, "In NfpUserMitmService::CreateUserInterface\n");
+    fprintf(g_logging_file, "NfpUserMitmService::CreateUserInterface()\n");
     fflush(g_logging_file);
     
     std::shared_ptr<NfpUserInterface> intf = nullptr;
