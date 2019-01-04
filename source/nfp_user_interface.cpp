@@ -148,9 +148,9 @@ NfpUserInterface::~NfpUserInterface()
     delete this->forward_intf;
 }
 
-Result NfpUserInterface::Initialize(u64 aruid, PidDescriptor pid_desc, InBuffer<u8> buf)
+Result NfpUserInterface::Initialize(u64 aruid, u64 unk, PidDescriptor pid_desc, InBuffer<u8> buf)
 {
-    fprintf(g_logging_file, "NfpUserInterface::Initialize(0x%016lx, 0x%016lx, buf[0x%lx] {\n", aruid, pid_desc.pid, buf.num_elements);
+    fprintf(g_logging_file, "NfpUserInterface::Initialize(0x%016lx, 0x%016lx, pid (%016lx), buf[0x%lx] {\n", aruid, unk, pid_desc.pid, buf.num_elements);
     fflush(g_logging_file);
     DumpHex(buf.buffer, buf.num_elements);
     fprintf(g_logging_file, "});\n");
@@ -295,7 +295,7 @@ Result NfpUserInterface::GetTagInfo(OutPointerWithServerSize<TagInfo, 0x1> out_i
     memcpy(&tag_info.uuid[0], &amiibo.uuid[0], 10);
     tag_info.uuid_length = static_cast<u8>(10);
 
-    tag_info.protocol = 8; // TODO(ogniK): Figure out actual values
+    tag_info.protocol = 1; // TODO(ogniK): Figure out actual values
     tag_info.tag_type = 2;
 
     *out_info.pointer = tag_info;
@@ -304,7 +304,6 @@ Result NfpUserInterface::GetTagInfo(OutPointerWithServerSize<TagInfo, 0x1> out_i
     DumpHex(&tag_info, sizeof(TagInfo));
     fprintf(g_logging_file, "})\n");
     fflush(g_logging_file);
-    DumpHex(out_info.pointer, sizeof(TagInfo));
     
     return 0;
 }
@@ -366,7 +365,7 @@ Result NfpUserInterface::GetDeviceState(u64 handle, Out<u32> out_state)
 {
     fprintf(g_logging_file, "NfpUserInterface::GetDeviceState(0x%016lx), current state is 0x%x\n", handle, static_cast<u32>(device_state));
     fflush(g_logging_file);
-    if (g_key_combo_triggered && !has_attached_handle)
+    if (g_key_combo_triggered && has_attached_handle)
     {
         fprintf(g_logging_file, "Triggered GetDeviceState\n");
         fflush(g_logging_file);

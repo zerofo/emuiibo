@@ -22,7 +22,7 @@
 #include <malloc.h>
 
 #include <switch.h>
-#include <atmosphere.h>
+// #include <atmosphere.h>
 #include <stratosphere.hpp>
 
 #include "nfpuser_mitm_service.hpp"

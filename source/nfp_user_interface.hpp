@@ -108,7 +108,7 @@ class NfpUserInterface : public IServiceObject {
         
     private:
         /* Actual command API. */
-        virtual Result Initialize(u64 aruid, PidDescriptor pid_desc, InBuffer<u8> buf) final;
+        virtual Result Initialize(u64 aruid, u64 unk, PidDescriptor pid_desc, InBuffer<u8> buf) final;
         virtual Result Finalize() final;
         virtual Result ListDevices(OutPointerWithClientSize<u64> out_devices, Out<u64> out_count) final;
         virtual Result StartDetection(u64 handle) final;
