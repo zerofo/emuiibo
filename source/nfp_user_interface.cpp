@@ -116,9 +116,9 @@ static AmiiboFile GetAmiibo()
     fread(&amiibo, sizeof(AmiiboFile), 1, file);
     fclose(file);
 
-    DumpHex(&amiibo, fsize);
-    fprintf(g_logging_file, "})\n");
-    fflush(g_logging_file);
+    // DumpHex(&amiibo, fsize);
+    // fprintf(g_logging_file, "})\n");
+    // fflush(g_logging_file);
 
     return amiibo;
 }
@@ -291,9 +291,10 @@ Result NfpUserInterface::GetTagInfo(OutPointerWithServerSize<TagInfo, 0x1> out_i
 
     auto amiibo = GetAmiibo();
 
-    TagInfo tag_info{};
-    memcpy(&tag_info.uuid[0], &amiibo.uuid[0], 10);
-    tag_info.uuid_length = static_cast<u8>(10);
+    TagInfo tag_info = {0};
+    memcpy(&tag_info.uuid[0], &amiibo.uuid[0], 3);
+    memcpy(&tag_info.uuid[3], &amiibo.uuid[4], 4);
+    tag_info.uuid_length = static_cast<u8>(7);
 
     tag_info.protocol = 1; // TODO(ogniK): Figure out actual values
     tag_info.tag_type = 2;
@@ -319,9 +320,21 @@ Result NfpUserInterface::GetModelInfo(OutPointerWithServerSize<ModelInfo, 0x1> o
 {
     fprintf(g_logging_file, "NfpUserInterface::GetModelInfo(ModelInfo[0x%lx])\n", out_info.num_elements);
     fflush(g_logging_file);
+
     auto amiibo = GetAmiibo();
 
-    *out_info.pointer = amiibo.model_info;
+    ModelInfo model_info = {0};
+    memcpy(&model_info.amiibo_identification_block[0], &amiibo.model_info.amiibo_identification_block[0], 3);
+    model_info.amiibo_identification_block[3] = amiibo.model_info.amiibo_identification_block[6];
+    model_info.amiibo_identification_block[4] = amiibo.model_info.amiibo_identification_block[5];
+    model_info.amiibo_identification_block[5] = amiibo.model_info.amiibo_identification_block[4];
+
+    *out_info.pointer = model_info;
+    fprintf(g_logging_file, "NfpUserInterface::EndOfModelInfo(model_info[0x%lx]{\n", sizeof(ModelInfo));
+    fflush(g_logging_file);
+    DumpHex(&model_info, sizeof(ModelInfo));
+    fprintf(g_logging_file, "})\n");
+    fflush(g_logging_file);
     return 0;
 }
 
