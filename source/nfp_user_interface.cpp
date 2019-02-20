@@ -49,7 +49,7 @@ static void DumpHex(const void *data, size_t size)
     ascii[16] = '\0';
     for (i = 0; i < size; ++i)
     {
-        fprintf(g_logging_file, "%02X ", ((unsigned char *)data)[i]);
+        //fprintf(g_logging_file, "%02X ", ((unsigned char *)data)[i]);
         if (((unsigned char *)data)[i] >= ' ' && ((unsigned char *)data)[i] <= '~')
         {
             ascii[i % 16] = ((unsigned char *)data)[i];
