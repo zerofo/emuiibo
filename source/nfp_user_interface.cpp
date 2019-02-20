@@ -23,7 +23,7 @@
 
 extern std::atomic_bool g_key_combo_triggered;
 extern IEvent *g_activate_event;
-extern FILE *g_logging_file;
+//extern FILE *g_logging_file;
 
 static HosMutex g_event_creation_lock;
 static HosMutex g_device_state_lock;
@@ -60,27 +60,27 @@ static void DumpHex(const void *data, size_t size)
         }
         if ((i + 1) % 8 == 0 || i + 1 == size)
         {
-            fprintf(g_logging_file, " ");
+            //fprintf(g_logging_file, " ");
             if ((i + 1) % 16 == 0)
             {
-                fprintf(g_logging_file, "|  %s \n", ascii);
+                //fprintf(g_logging_file, "|  %s \n", ascii);
             }
             else if (i + 1 == size)
             {
                 ascii[(i + 1) % 16] = '\0';
                 if ((i + 1) % 16 <= 8)
                 {
-                    fprintf(g_logging_file, " ");
+                    //fprintf(g_logging_file, " ");
                 }
                 for (j = (i + 1) % 16; j < 16; ++j)
                 {
-                    fprintf(g_logging_file, "   ");
+                    //fprintf(g_logging_file, "   ");
                 }
-                fprintf(g_logging_file, "|  %s \n", ascii);
+                //fprintf(g_logging_file, "|  %s \n", ascii);
             }
         }
     }
-    fflush(g_logging_file);
+    //fflush(g_logging_file);
 }
 
 void NfpUserInterface::SetDeviceState(DeviceState _state) {
