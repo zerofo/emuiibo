@@ -99,7 +99,7 @@ using NfpMitmManager = WaitableManager<NfpUserManagerOptions>;
 
 std::atomic_bool g_key_combo_triggered = false;
 IEvent* g_activate_event = nullptr;
-FILE* g_logging_file = nullptr;
+//FILE* g_logging_file = nullptr;
 
 void HidLoop(void* arg) {
     while (true) {
@@ -110,8 +110,8 @@ void HidLoop(void* arg) {
         hidScanInput();
         auto keys = hidKeysDown(CONTROLLER_P1_AUTO);
         if (!g_key_combo_triggered && ((keys & (KEY_R | KEY_L)) == (KEY_R | KEY_L))) {
-            fprintf(g_logging_file, "Key combo triggered\n");
-            fflush(g_logging_file);
+            //fprintf(g_logging_file, "Key combo triggered\n");
+            //fflush(g_logging_file);
             g_key_combo_triggered = true;
             g_activate_event->Signal();
             //RebootToRcm();
@@ -140,7 +140,7 @@ int main(int argc, char **argv) {
     /* Loop forever, servicing our services. */
     server_manager->Process();
 
-    fclose(g_logging_file);
+    //fclose(g_logging_file);
     
     delete server_manager;
 
