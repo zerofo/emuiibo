@@ -95,8 +95,8 @@ void NfpUserInterface::SetState(State _state) {
 
 static AmiiboFile GetAmiibo()
 {
-    fprintf(g_logging_file, "GetAmiibo(AmiiboFile[0x1] {\n");
-    fflush(g_logging_file);
+    //fprintf(g_logging_file, "GetAmiibo(AmiiboFile[0x1] {\n");
+    //fflush(g_logging_file);
     AmiiboFile amiibo{};
 
     FILE *file = fopen("amiibo.bin", "rb");
@@ -125,8 +125,8 @@ static AmiiboFile GetAmiibo()
 
 NfpUserInterface::NfpUserInterface(NfpUser *u)
 {
-    fprintf(g_logging_file, "NfpUserInterface::NfpUserInterface()\n");
-    fflush(g_logging_file);
+    //fprintf(g_logging_file, "NfpUserInterface::NfpUserInterface()\n");
+    //fflush(g_logging_file);
     this->forward_intf = u;
 
     {
@@ -141,8 +141,8 @@ NfpUserInterface::NfpUserInterface(NfpUser *u)
 
 NfpUserInterface::~NfpUserInterface()
 {
-    fprintf(g_logging_file, "NfpUserInterface::~NfpUserInterface()\n");
-    fflush(g_logging_file);
+    //fprintf(g_logging_file, "NfpUserInterface::~NfpUserInterface()\n");
+    //fflush(g_logging_file);
 
     nfpuserClose(this->forward_intf);
     delete this->forward_intf;
@@ -150,11 +150,11 @@ NfpUserInterface::~NfpUserInterface()
 
 Result NfpUserInterface::Initialize(u64 aruid, u64 unk, PidDescriptor pid_desc, InBuffer<u8> buf)
 {
-    fprintf(g_logging_file, "NfpUserInterface::Initialize(0x%016lx, 0x%016lx, pid (%016lx), buf[0x%lx] {\n", aruid, unk, pid_desc.pid, buf.num_elements);
-    fflush(g_logging_file);
+    //fprintf(g_logging_file, "NfpUserInterface::Initialize(0x%016lx, 0x%016lx, pid (%016lx), buf[0x%lx] {\n", aruid, unk, pid_desc.pid, buf.num_elements);
+    //fflush(g_logging_file);
     DumpHex(buf.buffer, buf.num_elements);
-    fprintf(g_logging_file, "});\n");
-    fflush(g_logging_file);
+    //fprintf(g_logging_file, "});\n");
+    //fflush(g_logging_file);
 
     SetDeviceState(DeviceState::Initialized);
     SetState(State::Initialized);
@@ -164,8 +164,8 @@ Result NfpUserInterface::Initialize(u64 aruid, u64 unk, PidDescriptor pid_desc, 
 
 Result NfpUserInterface::Finalize()
 {
-    fprintf(g_logging_file, "NfpUserInterface::Finalize();\n");
-    fflush(g_logging_file);
+    //fprintf(g_logging_file, "NfpUserInterface::Finalize();\n");
+    //fflush(g_logging_file);
     state = State::NonInitialized;
     device_state = DeviceState::Finalized;
     return 0;
@@ -173,8 +173,8 @@ Result NfpUserInterface::Finalize()
 
 Result NfpUserInterface::ListDevices(OutPointerWithClientSize<u64> out_devices, Out<u64> out_count)
 {
-    fprintf(g_logging_file, "NfpUserInterface::ListDevices(u64[0x%lx]);\n", out_devices.num_elements);
-    fflush(g_logging_file);
+    //fprintf(g_logging_file, "NfpUserInterface::ListDevices(u64[0x%lx]);\n", out_devices.num_elements);
+    //fflush(g_logging_file);
     if (out_devices.num_elements >= 1)
     {
         memcpy(out_devices.pointer, &device_handle, sizeof(device_handle));
@@ -182,8 +182,8 @@ Result NfpUserInterface::ListDevices(OutPointerWithClientSize<u64> out_devices, 
     }
     else
     {
-        fprintf(g_logging_file, "elements are zero\n");
-        fflush(g_logging_file);
+        //fprintf(g_logging_file, "elements are zero\n");
+        //fflush(g_logging_file);
         out_count.SetValue(0);
     }
     return 0;
@@ -191,23 +191,23 @@ Result NfpUserInterface::ListDevices(OutPointerWithClientSize<u64> out_devices, 
 
 Result NfpUserInterface::StartDetection(u64 handle)
 {
-    fprintf(g_logging_file, "NfpUserInterface::StartDetection(0x%016lx);\n", handle);
-    fflush(g_logging_file);
+    //fprintf(g_logging_file, "NfpUserInterface::StartDetection(0x%016lx);\n", handle);
+    //fflush(g_logging_file);
     if (device_state == DeviceState::Initialized || device_state == DeviceState::TagRemoved)
     {
         SetDeviceState(DeviceState::SearchingForTag);
         return 0;
     } else {
-        fprintf(g_logging_file, "Bad State\n");
-        fflush(g_logging_file);
+        //fprintf(g_logging_file, "Bad State\n");
+        //fflush(g_logging_file);
         return 0xdead;
     }
 }
 
 Result NfpUserInterface::StopDetection(u64 handle)
 {
-    fprintf(g_logging_file, "NfpUserInterface::StopDetection(0x%016lx)\n", handle);
-    fflush(g_logging_file);
+    //fprintf(g_logging_file, "NfpUserInterface::StopDetection(0x%016lx)\n", handle);
+    //fflush(g_logging_file);
     switch (device_state)
     {
     case DeviceState::TagFound:
@@ -225,69 +225,69 @@ Result NfpUserInterface::StopDetection(u64 handle)
 
 Result NfpUserInterface::Mount(u64 handle, u32 type, u32 target)
 {
-    fprintf(g_logging_file, "NfpUserInterface::Mount(0x%016lx, 0x%08x, 0x%08x)\n", handle, type, target);
-    fflush(g_logging_file);
+    //fprintf(g_logging_file, "NfpUserInterface::Mount(0x%016lx, 0x%08x, 0x%08x)\n", handle, type, target);
+    //fflush(g_logging_file);
     device_state = DeviceState::TagNearby;
     return 0;
 }
 
 Result NfpUserInterface::Unmount(u64 handle)
 {
-    fprintf(g_logging_file, "NfpUserInterface::Unmount(0x%016lx)\n", handle);
-    fflush(g_logging_file);
+    //fprintf(g_logging_file, "NfpUserInterface::Unmount(0x%016lx)\n", handle);
+    //fflush(g_logging_file);
     device_state = DeviceState::TagFound;
     return 0;
 }
 
 Result NfpUserInterface::OpenApplicationArea(u64 handle, u32 access_id)
 {
-    fprintf(g_logging_file, "NfpUserInterface::OpenApplicationArea(0x%016lx, 0x%08x)\n", handle, access_id);
-    fflush(g_logging_file);
+    //fprintf(g_logging_file, "NfpUserInterface::OpenApplicationArea(0x%016lx, 0x%08x)\n", handle, access_id);
+    //fflush(g_logging_file);
     return 0;
 }
 
 Result NfpUserInterface::GetApplicationArea(u64 handle, OutBuffer<u8> out_area, Out<u32> out_area_size)
 {
-    fprintf(g_logging_file, "NfpUserInterface::GetApplicationArea(0x%016lx)\n", handle);
-    fflush(g_logging_file);
+    //fprintf(g_logging_file, "NfpUserInterface::GetApplicationArea(0x%016lx)\n", handle);
+    //fflush(g_logging_file);
     out_area_size.SetValue(0);
     return 0;
 }
 
 Result NfpUserInterface::SetApplicationArea(u64 handle, InBuffer<u8> area)
 {
-    fprintf(g_logging_file, "NfpUserInterface::SetApplicationArea(0x%016lx, u8[0x%lx])\n", handle, area.num_elements);
-    fflush(g_logging_file);
+    //fprintf(g_logging_file, "NfpUserInterface::SetApplicationArea(0x%016lx, u8[0x%lx])\n", handle, area.num_elements);
+    //fflush(g_logging_file);
     return 0;
 }
 
 Result NfpUserInterface::Flush(u64 handle)
 {
-    fprintf(g_logging_file, "NfpUserInterface::Flush(0x%016lx)\n", handle);
-    fflush(g_logging_file);
+    //fprintf(g_logging_file, "NfpUserInterface::Flush(0x%016lx)\n", handle);
+    //fflush(g_logging_file);
     device_state = DeviceState::TagFound;
     return 0;
 }
 
 Result NfpUserInterface::Restore(u64 handle)
 {
-    fprintf(g_logging_file, "NfpUserInterface::Restore(0x%016lx)\n", handle);
-    fflush(g_logging_file);
+    //fprintf(g_logging_file, "NfpUserInterface::Restore(0x%016lx)\n", handle);
+    //fflush(g_logging_file);
     device_state = DeviceState::TagFound;
     return 0;
 }
 
 Result NfpUserInterface::CreateApplicationArea(u64 handle, u32 access_id, InBuffer<u8> area)
 {
-    fprintf(g_logging_file, "NfpUserInterface::CreateApplicationArea(0x%016lx, 0x%08x)\n", handle, access_id);
-    fflush(g_logging_file);
+    //fprintf(g_logging_file, "NfpUserInterface::CreateApplicationArea(0x%016lx, 0x%08x)\n", handle, access_id);
+    //fflush(g_logging_file);
     return 0;
 }
 
 Result NfpUserInterface::GetTagInfo(OutPointerWithServerSize<TagInfo, 0x1> out_info)
 {
-    fprintf(g_logging_file, "NfpUserInterface::GetTagInfo(TagInfo[0x%lx])\n", out_info.num_elements);
-    fflush(g_logging_file);
+    //fprintf(g_logging_file, "NfpUserInterface::GetTagInfo(TagInfo[0x%lx])\n", out_info.num_elements);
+    //fflush(g_logging_file);
 
     auto amiibo = GetAmiibo();
 
@@ -300,26 +300,26 @@ Result NfpUserInterface::GetTagInfo(OutPointerWithServerSize<TagInfo, 0x1> out_i
     tag_info.tag_type = 2;
 
     *out_info.pointer = tag_info;
-    fprintf(g_logging_file, "NfpUserInterface::EndOfTagInfo(tag_info[0x%lx]{\n", sizeof(TagInfo));
-    fflush(g_logging_file);
+    //fprintf(g_logging_file, "NfpUserInterface::EndOfTagInfo(tag_info[0x%lx]{\n", sizeof(TagInfo));
+    //fflush(g_logging_file);
     DumpHex(&tag_info, sizeof(TagInfo));
-    fprintf(g_logging_file, "})\n");
-    fflush(g_logging_file);
+    //fprintf(g_logging_file, "})\n");
+    //fflush(g_logging_file);
     
     return 0;
 }
 
 Result NfpUserInterface::GetRegisterInfo(OutPointerWithServerSize<RegisterInfo, 0x1> out_info)
 {
-    fprintf(g_logging_file, "NfpUserInterface::GetRegisterInfo(RegisterInfo[0x%lx])\n", out_info.num_elements);
-    fflush(g_logging_file);
+    //fprintf(g_logging_file, "NfpUserInterface::GetRegisterInfo(RegisterInfo[0x%lx])\n", out_info.num_elements);
+    //fflush(g_logging_file);
     return 0;
 }
 
 Result NfpUserInterface::GetModelInfo(OutPointerWithServerSize<ModelInfo, 0x1> out_info)
 {
-    fprintf(g_logging_file, "NfpUserInterface::GetModelInfo(ModelInfo[0x%lx])\n", out_info.num_elements);
-    fflush(g_logging_file);
+    //fprintf(g_logging_file, "NfpUserInterface::GetModelInfo(ModelInfo[0x%lx])\n", out_info.num_elements);
+    //fflush(g_logging_file);
 
     auto amiibo = GetAmiibo();
 
@@ -330,18 +330,18 @@ Result NfpUserInterface::GetModelInfo(OutPointerWithServerSize<ModelInfo, 0x1> o
     model_info.amiibo_identification_block[5] = amiibo.model_info.amiibo_identification_block[4];
 
     *out_info.pointer = model_info;
-    fprintf(g_logging_file, "NfpUserInterface::EndOfModelInfo(model_info[0x%lx]{\n", sizeof(ModelInfo));
-    fflush(g_logging_file);
+    //fprintf(g_logging_file, "NfpUserInterface::EndOfModelInfo(model_info[0x%lx]{\n", sizeof(ModelInfo));
+    //fflush(g_logging_file);
     DumpHex(&model_info, sizeof(ModelInfo));
-    fprintf(g_logging_file, "})\n");
-    fflush(g_logging_file);
+    //fprintf(g_logging_file, "})\n");
+    //fflush(g_logging_file);
     return 0;
 }
 
 Result NfpUserInterface::GetCommonInfo(OutPointerWithServerSize<CommonInfo, 0x1> out_info)
 {
-    fprintf(g_logging_file, "NfpUserInterface::GetCommonInfo(CommonInfo[0x%lx])\n", out_info.num_elements);
-    fflush(g_logging_file);
+    //fprintf(g_logging_file, "NfpUserInterface::GetCommonInfo(CommonInfo[0x%lx])\n", out_info.num_elements);
+    //fflush(g_logging_file);
     CommonInfo common_info{};
     common_info.application_area_size = 0;
 
@@ -351,8 +351,8 @@ Result NfpUserInterface::GetCommonInfo(OutPointerWithServerSize<CommonInfo, 0x1>
 
 Result NfpUserInterface::AttachActivateEvent(u64 handle, Out<CopiedHandle> event)
 {
-    fprintf(g_logging_file, "NfpUserInterface::AttachActivateEvent(0x%016lx)\n", handle);
-    fflush(g_logging_file);
+    //fprintf(g_logging_file, "NfpUserInterface::AttachActivateEvent(0x%016lx)\n", handle);
+    //fflush(g_logging_file);
     event.SetValue(g_activate_event->GetHandle());
     has_attached_handle = true;
     return 0;
@@ -360,28 +360,28 @@ Result NfpUserInterface::AttachActivateEvent(u64 handle, Out<CopiedHandle> event
 
 Result NfpUserInterface::AttachDeactivateEvent(u64 handle, Out<CopiedHandle> event)
 {
-    fprintf(g_logging_file, "NfpUserInterface::AttachDeactivateEvent(0x%016lx)\n", handle);
-    fflush(g_logging_file);
+    //fprintf(g_logging_file, "NfpUserInterface::AttachDeactivateEvent(0x%016lx)\n", handle);
+    //fflush(g_logging_file);
     event.SetValue(g_deactivate_event->GetHandle());
     return 0;
 }
 
 Result NfpUserInterface::GetState(Out<u32> out_state)
 {
-    fprintf(g_logging_file, "NfpUserInterface::GetState(), current state is 0x%x\n", static_cast<u32>(state));
-    fflush(g_logging_file);
+    //fprintf(g_logging_file, "NfpUserInterface::GetState(), current state is 0x%x\n", static_cast<u32>(state));
+    //fflush(g_logging_file);
     out_state.SetValue(static_cast<u32>(state));
     return 0;
 }
 
 Result NfpUserInterface::GetDeviceState(u64 handle, Out<u32> out_state)
 {
-    fprintf(g_logging_file, "NfpUserInterface::GetDeviceState(0x%016lx), current state is 0x%x\n", handle, static_cast<u32>(device_state));
-    fflush(g_logging_file);
+    //fprintf(g_logging_file, "NfpUserInterface::GetDeviceState(0x%016lx), current state is 0x%x\n", handle, static_cast<u32>(device_state));
+    //fflush(g_logging_file);
     if (g_key_combo_triggered && has_attached_handle)
     {
-        fprintf(g_logging_file, "Triggered GetDeviceState\n");
-        fflush(g_logging_file);
+        //fprintf(g_logging_file, "Triggered GetDeviceState\n");
+        //fflush(g_logging_file);
 
         device_state = DeviceState::TagFound;
         g_key_combo_triggered = false;
@@ -394,35 +394,35 @@ Result NfpUserInterface::GetDeviceState(u64 handle, Out<u32> out_state)
 
 Result NfpUserInterface::GetNpadId(u64 handle, Out<u32> out_npad_id)
 {
-    fprintf(g_logging_file, "NfpUserInterface::GetNpadId(0x%016lx)\n", handle);
-    fflush(g_logging_file);
+    //fprintf(g_logging_file, "NfpUserInterface::GetNpadId(0x%016lx)\n", handle);
+    //fflush(g_logging_file);
     out_npad_id.SetValue(npad_id);
     return 0;
 }
 
 Result NfpUserInterface::AttachAvailabilityChangeEvent(Out<CopiedHandle> event)
 {
-    fprintf(g_logging_file, "NfpUserInterface::AttachAvailabilityChangeEvent()\n");
-    fflush(g_logging_file);
+    //fprintf(g_logging_file, "NfpUserInterface::AttachAvailabilityChangeEvent()\n");
+    //fflush(g_logging_file);
     event.SetValue(g_availability_change_event->GetHandle());
     return 0;
 }
 
 Result NfpUserInterface::GetApplicationAreaSize(Out<u32> size)
 {
-    fprintf(g_logging_file, "NfpUserInterface::AttachAvailabilityChangeEvent()\n");
-    fflush(g_logging_file);
+    //fprintf(g_logging_file, "NfpUserInterface::AttachAvailabilityChangeEvent()\n");
+    //fflush(g_logging_file);
     size.SetValue(0);
     return 0;
 }
 
 Result NfpUserInterface::RecreateApplicationArea(u64 handle, u32 access_id, InBuffer<u8> area)
 {
-    fprintf(g_logging_file, "NfpUserInterface::AttachAvailabilityChangeEvent(0x%016lx, 0x%08x, u8[0x%lx]{\n", handle, access_id, area.num_elements);
-    fflush(g_logging_file);
+    //fprintf(g_logging_file, "NfpUserInterface::AttachAvailabilityChangeEvent(0x%016lx, 0x%08x, u8[0x%lx]{\n", handle, access_id, area.num_elements);
+    //fflush(g_logging_file);
     DumpHex(area.buffer, area.num_elements);
-    fprintf(g_logging_file, "})\n");
-    fflush(g_logging_file);
+    //fprintf(g_logging_file, "})\n");
+    //fflush(g_logging_file);
 
     return 0;
 }
