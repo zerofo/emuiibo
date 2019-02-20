@@ -126,7 +126,7 @@ void HidLoop(void* arg) {
 int main(int argc, char **argv) {
     consoleDebugInit(debugDevice_SVC);
     
-    g_logging_file = fopen("nfp_log.log", "w");
+    //g_logging_file = fopen("nfp_log.log", "w");
     g_activate_event = CreateWriteOnlySystemEvent<true>();
     
     HosThread hid_poller_thread;
