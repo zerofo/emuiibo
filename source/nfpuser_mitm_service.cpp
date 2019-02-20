@@ -19,15 +19,15 @@
 #include "nfpuser_mitm_service.hpp"
 #include "nfp_shim.h"
 
-extern FILE* g_logging_file;
+//extern FILE* g_logging_file;
 
 void NfpUserMitmService::PostProcess(IMitmServiceObject *obj, IpcResponseContext *ctx) {
     /* Do nothing. */
 }
 
 Result NfpUserMitmService::CreateUserInterface(Out<std::shared_ptr<NfpUserInterface>> out) {
-    fprintf(g_logging_file, "NfpUserMitmService::CreateUserInterface()\n");
-    fflush(g_logging_file);
+    //fprintf(g_logging_file, "NfpUserMitmService::CreateUserInterface()\n");
+    //fflush(g_logging_file);
     
     std::shared_ptr<NfpUserInterface> intf = nullptr;
     u32 out_domain_id = 0;
@@ -37,8 +37,8 @@ Result NfpUserMitmService::CreateUserInterface(Out<std::shared_ptr<NfpUserInterf
             out.SetValue(std::move(intf));
             if (out.IsDomain()) {
                 out.ChangeObjectId(out_domain_id);
-                fprintf(g_logging_file, "Is domain with objid %u\n", out.GetObjectId());
-                fflush(g_logging_file);
+                //fprintf(g_logging_file, "Is domain with objid %u\n", out.GetObjectId());
+                //fflush(g_logging_file);
             }
         }
     };
