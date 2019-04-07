@@ -110,7 +110,7 @@ IEvent* g_activate_event = nullptr;
 void HidLoop(void* arg) {
     while (true) {
         hidScanInput();
-        auto keys = hidKeysDown(CONTROLLER_P1_AUTO);
+        auto keys = hidKeysDown(CONTROLLER_P1_AUTO) | hidKeysHeld(CONTROLLER_P1_AUTO);
         if (!g_key_combo_triggered && ((keys & (KEY_L | KEY_RSTICK_UP)) == (KEY_L | KEY_RSTICK_UP))) {
             //fprintf(g_logging_file, "Key combo triggered\n");
             //fflush(g_logging_file);
