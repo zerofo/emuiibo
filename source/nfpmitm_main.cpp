@@ -72,12 +72,18 @@ void __appInit(void) {
     if (R_FAILED(rc)) {
         fatalSimple(rc);
     }
+
+    rc = hidInitialize();
+    if (R_FAILED(rc)) {
+            fatalSimple(MAKERESULT(Module_Libnx, LibnxError_InitFail_HID));
+    }
     
     //CheckAtmosphereVersion(CURRENT_ATMOSPHERE_VERSION);
 }
 
 void __appExit(void) {
     /* Cleanup services. */
+    hidExit();
     fsdevUnmountAll();
     fsExit();
     smExit();
@@ -103,21 +109,15 @@ IEvent* g_activate_event = nullptr;
 
 void HidLoop(void* arg) {
     while (true) {
-        if (R_FAILED(hidInitialize())) {
-            fatalSimple(MAKERESULT(Module_Libnx, LibnxError_InitFail_HID));
-        }
-        
         hidScanInput();
         auto keys = hidKeysDown(CONTROLLER_P1_AUTO);
-        if (!g_key_combo_triggered && ((keys & (KEY_R | KEY_L)) == (KEY_R | KEY_L))) {
+        if (!g_key_combo_triggered && ((keys & (KEY_L | KEY_RSTICK_UP)) == (KEY_L | KEY_RSTICK_UP))) {
             //fprintf(g_logging_file, "Key combo triggered\n");
             //fflush(g_logging_file);
             g_key_combo_triggered = true;
             g_activate_event->Signal();
             //RebootToRcm();
         }
-        
-        hidExit();
 
         svcSleepThread(100000000UL);
     }

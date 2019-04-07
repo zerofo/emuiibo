@@ -243,7 +243,7 @@ Result NfpUserInterface::OpenApplicationArea(u64 handle, u32 access_id)
 {
     //fprintf(g_logging_file, "NfpUserInterface::OpenApplicationArea(0x%016lx, 0x%08x)\n", handle, access_id);
     //fflush(g_logging_file);
-    return 0;
+    return 0x10073;
 }
 
 Result NfpUserInterface::GetApplicationArea(u64 handle, OutBuffer<u8> out_area, Out<u32> out_area_size)
