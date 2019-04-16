@@ -17,7 +17,7 @@ typedef struct {
 
 Result nfpCreateUserInterface(Service* s, NfpUser* out);
 
-void nfpuserClose(NfpUser* u);
+void nfpUserClose(NfpUser* u);
 
 #ifdef __cplusplus
 }

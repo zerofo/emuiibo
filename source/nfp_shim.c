@@ -53,6 +53,6 @@ Result nfpCreateUserInterface(Service* s, NfpUser* out) {
     return rc;
 }
 
-void nfpuserClose(NfpUser* u) {
+void nfpUserClose(NfpUser* u) {
     serviceClose(&u->s);
 }

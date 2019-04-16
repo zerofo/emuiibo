@@ -65,52 +65,50 @@ enum class DeviceState : u32 {
     Finalized = 6
 };
 
+class NfpResults {
+    public:
+        static constexpr Result ResultNeedRestart = MAKERESULT(115, 96);
+        static constexpr Result ResultDeviceNotFound = MAKERESULT(115, 64);
+        static constexpr Result ResultNotFoundArea = MAKERESULT(115, 128);
+};
+
 class NfpUserInterface : public IServiceObject {
     private:
         NfpUser *forward_intf;
+        NfpuState state;
+        NfpuDeviceState dvstate;
+        IEvent* edeactivate;
+        IEvent* eavailabilitychange;
     public:
         NfpUserInterface(NfpUser *u);
         ~NfpUserInterface();
-
-        void SetDeviceState(DeviceState _state);
-        void SetState(State _state);
-        
+        static constexpr u64 EmuDeviceHandle = 0xfeedbeef; // emuiibo's custom handle
     private:
-        /* Actual command API. */
-        virtual Result Initialize(u64 aruid, u64 unk, PidDescriptor pid_desc, InBuffer<u8> buf) final;
-        virtual Result Finalize() final;
-        virtual Result ListDevices(OutPointerWithClientSize<u64> out_devices, Out<u64> out_count) final;
-        virtual Result StartDetection(u64 handle) final;
-        virtual Result StopDetection(u64 handle) final;
-        virtual Result Mount(u64 handle, NfpuDeviceType type, NfpuMountTarget target) final;
-        virtual Result Unmount(u64 handle) final;
-        virtual Result OpenApplicationArea(u64 handle, u32 access_id) final;
-        virtual Result GetApplicationArea(u64 handle, OutBuffer<u8> out_area, Out<u32> out_area_size) final;
-        virtual Result SetApplicationArea(u64 handle, InBuffer<u8> area) final;
-        virtual Result Flush(u64 handle) final;
-        virtual Result Restore(u64 handle) final;
-        virtual Result CreateApplicationArea(u64 handle, u32 access_id, InBuffer<u8> area) final;
-        virtual Result GetTagInfo(u64 handle, OutPointerWithServerSize<NfpuTagInfo, 0x1> out_info) final;
-        virtual Result GetRegisterInfo(u64 handle, OutPointerWithServerSize<NfpuRegisterInfo, 0x1> out_info) final;
-        virtual Result GetCommonInfo(u64 handle, OutPointerWithServerSize<NfpuCommonInfo, 0x1> out_info) final;
-        virtual Result GetModelInfo(u64 handle, OutPointerWithServerSize<NfpuModelInfo, 0x1> out_info) final;
-        virtual Result AttachActivateEvent(u64 handle, Out<CopiedHandle> event) final;
-        virtual Result AttachDeactivateEvent(u64 handle, Out<CopiedHandle> event) final;
-        virtual Result GetState(Out<u32> state) final;
-        virtual Result GetDeviceState(u64 handle, Out<u32> state) final;
-        virtual Result GetNpadId(u64 handle, Out<u32> npad_id) final;
-        virtual Result AttachAvailabilityChangeEvent(Out<CopiedHandle> event) final;
-        virtual Result GetApplicationAreaSize(Out<u32> size) final;
-        virtual Result RecreateApplicationArea(u64 handle, u32 access_id, InBuffer<u8> area) final;
-
-        bool has_attached_handle{};
-        const u64 device_handle{0x20}; // 'YUZU'
-        const u32 npad_id{0x20}; // Player 1 controller
-        State state{State::NonInitialized};
-        DeviceState device_state{DeviceState::Initialized};
-        IEvent* deactivate_event;
-        IEvent* availability_change_event;
-
+        Result Initialize(u64 aruid, u64 unk, PidDescriptor pid_desc, InBuffer<u8> buf);
+        Result Finalize();
+        Result ListDevices(OutPointerWithClientSize<u64> out_devices, Out<u64> out_count);
+        Result StartDetection(u64 handle);
+        Result StopDetection(u64 handle);
+        Result Mount(u64 handle, NfpuDeviceType type, NfpuMountTarget target);
+        Result Unmount(u64 handle);
+        Result OpenApplicationArea(u64 handle, u32 access_id);
+        Result GetApplicationArea(u64 handle, OutBuffer<u8> out_area, Out<u32> out_area_size);
+        Result SetApplicationArea(u64 handle, InBuffer<u8> area);
+        Result Flush(u64 handle);
+        Result Restore(u64 handle);
+        Result CreateApplicationArea(u64 handle, u32 access_id, InBuffer<u8> area);
+        Result GetTagInfo(u64 handle, OutPointerWithServerSize<NfpuTagInfo, 0x1> out_info);
+        Result GetRegisterInfo(u64 handle, OutPointerWithServerSize<NfpuRegisterInfo, 0x1> out_info);
+        Result GetCommonInfo(u64 handle, OutPointerWithServerSize<NfpuCommonInfo, 0x1> out_info);
+        Result GetModelInfo(u64 handle, OutPointerWithServerSize<NfpuModelInfo, 0x1> out_info);
+        Result AttachActivateEvent(u64 handle, Out<CopiedHandle> event);
+        Result AttachDeactivateEvent(u64 handle, Out<CopiedHandle> event);
+        Result GetState(Out<u32> state);
+        Result GetDeviceState(u64 handle, Out<u32> state);
+        Result GetNpadId(u64 handle, Out<u32> npad_id);
+        Result AttachAvailabilityChangeEvent(Out<CopiedHandle> event);
+        Result GetApplicationAreaSize(Out<u32> size);
+        Result RecreateApplicationArea(u64 handle, u32 access_id, InBuffer<u8> area);
     public:
         DEFINE_SERVICE_DISPATCH_TABLE {
             MakeServiceCommandMeta<NfpUserInterfaceCmd_Initialize, &NfpUserInterface::Initialize>(),

@@ -20,6 +20,10 @@ class AmiiboEmulator {
         static NfpuRegisterInfo EmulateRegisterInfo();
         static NfpuCommonInfo EmulateCommonInfo();
         static void MoveNext();
+        static s32 GetCurrentIndex();
+        static void ForceAmiibo(std::string path);
+        static bool IsForced();
+        static void UnforceAmiibo();
     private:
         static std::string GetNameForIndex(u32 idx);
         static AmiiboData GetRaw();

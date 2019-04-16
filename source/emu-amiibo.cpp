@@ -7,6 +7,7 @@
 #include <sys/stat.h>
 
 static std::string amiiboDir = "sdmc:/emuiibo";
+static std::string fPath = "";
 s32 amiiboIdx = -1;
 extern FILE *g_logging_file;
 
@@ -49,8 +50,8 @@ NfpuTagInfo AmiiboEmulator::GetCurrentTagInfo() {
 
     AmiiboData amiibo = GetRaw();
 
-    memcpy(tag_info.uuid, amiibo.uuid, 7);
-    tag_info.uuid_length = 7;
+    memcpy(tag_info.uuid, amiibo.uuid, 10);
+    tag_info.uuid_length = 10;
     tag_info.protocol = 0;
     tag_info.tag_type = 2;
 
@@ -120,17 +121,20 @@ void AmiiboEmulator::MoveNext() {
     else amiiboIdx = 0;
 }
 
-AmiiboData AmiiboEmulator::GetRaw() {
-    AmiiboData amiibo = {};
-    std::string name = GetNameForIndex(amiiboIdx);
-    if(!name.empty()) {
-        FILE *f = fopen((amiiboDir + "/" + name).c_str(), "rb");
-        if(f) {
-            fread(&amiibo, sizeof(AmiiboData), 1, f);
-        }
-        fclose(f);
-    }
-    return amiibo;
+s32 AmiiboEmulator::GetCurrentIndex() {
+    return amiiboIdx;
+}
+
+void AmiiboEmulator::ForceAmiibo(std::string path) {
+    fPath = path;
+}
+
+bool AmiiboEmulator::IsForced() {
+    return (fPath != "");
+}
+
+void AmiiboEmulator::UnforceAmiibo() {
+    fPath = "";
 }
 
 std::string AmiiboEmulator::GetNameForIndex(u32 idx) {
@@ -158,10 +162,17 @@ std::string AmiiboEmulator::GetNameForIndex(u32 idx) {
         }
         closedir(dp);
     }
-    else {
-        amiiboIdx = -1;
-    }
-    fprintf(g_logging_file, "amiiGetName: %s\n", name.c_str());
-    fflush(g_logging_file);
     return name;
+}
+
+AmiiboData AmiiboEmulator::GetRaw() {
+    AmiiboData amiibo = {};
+    std::string name = GetNameForIndex(amiiboIdx);
+    std::string path = (IsForced() ? fPath : (amiiboDir + "/" + name));
+    FILE *f = fopen(path.c_str(), "rb");
+    if(f) {
+        fread(&amiibo, sizeof(AmiiboData), 1, f);
+    }
+    fclose(f);
+    return amiibo;
 }

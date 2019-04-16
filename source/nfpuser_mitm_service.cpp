@@ -28,7 +28,6 @@ void NfpUserMitmService::PostProcess(IMitmServiceObject *obj, IpcResponseContext
 Result NfpUserMitmService::CreateUserInterface(Out<std::shared_ptr<NfpUserInterface>> out) {
     fprintf(g_logging_file, "NfpUserMitmService::CreateUserInterface()\n");
     fflush(g_logging_file);
-    
     std::shared_ptr<NfpUserInterface> intf = nullptr;
     u32 out_domain_id = 0;
     Result rc = 0;
@@ -42,7 +41,7 @@ Result NfpUserMitmService::CreateUserInterface(Out<std::shared_ptr<NfpUserInterf
             }
         }
     };
-    
+
     NfpUser user;
     rc = nfpCreateUserInterface(this->forward_service.get(), &user);
     if (R_SUCCEEDED(rc)) {

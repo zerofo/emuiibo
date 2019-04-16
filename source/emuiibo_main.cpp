@@ -103,9 +103,12 @@ struct NfpUserManagerOptions {
 
 using EmuiiboManager = WaitableManager<NfpUserManagerOptions>;
 
-std::atomic_bool g_enableComboSet = false;
-IEvent* g_activate_event = nullptr;
-extern HosMutex g_enable_lock;
+std::atomic_bool g_enableEmu = true;
+std::atomic_bool g_comboDetected = false;
+
+IEvent* g_eactivate = nullptr;
+
+extern HosMutex g_comboLock;
 
 bool AllKeysDown(std::vector<u64> keys) { // Proper system to get down input of several keys at the same time. TLDR -> one needs to be down at least, and the others down or held (as all would be held).
     u64 kdown = hidKeysDown(CONTROLLER_P1_AUTO);
@@ -140,10 +143,10 @@ void ComboCheckerThread(void* arg) {
     {
         hidScanInput();
         if(AllKeysDown({ KEY_L, KEY_R, KEY_X })) {
-            std::scoped_lock<HosMutex> lck(g_enable_lock);
-            if(!g_enableComboSet) {
-                g_enableComboSet = true;
-                g_activate_event->Signal();
+            std::scoped_lock<HosMutex> lck(g_comboLock);
+            if(!g_comboDetected) {
+                g_comboDetected = true;
+                g_eactivate->Signal();
             }
         }
         else if(AllKeysDown({ KEY_L, KEY_R, KEY_Y })) {
@@ -160,7 +163,7 @@ int main(int argc, char **argv) {
     g_logging_file = fopen("sdmc:/emuiibo-test.log", "a");
     AmiiboEmulator::Initialize();
 
-    g_activate_event = CreateWriteOnlySystemEvent<true>();
+    g_eactivate = CreateWriteOnlySystemEvent<true>();
     
     HosThread comboth;
     comboth.Initialize(&ComboCheckerThread, nullptr, 0x4000, 0x15);
