@@ -45,6 +45,6 @@ bool IsEmuiiboPresent()
 
 ## Credits
 
-- All the persons who contributed to the `nfp-mitm` project before me: *Subv, ogniK, averne, spx, SciresM*
+- All the persons who contributed to the `nfp-mitm` project before me: *Subv, ogniK, averne, spx01, SciresM*
 
 - libstratosphere libraries (SciresM again)
