@@ -32,6 +32,10 @@ void AmiiboEmulator::ToggleOnce() {
 }
 
 void AmiiboEmulator::SwapNext() {
+    if(IsForced()) {
+        UnforceAmiibo();
+        return;
+    }
     std::scoped_lock<HosMutex> lck(g_toggleLock);
     if(g_toggleEmulation > 0) {
         s32 c = GetCount();
