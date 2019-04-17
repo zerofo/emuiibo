@@ -16,6 +16,7 @@ class AmiiboEmulator {
         static void Initialize();
         static void Toggle();
         static void ToggleOnce();
+        static void Untoggle();
         static void SwapNext();
         static u32 GetCount();
         static NfpuTagInfo GetCurrentTagInfo();

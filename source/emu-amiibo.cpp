@@ -32,6 +32,11 @@ void AmiiboEmulator::ToggleOnce() {
     g_toggleEmulation = 2; // Just toggle once, then untoggle emulation
 }
 
+void AmiiboEmulator::Untoggle() {
+    std::scoped_lock<HosMutex> lck(g_toggleLock);
+    g_toggleEmulation = 0; // Fully untoggle, no matter it was toggled or not
+}
+
 void AmiiboEmulator::SwapNext() {
     if(IsForced()) {
         UnforceAmiibo();

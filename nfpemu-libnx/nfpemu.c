@@ -213,7 +213,7 @@ Result nfpemuToggleOnce()
     return rc;
 }
 
-Result nfpemuSwapNext()
+Result nfpemuUntoggle()
 {
     IpcCommand c;
     ipcInitialize(&c);
@@ -225,6 +225,36 @@ Result nfpemuSwapNext()
     raw = ipcPrepareHeader(&c, sizeof(*raw));
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 6;
+    Result rc = serviceIpcDispatch(&g_nfpEmuSrv);
+
+    if(R_SUCCEEDED(rc))
+    {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+    }
+
+    return rc;
+}
+
+Result nfpemuSwapNext()
+{
+    IpcCommand c;
+    ipcInitialize(&c);
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 7;
     Result rc = serviceIpcDispatch(&g_nfpEmuSrv);
 
     if(R_SUCCEEDED(rc))

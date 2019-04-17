@@ -37,6 +37,11 @@ Result NfpEmulationService::ToggleOnce() {
     return 0;
 }
 
+Result NfpEmulationService::Untoggle() {
+    AmiiboEmulator::Untoggle();
+    return 0;
+}
+
 Result NfpEmulationService::SwapNext() {
     AmiiboEmulator::SwapNext();
     return 0;

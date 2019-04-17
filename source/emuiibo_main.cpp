@@ -140,13 +140,16 @@ void ComboCheckerThread(void* arg) {
     {
         hidScanInput();
         
-        if(AllKeysDown({ KEY_RSTICK, KEY_RSTICK_UP })) {
+        if(AllKeysDown({ KEY_RSTICK, KEY_DUP })) {
             AmiiboEmulator::Toggle();
         }
-        else if(AllKeysDown({ KEY_RSTICK, KEY_RSTICK_RIGHT })) {
+        else if(AllKeysDown({ KEY_RSTICK, KEY_DRIGHT })) {
             AmiiboEmulator::ToggleOnce();
         }
-        else if(AllKeysDown({ KEY_RSTICK, KEY_RSTICK_LEFT })) {
+        else if(AllKeysDown({ KEY_RSTICK, KEY_DDOWN })) {
+            AmiiboEmulator::Untoggle();
+        }
+        else if(AllKeysDown({ KEY_RSTICK, KEY_DLEFT })) {
             AmiiboEmulator::SwapNext();
         }
         

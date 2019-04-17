@@ -6,21 +6,25 @@
 
 Download the latest release and place it on your CFW's `titles` folder (so it would be like `<cfw>/titles/0100000000000352`).
 
+According to tests, should work on any CFW which allows NSP sysmodules (Atmosphere, ReiNX, SX OS).
+
 You also have to set the boot2 flag, whose location depends on the CFW:
 
 - Atmosphere: create a file named `boot2.flag` inside `titles/0100000000000352/flags` directory.
 
-- ReiNX: same as above, but in the root title dir (`titles/0100000000000352`).
+- ReiNX: create a file named `boot2.flag` inside `titles/0100000000000352` directory.
 
 ### Combos
 
-All the input combos are performed with R-Stick pressing and moving it in an specific direction (at the same time). Combos must (should) be done before or after the game starts looking for amiibos.
+All the input combos are performed with R-Stick pressing and pressing the D-pad in an specific direction (at the same time). Combos must (should) be done before or after the game starts looking for amiibos.
 
-- **Toggle amiibo emulation**: Press R-Stick (like it was a button) and also move it up. Toggles/untoggles emulation.
+- **Toggle amiibo emulation**: Press R-Stick (like it was a button) and also pressing the D-pad up. Toggles/untoggles emulation.
 
-- **Toggle amiibo emulation once**: Same as above, but moving right the R-Stick. Toggles emulation once, after emulating an amiibo then it will untoggle automatically.
+- **Toggle amiibo emulation once**: Same as above, but pressing the D-pad right. Toggles emulation once, after emulating an amiibo then it will untoggle automatically.
 
-- **Amiibo swapping**: Same as above, but moving left the R-Stick. Moves to the next amiibo in the amiibo directory, if last one starts again with the first one. Only has effect if amiibo emulation is toggled.
+- **Untoggle amiibo emulation**: Same as above, but pressing the D-pad down. Untoggles amiibo emulation, and should be used as a way to fully ensure it is untoggled, in case you don't know whether it's toggled or not.
+
+- **Swap amiibo**: Same as above, but pressing the D-pad left. Moves to the next amiibo in the amiibo directory, if last one starts again with the first one. Only has effect if amiibo emulation is toggled.
 
 Emuiibo's amiibo directory is `sd:/emuiibo`. Place your amiibo dumps (must be `*.bin` files) there.
 

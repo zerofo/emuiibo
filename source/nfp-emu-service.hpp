@@ -10,7 +10,8 @@ enum NfpEmulationCmd : u32 {
     NfpEmulationCmd_RequestResetCustomAmiibo = 3,
     NfpEmulationCmd_Toggle = 4,
     NfpEmulationCmd_ToggleOnce = 5,
-    NfpEmulationCmd_SwapNext = 6,
+    NfpEmulationCmd_Untoggle = 6,
+    NfpEmulationCmd_SwapNext = 7,
 };
 
 class NfpEmulationService : public IServiceObject {
@@ -21,6 +22,7 @@ class NfpEmulationService : public IServiceObject {
         Result RequestResetCustomAmiibo();
         Result Toggle();     // Combo action
         Result ToggleOnce(); // Combo action
+        Result Untoggle();   // Combo action
         Result SwapNext();   // Combo action
     public:
         DEFINE_SERVICE_DISPATCH_TABLE {
@@ -30,6 +32,7 @@ class NfpEmulationService : public IServiceObject {
             MakeServiceCommandMeta<NfpEmulationCmd_RequestResetCustomAmiibo, &NfpEmulationService::RequestResetCustomAmiibo>(),
             MakeServiceCommandMeta<NfpEmulationCmd_Toggle, &NfpEmulationService::Toggle>(),
             MakeServiceCommandMeta<NfpEmulationCmd_ToggleOnce, &NfpEmulationService::ToggleOnce>(),
+            MakeServiceCommandMeta<NfpEmulationCmd_Untoggle, &NfpEmulationService::Untoggle>(),
             MakeServiceCommandMeta<NfpEmulationCmd_SwapNext, &NfpEmulationService::SwapNext>(),
         };
 };

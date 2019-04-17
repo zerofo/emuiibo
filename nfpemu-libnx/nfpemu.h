@@ -16,6 +16,7 @@ Result nfpemuRequestUseCustomAmiibo(const char *path);
 Result nfpemuRequestResetCustomAmiibo();
 Result nfpemuToggle();
 Result nfpemuToggleOnce();
+Result nfpemuUntoggle();
 Result nfpemuSwapNext();
 
 #ifdef __cplusplus
