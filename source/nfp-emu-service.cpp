@@ -1,7 +1,6 @@
 #include "nfp-emu-service.hpp"
 #include "emu-amiibo.hpp"
 
-extern FILE *g_logging_file;
 extern u32 g_toggleEmulation;
 
 Result NfpEmulationService::GetAmiiboCount(Out<u32> out) {

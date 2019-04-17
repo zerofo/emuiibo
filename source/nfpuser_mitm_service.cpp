@@ -19,7 +19,6 @@
 #include "nfpuser_mitm_service.hpp"
 #include "nfp_shim.h"
 
-extern FILE *g_logging_file;
 extern HosMutex g_toggleLock;
 extern u32 g_toggleEmulation;
 

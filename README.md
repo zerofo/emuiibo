@@ -6,7 +6,7 @@
 
 Download the latest release and place it on your CFW's `titles` folder (so it would be like `<cfw>/titles/0100000000000352`).
 
-According to tests, should work on any CFW which allows NSP sysmodules (Atmosphere, ReiNX, SX OS).
+According to tests, should work on any CFW which allows NSP sysmodules (Atmosphere, ReiNX).
 
 You also have to set the boot2 flag, whose location depends on the CFW:
 

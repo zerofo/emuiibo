@@ -157,13 +157,9 @@ void ComboCheckerThread(void* arg) {
     }
 }
 
-FILE *g_logging_file;
 
 int main(int argc, char **argv) {
-
-    remove("sdmc:/emuiibo-new.log");
-    g_logging_file = fopen("sdmc:/emuiibo-new.log", "a"); // Log is temporary, release probably won't have it
-
+    
     AmiiboEmulator::Initialize();
 
     g_eactivate = CreateWriteOnlySystemEvent<true>();
@@ -185,7 +181,6 @@ int main(int argc, char **argv) {
     server_manager->Process();
     
     delete server_manager;
-    fclose(g_logging_file);
 
     return 0;
 }

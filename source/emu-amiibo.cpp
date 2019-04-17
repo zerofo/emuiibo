@@ -11,7 +11,6 @@ static std::string amiiboDir = "sdmc:/emuiibo";
 static std::string fPath = "";
 static s32 amiiboIdx = -1;
 
-extern FILE *g_logging_file;
 extern HosMutex g_toggleLock;
 extern u32 g_toggleEmulation;
 
