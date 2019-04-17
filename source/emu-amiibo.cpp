@@ -4,6 +4,7 @@
 #include <dirent.h>
 #include <cstdio>
 #include <cstring>
+#include <stratosphere.hpp>
 #include <sys/stat.h>
 
 static std::string amiiboDir = "sdmc:/emuiibo";

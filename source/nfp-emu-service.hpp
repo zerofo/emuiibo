@@ -24,12 +24,12 @@ class NfpEmulationService : public IServiceObject {
         Result SwapNext();   // Combo action
     public:
         DEFINE_SERVICE_DISPATCH_TABLE {
-            MakeServiceCommandMeta<NfpEmulationCmd_GetAmiiboCount, &NfpHomebrewService::GetAmiiboCount>(),
-            MakeServiceCommandMeta<NfpEmulationCmd_GetCurrentAmiibo, &NfpHomebrewService::GetCurrentAmiibo>(),
-            MakeServiceCommandMeta<NfpEmulationCmd_RequestUseCustomAmiibo, &NfpHomebrewService::RequestUseCustomAmiibo>(),
-            MakeServiceCommandMeta<NfpEmulationCmd_RequestResetCustomAmiibo, &NfpHomebrewService::RequestResetCustomAmiibo>(),
-            MakeServiceCommandMeta<NfpEmulationCmd_Toggle, &NfpHomebrewService::Toggle>(),
-            MakeServiceCommandMeta<NfpEmulationCmd_ToggleOnce, &NfpHomebrewService::ToggleOnce>(),
-            MakeServiceCommandMeta<NfpEmulationCmd_SwapNext, &NfpHomebrewService::SwapNext>(),
+            MakeServiceCommandMeta<NfpEmulationCmd_GetAmiiboCount, &NfpEmulationService::GetAmiiboCount>(),
+            MakeServiceCommandMeta<NfpEmulationCmd_GetCurrentAmiibo, &NfpEmulationService::GetCurrentAmiibo>(),
+            MakeServiceCommandMeta<NfpEmulationCmd_RequestUseCustomAmiibo, &NfpEmulationService::RequestUseCustomAmiibo>(),
+            MakeServiceCommandMeta<NfpEmulationCmd_RequestResetCustomAmiibo, &NfpEmulationService::RequestResetCustomAmiibo>(),
+            MakeServiceCommandMeta<NfpEmulationCmd_Toggle, &NfpEmulationService::Toggle>(),
+            MakeServiceCommandMeta<NfpEmulationCmd_ToggleOnce, &NfpEmulationService::ToggleOnce>(),
+            MakeServiceCommandMeta<NfpEmulationCmd_SwapNext, &NfpEmulationService::SwapNext>(),
         };
 };

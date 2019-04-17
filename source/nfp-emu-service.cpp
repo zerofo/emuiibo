@@ -17,7 +17,7 @@ Result NfpEmulationService::GetCurrentAmiibo(Out<u32> idx) {
     return 0;
 }
 
-Result NfpEmulationService::RequestCustomAmiibo(InBuffer<char> path) {
+Result NfpEmulationService::RequestUseCustomAmiibo(InBuffer<char> path) {
     AmiiboEmulator::ForceAmiibo(std::string(path.buffer));
     return 0;
 }
