@@ -27,7 +27,7 @@
 
 #include "mii-shim.h"
 #include "nfpuser_mitm_service.hpp"
-#include "nfp-homebrew-service.hpp"
+#include "nfp-emu-service.hpp"
 #include "emu-amiibo.hpp"
 
 extern "C" {
@@ -103,12 +103,9 @@ struct NfpUserManagerOptions {
 
 using EmuiiboManager = WaitableManager<NfpUserManagerOptions>;
 
-std::atomic_bool g_enableEmu = true;
-std::atomic_bool g_comboDetected = false;
-
 IEvent* g_eactivate = nullptr;
-
-extern HosMutex g_comboLock;
+u32 g_toggleEmulation = 0;
+extern HosMutex g_toggleLock;
 
 bool AllKeysDown(std::vector<u64> keys) { // Proper system to get down input of several keys at the same time. TLDR -> one needs to be down at least, and the others down or held (as all would be held).
     u64 kdown = hidKeysDown(CONTROLLER_P1_AUTO);
@@ -142,17 +139,18 @@ void ComboCheckerThread(void* arg) {
     while(true)
     {
         hidScanInput();
-        if(AllKeysDown({ KEY_L, KEY_R, KEY_X })) {
-            std::scoped_lock<HosMutex> lck(g_comboLock);
-            if(!g_comboDetected) {
-                g_comboDetected = true;
-                g_eactivate->Signal();
-            }
+        
+        if(AllKeysDown({ KEY_RSTICK, KEY_RSTICK_UP })) {
+            AmiiboEmulator::Toggle();
         }
-        else if(AllKeysDown({ KEY_L, KEY_R, KEY_Y })) {
-            AmiiboEmulator::MoveNext();
+        else if(AllKeysDown({ KEY_RSTICK, KEY_RSTICK_RIGHT })) {
+            AmiiboEmulator::ToggleOnce();
         }
-        svcSleepThread(100000000UL);
+        else if(AllKeysDown({ KEY_RSTICK, KEY_RSTICK_LEFT })) {
+            AmiiboEmulator::SwapNext();
+        }
+        
+        svcSleepThread(100000000L);
     }
 }
 
@@ -160,7 +158,9 @@ FILE *g_logging_file;
 
 int main(int argc, char **argv) {
 
-    g_logging_file = fopen("sdmc:/emuiibo-test.log", "a");
+    remove("sdmc:/emuiibo-new.log");
+    g_logging_file = fopen("sdmc:/emuiibo-new.log", "a"); // Log is temporary, release probably won't have it
+
     AmiiboEmulator::Initialize();
 
     g_eactivate = CreateWriteOnlySystemEvent<true>();
@@ -171,15 +171,17 @@ int main(int argc, char **argv) {
     
     /* Create server manager. */
     auto server_manager = new EmuiiboManager(2);
+
+    // MitM user NFP service...
     AddMitmServerToManager<NfpUserMitmService>(server_manager, "nfp:user", 10);
 
-    server_manager->AddWaitable(new ServiceServer<NfpHomebrewService>("nfp:emu", 10));
+    // Host custom emulation service...
+    server_manager->AddWaitable(new ServiceServer<NfpEmulationService>("nfp:emu", 10));
 
     /* Loop forever, servicing our services. */
     server_manager->Process();
     
     delete server_manager;
-
     fclose(g_logging_file);
 
     return 0;

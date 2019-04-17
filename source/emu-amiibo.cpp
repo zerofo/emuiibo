@@ -8,13 +8,36 @@
 
 static std::string amiiboDir = "sdmc:/emuiibo";
 static std::string fPath = "";
-s32 amiiboIdx = -1;
+static s32 amiiboIdx = -1;
+
 extern FILE *g_logging_file;
+extern HosMutex g_toggleLock;
+extern u32 g_toggleEmulation;
 
 void AmiiboEmulator::Initialize() {
     u32 c = GetCount();
     if(c > 0) amiiboIdx = 0;
     else amiiboIdx = -1;
+}
+
+void AmiiboEmulator::Toggle() {
+    std::scoped_lock<HosMutex> lck(g_toggleLock);
+    if(g_toggleEmulation > 0) g_toggleEmulation = 0; // If toggled, reset
+    else g_toggleEmulation = 1; // Keep emulation toggled forever
+}
+
+void AmiiboEmulator::ToggleOnce() {
+    std::scoped_lock<HosMutex> lck(g_toggleLock);
+    g_toggleEmulation = 2; // Just toggle once, then untoggle emulation
+}
+
+void AmiiboEmulator::SwapNext() {
+    std::scoped_lock<HosMutex> lck(g_toggleLock);
+    if(g_toggleEmulation > 0) {
+        s32 c = GetCount();
+        if((amiiboIdx + 1) < c) amiiboIdx++;
+        else amiiboIdx = 0;
+    };
 }
 
 u32 AmiiboEmulator::GetCount() {
@@ -35,15 +58,10 @@ u32 AmiiboEmulator::GetCount() {
     else {
         amiiboIdx = -1;
     }
-    fprintf(g_logging_file, "amiiGetCount: %u\n", c);
-    fflush(g_logging_file);
     return c;
 }
 
 NfpuTagInfo AmiiboEmulator::GetCurrentTagInfo() {
-    fprintf(g_logging_file, "amiiTagInfo\n");
-    fflush(g_logging_file);
-
     NfpuTagInfo tag_info;
     memset(&tag_info, 0, sizeof(NfpuTagInfo));
     if(amiiboIdx < 0) return tag_info;
@@ -59,9 +77,6 @@ NfpuTagInfo AmiiboEmulator::GetCurrentTagInfo() {
 }
 
 NfpuModelInfo AmiiboEmulator::GetCurrentModelInfo() {
-    fprintf(g_logging_file, "amiiModelInfo\n");
-    fflush(g_logging_file);
-    
 
     NfpuModelInfo model_info = {};
     if(amiiboIdx < 0) return model_info;
@@ -83,9 +98,10 @@ NfpuRegisterInfo AmiiboEmulator::EmulateRegisterInfo() {
     reg_info.first_write_month = 6; // Some fresh
     reg_info.first_write_day = 15;  // memes
 
-    std::string name = GetNameForIndex(amiiboIdx);
-    std::string noext = name.substr(0, name.find_last_of(".")); // Get filename
-    if(noext.length() > 10) noext = "Emuiibo"; // Splitting 10+ char names would be ugly- e.g. Meta Knight -> Meta Knigh (...)
+    std::string name = (IsForced() ? fPath.substr(fPath.find_last_of("/") + 1) : GetNameForIndex(amiiboIdx));
+    std::string noext;
+    noext = name.substr(0, name.find_last_of(".")); // Get filename
+    if(noext.length() > 10) noext = "Emuiibo"; // Splitting 10+ char names can be ugly
 
     strcpy(reg_info.amiibo_name, noext.c_str());
 
@@ -113,12 +129,6 @@ NfpuCommonInfo AmiiboEmulator::EmulateCommonInfo() {
     common_info.application_area_size = 0xd8;
 
     return common_info;
-}
-
-void AmiiboEmulator::MoveNext() {
-    s32 c = GetCount();
-    if((amiiboIdx + 1) < c) amiiboIdx++;
-    else amiiboIdx = 0;
 }
 
 s32 AmiiboEmulator::GetCurrentIndex() {

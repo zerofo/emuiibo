@@ -29,9 +29,7 @@ class NfpUserMitmService : public IMitmServiceObject {
             /* ... */
         }
         
-        static bool ShouldMitm(u64 pid, u64 tid) {
-            return true;
-        }
+        static bool ShouldMitm(u64 pid, u64 tid);
         
         static void PostProcess(IMitmServiceObject *obj, IpcResponseContext *ctx);
                     

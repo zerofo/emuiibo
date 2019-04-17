@@ -14,12 +14,14 @@ static_assert(sizeof(AmiiboData) == 0x21C, "AmiiboData has an invalid size");
 class AmiiboEmulator {
     public:
         static void Initialize();
+        static void Toggle();
+        static void ToggleOnce();
+        static void SwapNext();
         static u32 GetCount();
         static NfpuTagInfo GetCurrentTagInfo();
         static NfpuModelInfo GetCurrentModelInfo();
         static NfpuRegisterInfo EmulateRegisterInfo();
         static NfpuCommonInfo EmulateCommonInfo();
-        static void MoveNext();
         static s32 GetCurrentIndex();
         static void ForceAmiibo(std::string path);
         static bool IsForced();

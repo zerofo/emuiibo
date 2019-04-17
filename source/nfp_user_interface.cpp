@@ -21,14 +21,16 @@
 
 #include "nfp_user_interface.hpp"
 
-extern std::atomic_bool g_comboDetected;
 extern IEvent *g_eactivate;
 extern FILE *g_logging_file;
+extern u32 g_toggleEmulation;
 
-HosMutex g_comboLock;
+HosMutex g_toggleLock;
 
 NfpUserInterface::NfpUserInterface(NfpUser *u)
 {
+    fprintf(g_logging_file, " -- IUser-%s(...)\n", __FUNCTION__);
+    fflush(g_logging_file);
     this->forward_intf = u;
     edeactivate = CreateWriteOnlySystemEvent();
     eavailabilitychange = CreateWriteOnlySystemEvent();
@@ -38,6 +40,8 @@ NfpUserInterface::NfpUserInterface(NfpUser *u)
 
 NfpUserInterface::~NfpUserInterface()
 {
+    fprintf(g_logging_file, " -- IUser-%s(...)\n", __FUNCTION__);
+    fflush(g_logging_file);
     delete edeactivate;
     delete eavailabilitychange;
     nfpUserClose(this->forward_intf);
@@ -46,6 +50,8 @@ NfpUserInterface::~NfpUserInterface()
 
 Result NfpUserInterface::Initialize(u64 aruid, u64 unk, PidDescriptor pid_desc, InBuffer<u8> buf)
 {
+    fprintf(g_logging_file, " -- IUser-%s(...)\n", __FUNCTION__);
+    fflush(g_logging_file);
     state = NfpuState_Initialized;
     dvstate = NfpuDeviceState_Initialized;
     return 0;
@@ -53,6 +59,8 @@ Result NfpUserInterface::Initialize(u64 aruid, u64 unk, PidDescriptor pid_desc, 
 
 Result NfpUserInterface::Finalize()
 {
+    fprintf(g_logging_file, " -- IUser-%s(...)\n", __FUNCTION__);
+    fflush(g_logging_file);
     state = NfpuState_NonInitialized;
     dvstate = NfpuDeviceState_Finalized;
     return 0;
@@ -60,39 +68,35 @@ Result NfpUserInterface::Finalize()
 
 Result NfpUserInterface::ListDevices(OutPointerWithClientSize<u64> out_devices, Out<u64> out_count)
 {
-    if(out_devices.num_elements >= 1)
-    {
-        memcpy(out_devices.pointer, &EmuDeviceHandle, sizeof(EmuDeviceHandle));
-        out_count.SetValue(1);
-    }
-    else out_count.SetValue(0);
+    fprintf(g_logging_file, " -- IUser-%s(...)\n", __FUNCTION__);
+    fflush(g_logging_file);
+    u64 dvcid = 0x20;
+    hidScanInput();
+    if(hidIsControllerConnected(CONTROLLER_PLAYER_1)) dvcid = (u64)CONTROLLER_PLAYER_1;
+    memcpy(out_devices.pointer, &dvcid, sizeof(u64));
+    out_count.SetValue(1);
     return 0;
 }
 
 Result NfpUserInterface::StartDetection(u64 handle)
 {
-    if((dvstate == NfpuDeviceState_Initialized) || (dvstate == NfpuDeviceState_TagRemoved))
-    {
-        std::scoped_lock<HosMutex> lck(g_comboLock);
-        if(g_comboDetected) {
-            eavailabilitychange->Signal();
-            g_comboDetected = false;
-        }
-        dvstate = NfpuDeviceState_TagFound;
-        return 0;
-    }
-    return NfpResults::ResultDeviceNotFound;
+    fprintf(g_logging_file, " -- IUser-%s(...)\n", __FUNCTION__);
+    fflush(g_logging_file);
+    g_eactivate->Signal();
+    eavailabilitychange->Signal();
+    dvstate = NfpuDeviceState_TagFound;
+    return 0;
 }
 
 Result NfpUserInterface::StopDetection(u64 handle)
 {
+    fprintf(g_logging_file, " -- IUser-%s(...)\n", __FUNCTION__);
+    fflush(g_logging_file);
     switch(dvstate)
     {
         case NfpuDeviceState_TagFound:
         case NfpuDeviceState_TagMounted:
             edeactivate->Signal();
-            dvstate = NfpuDeviceState_Initialized;
-            break;
         case NfpuDeviceState_SearchingForTag:
         case NfpuDeviceState_TagRemoved:
             dvstate = NfpuDeviceState_Initialized;
@@ -105,12 +109,17 @@ Result NfpUserInterface::StopDetection(u64 handle)
 
 Result NfpUserInterface::Mount(u64 handle, NfpuDeviceType type, NfpuMountTarget target)
 {
+    fprintf(g_logging_file, " -- IUser-%s(...)\n", __FUNCTION__);
+    fflush(g_logging_file);
+    g_eactivate->Signal();
     dvstate = NfpuDeviceState_TagMounted;
     return 0;
 }
 
 Result NfpUserInterface::Unmount(u64 handle)
 {
+    fprintf(g_logging_file, " -- IUser-%s(...)\n", __FUNCTION__);
+    fflush(g_logging_file);
     edeactivate->Signal();
     dvstate = NfpuDeviceState_SearchingForTag;
     return 0;
@@ -118,39 +127,53 @@ Result NfpUserInterface::Unmount(u64 handle)
 
 Result NfpUserInterface::OpenApplicationArea(u64 handle, u32 access_id)
 {
+    fprintf(g_logging_file, " -- IUser-%s(...)\n", __FUNCTION__);
+    fflush(g_logging_file);
     return NfpResults::ResultNotFoundArea;
 }
 
 Result NfpUserInterface::GetApplicationArea(u64 handle, OutBuffer<u8> out_area, Out<u32> out_area_size)
 {
+    fprintf(g_logging_file, " -- IUser-%s(...)\n", __FUNCTION__);
+    fflush(g_logging_file);
     out_area_size.SetValue(out_area.num_elements);
     return 0;
 }
 
 Result NfpUserInterface::SetApplicationArea(u64 handle, InBuffer<u8> area)
 {
+    fprintf(g_logging_file, " -- IUser-%s(...)\n", __FUNCTION__);
+    fflush(g_logging_file);
     return 0;
 }
 
 Result NfpUserInterface::Flush(u64 handle)
 {
+    fprintf(g_logging_file, " -- IUser-%s(...)\n", __FUNCTION__);
+    fflush(g_logging_file);
     dvstate = NfpuDeviceState_TagFound;
     return 0;
 }
 
 Result NfpUserInterface::Restore(u64 handle)
 {
+    fprintf(g_logging_file, " -- IUser-%s(...)\n", __FUNCTION__);
+    fflush(g_logging_file);
     dvstate = NfpuDeviceState_TagFound;
     return 0;
 }
 
 Result NfpUserInterface::CreateApplicationArea(u64 handle, u32 access_id, InBuffer<u8> area)
 {
+    fprintf(g_logging_file, " -- IUser-%s(...)\n", __FUNCTION__);
+    fflush(g_logging_file);
     return 0;
 }
 
 Result NfpUserInterface::GetTagInfo(u64 handle, OutPointerWithServerSize<NfpuTagInfo, 0x1> out_info)
 {
+    fprintf(g_logging_file, " -- IUser-%s(...)\n", __FUNCTION__);
+    fflush(g_logging_file);
     NfpuTagInfo tag_info = AmiiboEmulator::GetCurrentTagInfo();
     if(tag_info.uuid_length == 0) return LibnxError_NotFound;
     memcpy(out_info.pointer, &tag_info, sizeof(NfpuTagInfo));
@@ -159,6 +182,8 @@ Result NfpUserInterface::GetTagInfo(u64 handle, OutPointerWithServerSize<NfpuTag
 
 Result NfpUserInterface::GetRegisterInfo(u64 handle, OutPointerWithServerSize<NfpuRegisterInfo, 0x1> out_info)
 {
+    fprintf(g_logging_file, " -- IUser-%s(...)\n", __FUNCTION__);
+    fflush(g_logging_file);
     NfpuRegisterInfo reg_info = AmiiboEmulator::EmulateRegisterInfo();
     memcpy(out_info.pointer, &reg_info, sizeof(NfpuRegisterInfo));
     return 0;
@@ -166,6 +191,8 @@ Result NfpUserInterface::GetRegisterInfo(u64 handle, OutPointerWithServerSize<Nf
 
 Result NfpUserInterface::GetModelInfo(u64 handle, OutPointerWithServerSize<NfpuModelInfo, 0x1> out_info)
 {
+    fprintf(g_logging_file, " -- IUser-%s(...)\n", __FUNCTION__);
+    fflush(g_logging_file);
     NfpuModelInfo model_info = AmiiboEmulator::GetCurrentModelInfo();
     memcpy(out_info.pointer, &model_info, sizeof(NfpuModelInfo));
     return 0;
@@ -173,6 +200,8 @@ Result NfpUserInterface::GetModelInfo(u64 handle, OutPointerWithServerSize<NfpuM
 
 Result NfpUserInterface::GetCommonInfo(u64 handle, OutPointerWithServerSize<NfpuCommonInfo, 0x1> out_info)
 {
+    fprintf(g_logging_file, " -- IUser-%s(...)\n", __FUNCTION__);
+    fflush(g_logging_file);
     NfpuCommonInfo common_info = AmiiboEmulator::EmulateCommonInfo();
     memcpy(out_info.pointer, &common_info, sizeof(NfpuCommonInfo));
     return 0;
@@ -180,56 +209,63 @@ Result NfpUserInterface::GetCommonInfo(u64 handle, OutPointerWithServerSize<Nfpu
 
 Result NfpUserInterface::AttachActivateEvent(u64 handle, Out<CopiedHandle> event)
 {
+    fprintf(g_logging_file, " -- IUser-%s(...)\n", __FUNCTION__);
+    fflush(g_logging_file);
     event.SetValue(g_eactivate->GetHandle());
     return 0;
 }
 
 Result NfpUserInterface::AttachDeactivateEvent(u64 handle, Out<CopiedHandle> event)
 {
+    fprintf(g_logging_file, " -- IUser-%s(...)\n", __FUNCTION__);
+    fflush(g_logging_file);
     event.SetValue(edeactivate->GetHandle());
     return 0;
 }
 
 Result NfpUserInterface::GetState(Out<u32> out_state)
 {
+    fprintf(g_logging_file, " -- IUser-%s(...)\n", __FUNCTION__);
+    fflush(g_logging_file);
     out_state.SetValue(static_cast<u32>(state));
     return 0;
 }
 
 Result NfpUserInterface::GetDeviceState(u64 handle, Out<u32> out_state)
 {
-    std::scoped_lock<HosMutex> lck(g_comboLock);
-    if(g_comboDetected) {
-        dvstate = NfpuDeviceState_TagFound;
-        g_comboDetected = false;
-        g_eactivate->Clear();
-    }
+    fprintf(g_logging_file, " -- IUser-%s(...)\n", __FUNCTION__);
+    fflush(g_logging_file);
     out_state.SetValue(static_cast<u32>(dvstate));
     return 0;
 }
 
 Result NfpUserInterface::GetNpadId(u64 handle, Out<u32> out_npad_id)
 {
-    HidControllerID ctrlid = CONTROLLER_HANDHELD;
-    hidScanInput();
-    if(hidIsControllerConnected(CONTROLLER_PLAYER_1)) ctrlid = CONTROLLER_PLAYER_1;
-    out_npad_id.SetValue(hidControllerIDToOfficial(ctrlid));
+    fprintf(g_logging_file, " -- IUser-%s(...)\n", __FUNCTION__);
+    fflush(g_logging_file);
+    out_npad_id.SetValue((u32)handle);
     return 0;
 }
 
 Result NfpUserInterface::AttachAvailabilityChangeEvent(Out<CopiedHandle> event)
 {
+    fprintf(g_logging_file, " -- IUser-%s(...)\n", __FUNCTION__);
+    fflush(g_logging_file);
     event.SetValue(eavailabilitychange->GetHandle());
     return 0;
 }
 
 Result NfpUserInterface::GetApplicationAreaSize(Out<u32> size)
 {
+    fprintf(g_logging_file, " -- IUser-%s(...)\n", __FUNCTION__);
+    fflush(g_logging_file);
     size.SetValue(0);
     return 0;
 }
 
 Result NfpUserInterface::RecreateApplicationArea(u64 handle, u32 access_id, InBuffer<u8> area)
 {
+    fprintf(g_logging_file, " -- IUser-%s(...)\n", __FUNCTION__);
+    fflush(g_logging_file);
     return 0;
 }

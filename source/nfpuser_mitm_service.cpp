@@ -20,14 +20,21 @@
 #include "nfp_shim.h"
 
 extern FILE *g_logging_file;
+extern HosMutex g_toggleLock;
+extern u32 g_toggleEmulation;
 
 void NfpUserMitmService::PostProcess(IMitmServiceObject *obj, IpcResponseContext *ctx) {
     /* Do nothing. */
 }
 
+bool NfpUserMitmService::ShouldMitm(u64 pid, u64 tid) {
+    std::scoped_lock<HosMutex> lck(g_toggleLock);
+    return (g_toggleEmulation > 0);
+}
+
 Result NfpUserMitmService::CreateUserInterface(Out<std::shared_ptr<NfpUserInterface>> out) {
-    fprintf(g_logging_file, "NfpUserMitmService::CreateUserInterface()\n");
-    fflush(g_logging_file);
+    std::scoped_lock<HosMutex> lck(g_toggleLock);
+    if(g_toggleEmulation == 0) return ResultAtmosphereMitmShouldForwardToSession;
     std::shared_ptr<NfpUserInterface> intf = nullptr;
     u32 out_domain_id = 0;
     Result rc = 0;
@@ -36,8 +43,6 @@ Result NfpUserMitmService::CreateUserInterface(Out<std::shared_ptr<NfpUserInterf
             out.SetValue(std::move(intf));
             if (out.IsDomain()) {
                 out.ChangeObjectId(out_domain_id);
-                fprintf(g_logging_file, "Is domain with objid %u\n", out.GetObjectId());
-                fflush(g_logging_file);
             }
         }
     };
@@ -50,6 +55,6 @@ Result NfpUserMitmService::CreateUserInterface(Out<std::shared_ptr<NfpUserInterf
             out_domain_id = user.s.object_id;
         }
     }
-
+    if(g_toggleEmulation == 2) g_toggleEmulation = 0;
     return rc;
 }
