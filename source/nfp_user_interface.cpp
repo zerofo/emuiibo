@@ -111,6 +111,7 @@ Result NfpUserInterface::Mount(u64 handle, NfpuDeviceType type, NfpuMountTarget 
 
 Result NfpUserInterface::Unmount(u64 handle)
 {
+    edeactivate->Signal();
     dvstate = NfpuDeviceState_SearchingForTag;
     return 0;
 }
@@ -122,7 +123,7 @@ Result NfpUserInterface::OpenApplicationArea(u64 handle, u32 access_id)
 
 Result NfpUserInterface::GetApplicationArea(u64 handle, OutBuffer<u8> out_area, Out<u32> out_area_size)
 {
-    out_area_size.SetValue(0);
+    out_area_size.SetValue(out_area.num_elements);
     return 0;
 }
 
