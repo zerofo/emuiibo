@@ -1,4 +1,3 @@
-
 #include "mii-shim.h"
 #include <stdlib.h>
 #include <string.h>
@@ -6,19 +5,20 @@
 static Service g_miiSrv;
 static u64 g_refCnt;
 
-Result miiInitialize() {
+Result miiInitialize()
+{
     atomicIncrement64(&g_refCnt);
     if(serviceIsActive(&g_miiSrv)) return 0;
     return smGetService(&g_miiSrv, "mii:u");
 }
 
-void miiExit() {
-    if(atomicDecrement64(&g_refCnt) == 0) {
-        serviceClose(&g_miiSrv);
-    }
+void miiExit()
+{
+    if(atomicDecrement64(&g_refCnt) == 0) serviceClose(&g_miiSrv);
 }
 
-Result miiGetDatabase(MiiDatabase *out) {
+Result miiGetDatabase(MiiDatabase *out)
+{
     IpcCommand c;
     ipcInitialize(&c);
     struct {
@@ -45,7 +45,8 @@ Result miiGetDatabase(MiiDatabase *out) {
     return rc;
 }
 
-Result miiDatabaseGetCount(MiiDatabase *db, u32 *out_count) {
+Result miiDatabaseGetCount(MiiDatabase *db, u32 *out_count)
+{
     IpcCommand c;
     ipcInitialize(&c);
     struct {
@@ -73,7 +74,8 @@ Result miiDatabaseGetCount(MiiDatabase *db, u32 *out_count) {
     return rc;
 }
 
-Result miiDatabaseGetCharInfo(MiiDatabase *db, u32 idx, NfpuMiiCharInfo *ch_out) {
+Result miiDatabaseGetCharInfo(MiiDatabase *db, u32 idx, NfpuMiiCharInfo *ch_out)
+{
     u32 mc = 0;
     miiDatabaseGetCount(db, &mc);
     if(mc < 1) return LibnxError_BadInput;
@@ -109,6 +111,7 @@ Result miiDatabaseGetCharInfo(MiiDatabase *db, u32 idx, NfpuMiiCharInfo *ch_out)
     return rc;
 }
 
-void miiDatabaseClose(MiiDatabase *db) {
+void miiDatabaseClose(MiiDatabase *db)
+{
     serviceClose(&db->s);
 }

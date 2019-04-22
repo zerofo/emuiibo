@@ -3,45 +3,53 @@
 
 extern u32 g_toggleEmulation;
 
-Result NfpEmulationService::GetAmiiboCount(Out<u32> out) {
+Result NfpEmulationService::GetAmiiboCount(Out<u32> out)
+{
     u32 c = AmiiboEmulator::GetCount();
     out.SetValue(c);
     return 0;
 }
 
-Result NfpEmulationService::GetCurrentAmiibo(Out<u32> idx) {
+Result NfpEmulationService::GetCurrentAmiibo(Out<u32> idx)
+{
     s32 cidx = AmiiboEmulator::GetCurrentIndex();
     if(cidx < 0) return LibnxError_NotFound;
     idx.SetValue(cidx);
     return 0;
 }
 
-Result NfpEmulationService::RequestUseCustomAmiibo(InBuffer<char> path) {
-    AmiiboEmulator::ForceAmiibo(std::string(path.buffer));
+Result NfpEmulationService::RequestUseCustomAmiibo(InBuffer<char> path)
+{
+    AmiiboEmulator::SetCustomAmiibo(std::string(path.buffer));
     return 0;
 }
 
-Result NfpEmulationService::RequestResetCustomAmiibo() {
-    AmiiboEmulator::UnforceAmiibo();
+Result NfpEmulationService::RequestResetCustomAmiibo()
+{
+    AmiiboEmulator::ResetCustomAmiibo();
     return 0;
 }
 
-Result NfpEmulationService::Toggle() {
+Result NfpEmulationService::Toggle()
+{
     AmiiboEmulator::Toggle();
     return 0;
 }
 
-Result NfpEmulationService::ToggleOnce() {
+Result NfpEmulationService::ToggleOnce()
+{
     AmiiboEmulator::ToggleOnce();
     return 0;
 }
 
-Result NfpEmulationService::Untoggle() {
+Result NfpEmulationService::Untoggle()
+{
     AmiiboEmulator::Untoggle();
     return 0;
 }
 
-Result NfpEmulationService::SwapNext() {
+Result NfpEmulationService::SwapNext()
+{
     AmiiboEmulator::SwapNext();
     return 0;
 }

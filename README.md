@@ -1,3 +1,5 @@
+![Logo](emuiibo.png)
+
 # emuiibo
 
 > Custom process MitM'ing `nfp:user` services for amiibo emulation (my custom but really extended fork of `nfp-mitm`)

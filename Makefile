@@ -45,7 +45,7 @@ LIBS	:= -lstratosphere -lnx
 # list of directories containing libraries, this must be the top level containing
 # include and lib
 #---------------------------------------------------------------------------------
-LIBDIRS	:= $(PORTLIBS) $(LIBNX) $(CURDIR)/libstratosphere
+LIBDIRS	:= $(PORTLIBS) $(CURDIR)/libnx-master/nx $(CURDIR)/libstratosphere
 
 
 #---------------------------------------------------------------------------------

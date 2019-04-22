@@ -14,17 +14,8 @@
 	"filesystem_access":	{
 		"permissions":	"0xFFFFFFFFFFFFFFFF"
 	},
-    "service_host": [
-		"nfp:user",
-		"nfp:emu"
-    ],
-    "service_access": [
-		"nfp:user",
-        "fatal:u",
-		"fsp-srv",
-		"mii:u",
-		"hid"
-    ],
+    "service_host": [ "nfp:user", "nfp:emu" ],
+    "service_access": [ "*" ],
 	"kernel_capabilities": [
         {
             "type": "kernel_flags",

@@ -3,7 +3,8 @@
 #include <switch.h>
 #include <stratosphere.hpp>
 
-enum NfpEmulationCmd : u32 {
+enum NfpEmulationCmd : u32
+{
     NfpEmulationCmd_GetAmiiboCount = 0,
     NfpEmulationCmd_GetCurrentAmiibo = 1,
     NfpEmulationCmd_RequestUseCustomAmiibo = 2,
@@ -14,18 +15,30 @@ enum NfpEmulationCmd : u32 {
     NfpEmulationCmd_SwapNext = 7,
 };
 
-class NfpEmulationService : public IServiceObject {
+class NfpEmulationService : public IServiceObject
+{
     protected:
         Result GetAmiiboCount(Out<u32> out);
         Result GetCurrentAmiibo(Out<u32> idx);
         Result RequestUseCustomAmiibo(InBuffer<char> Path);
         Result RequestResetCustomAmiibo();
-        Result Toggle();     // Combo action
-        Result ToggleOnce(); // Combo action
-        Result Untoggle();   // Combo action
-        Result SwapNext();   // Combo action
+        Result Toggle();
+        Result ToggleOnce();
+        Result Untoggle();
+        Result SwapNext();
+        /*
+        Result GetCurrentAmiibo(OutBuffer<char> path, Out<bool> ok);
+        Result SetCustomAmiibo(InBuffer<char> path);
+        Result ResetCustomAmiibo();
+        Result Toggle();
+        Result ToggleOnce();
+        Result Untoggle();
+        Result SwapNext();
+        Result GetToggleStatus(Out<u32> status);
+        */
     public:
-        DEFINE_SERVICE_DISPATCH_TABLE {
+        DEFINE_SERVICE_DISPATCH_TABLE
+        {
             MakeServiceCommandMeta<NfpEmulationCmd_GetAmiiboCount, &NfpEmulationService::GetAmiiboCount>(),
             MakeServiceCommandMeta<NfpEmulationCmd_GetCurrentAmiibo, &NfpEmulationService::GetCurrentAmiibo>(),
             MakeServiceCommandMeta<NfpEmulationCmd_RequestUseCustomAmiibo, &NfpEmulationService::RequestUseCustomAmiibo>(),
