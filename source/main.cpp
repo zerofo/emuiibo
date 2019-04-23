@@ -58,10 +58,13 @@ void __appInit(void)
 
     rc = hidInitialize();
     if(R_FAILED(rc)) fatalSimple(MAKERESULT(Module_Libnx, LibnxError_InitFail_HID));
+
+    nfpDbgInitialize();
 }
 
 void __appExit(void)
 {
+    nfpDbgExit();
     hidExit();
     fsdevUnmountAll();
     fsExit();

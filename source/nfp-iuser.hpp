@@ -44,6 +44,7 @@ class NfpIUser : public IServiceObject
         IEvent* edeactivate;
         IEvent* eavailabilitychange;
         u32 cur_id;
+        NfpDebug dbgsession;
     public:
         NfpIUser();
         ~NfpIUser();

@@ -1,5 +1,6 @@
 
 #include <switch.h>
+#include <string.h>
 #include "nfp-shim.h"
 
 static Service g_nfpdbgSrv;
@@ -129,7 +130,7 @@ Result nfpDebugListDevices(NfpDebug *dbg, u32 *out, u64 *devices_out, size_t out
 {
     IpcCommand c;
     ipcInitialize(&c);
-
+    memset(devices_out, 0, out_size);
     ipcAddRecvStatic(&c, devices_out, out_size, 0);
 
     struct {
