@@ -75,7 +75,7 @@ class NfpISystem : public IServiceObject
         Result AttachAvailabilityChangeEvent(Out<CopiedHandle> event);
         Result Format(NfpDeviceHandle handle);
         Result GetAdminInfo(NfpDeviceHandle handle, OutPointerWithServerSize<AdminInfo, 0x1> info);
-        // Result GetRegisterInfo2() -> GetRegisterInfo
+        Result GetRegisterInfo2(NfpDeviceHandle handle, OutPointerWithServerSize<NfpuRegisterInfo, 0x1> out_info);
         Result SetRegisterInfo(NfpDeviceHandle handle, InPointer<NfpuRegisterInfo> info);
         Result DeleteRegisterInfo(NfpDeviceHandle handle);
         Result DeleteApplicationArea(NfpDeviceHandle handle);
@@ -104,7 +104,7 @@ class NfpISystem : public IServiceObject
             MakeServiceCommandMeta<NfpISystemCmd_AttachAvailabilityChangeEvent, &NfpISystem::AttachAvailabilityChangeEvent>(),
             MakeServiceCommandMeta<NfpISystemCmd_Format, &NfpISystem::Format>(),
             MakeServiceCommandMeta<NfpISystemCmd_GetAdminInfo, &NfpISystem::GetAdminInfo>(),
-            MakeServiceCommandMeta<NfpISystemCmd_GetRegisterInfo2, &NfpISystem::GetRegisterInfo>(),
+            MakeServiceCommandMeta<NfpISystemCmd_GetRegisterInfo2, &NfpISystem::GetRegisterInfo2>(),
             MakeServiceCommandMeta<NfpISystemCmd_SetRegisterInfo, &NfpISystem::SetRegisterInfo>(),
             MakeServiceCommandMeta<NfpISystemCmd_DeleteRegisterInfo, &NfpISystem::DeleteRegisterInfo>(),
             MakeServiceCommandMeta<NfpISystemCmd_DeleteApplicationArea, &NfpISystem::DeleteApplicationArea>(),

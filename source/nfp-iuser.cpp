@@ -48,7 +48,7 @@ Result NfpIUser::Finalize()
 Result NfpIUser::ListDevices(OutPointerWithClientSize<u64> out_devices, Out<u32> out_count)
 {
     std::scoped_lock<HosMutex> lck(g_toggleLock);
-    if(g_toggleEmulation == 0) return nfpDebugListDevices(&dbgsession, out_count.GetPointer(), out_devices.pointer, out_devices.num_elements);
+    if(g_toggleEmulation == 0) return nfpDebugListDevices(&dbgsession, out_count.GetPointer(), out_devices.pointer, out_devices.num_elements * sizeof(u64));
     u64 dvcid = 0x20;
     hidScanInput();
     if(hidIsControllerConnected(CONTROLLER_PLAYER_1)) dvcid = (u64)CONTROLLER_PLAYER_1;

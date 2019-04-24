@@ -10,6 +10,7 @@
 
 #include "mii-shim.h"
 #include "nfpuser-mitm-service.hpp"
+#include "nfpsys-mitm-service.hpp"
 #include "nfp-emu-service.hpp"
 #include "emu-amiibo.hpp"
 
@@ -137,8 +138,9 @@ int main()
     comboth.Start();
     
     auto server_manager = new EmuiiboManager(2);
-    AddMitmServerToManager<NfpUserMitmService>(server_manager, "nfp:user", 10);
-    server_manager->AddWaitable(new ServiceServer<NfpEmulationService>("nfp:emu", 10));
+    AddMitmServerToManager<NfpUserMitmService>(server_manager, "nfp:user", 0x10);
+    // AddMitmServerToManager<NfpSystemMitmService>(server_manager, "nfp:sys", 0x10);
+    server_manager->AddWaitable(new ServiceServer<NfpEmulationService>("nfp:emu", 0x10));
     server_manager->Process();
     
     delete server_manager;

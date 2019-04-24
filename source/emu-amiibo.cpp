@@ -95,27 +95,25 @@ void AmiiboEmulator::Untoggle()
 
 void AmiiboEmulator::SwapNext()
 {
+    if(IsCustom())
+    {
+        u32 c = GetCount();
+        if(c > 0)
+        {
+            g_curAmiibo = g_emuiiboDir + "/" + GetNameForIndex(0);
+            g_curIdx = 0;
+        }
+        return;
+    }
     std::scoped_lock<HosMutex> lck(g_toggleLock);
     if(g_toggleEmulation > 0)
     {
         u32 c = GetCount();
-        if(IsCustom())
+        if(c > 0)
         {
-            if(c > 0)
-            {
-                g_curAmiibo = g_emuiiboDir + "/" + GetNameForIndex(0);
-                g_curIdx = 0;
-            }
-            return;
-        }
-        else
-        {
-            if(c > 0)
-            {
-                if((g_curIdx + 1) < c) g_curIdx++;
-                else g_curIdx = 0;
-                g_curAmiibo = g_emuiiboDir + "/" + GetNameForIndex(g_curIdx);
-            }
+            if((g_curIdx + 1) < c) g_curIdx++;
+            else g_curIdx = 0;
+            g_curAmiibo = g_emuiiboDir + "/" + GetNameForIndex(g_curIdx);
         }
     }
 }
