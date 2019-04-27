@@ -22,6 +22,7 @@ NfpuTagInfo AmiiboLayout::ProcessTagInfo()
     NfpuTagInfo tinfo;
     memset(&tinfo, 0, sizeof(NfpuTagInfo));
     memcpy(tinfo.uuid, this->data.uuid, 10);
+    if(this->randomuuid) randomGet(tinfo.uuid, 10);
     tinfo.uuid_length = 10;
     tinfo.protocol = 0;
     tinfo.tag_type = 2;
@@ -180,6 +181,7 @@ AmiiboLayout AmiiboEmulator::GetCurrentAmiibo()
     lyt.lastwrite.month = (u8)jdata["lastWriteDate"][1].get<int>();
     lyt.lastwrite.day = (u8)jdata["lastWriteDate"][2].get<int>();
     lyt.appareasize = (u32)jdata["applicationAreaSize"].get<int>();
+    lyt.randomuuid = jdata.value<bool>("randomizeUuid", false);
     FILE *miif = fopen((lname + "/mii.dat").c_str(), "rb");
     fread(&lyt.mii, 1, sizeof(NfpuMiiCharInfo), miif);
     fclose(miif);

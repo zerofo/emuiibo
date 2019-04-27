@@ -123,7 +123,7 @@ void ComboCheckerThread(void* arg)
         else if(AllKeysDown({ KEY_RSTICK, KEY_DRIGHT })) AmiiboEmulator::ToggleOnce();
         else if(AllKeysDown({ KEY_RSTICK, KEY_DDOWN })) AmiiboEmulator::Untoggle();
         else if(AllKeysDown({ KEY_RSTICK, KEY_DLEFT })) AmiiboEmulator::SwapNext();
-        svcSleepThread(100000000L);
+        svcSleepThread(10000000L);
     }
 }
 

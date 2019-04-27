@@ -9,7 +9,6 @@ struct AmiiboData
     u8 uuid[10];
     u8 pad1[0x4a];
     u8 amiibo_id[0x8];
-    u8 pad2[0x1c0];
 };
 
 static const u8 DefaultCharInfo[88] =
@@ -24,8 +23,6 @@ static const u8 DefaultCharInfo[88] =
     0x13, 0x04, 0x03, 0x0e, 0x03, 0x00, 0x00, 0x04, 0x0b, 0x00,
     0x08, 0x04, 0x0b, 0x00, 0x04, 0x02, 0x14, 0x00,
 };
-
-static_assert(sizeof(AmiiboData) == 0x21c, "AmiiboData has an invalid size");
 
 struct AmiiboWriteDate
 {
@@ -43,6 +40,7 @@ struct AmiiboLayout
     NfpuMiiCharInfo mii;
     u32 appareasize;
     AmiiboData data;
+    bool randomuuid;
 
     NfpuTagInfo ProcessTagInfo();
     NfpuModelInfo ProcessModelInfo();
