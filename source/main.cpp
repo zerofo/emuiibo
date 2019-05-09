@@ -116,27 +116,19 @@ void HOMENotificate()
     hidsysInitialize();
     HidsysNotificationLedPattern pattern;
     memset(&pattern, 0, sizeof(pattern));
-    pattern.baseMiniCycleDuration = 0x1;             // 12.5ms.
-    pattern.totalMiniCycles = 0x2;                   // 16 mini cycles.
-    pattern.totalFullCycles = 0x1;                   // Repeat forever.
-    pattern.startIntensity = 0x0;                    // 0%.
-
-    // First beat.
-    pattern.miniCycles[0].ledIntensity = 0xF;        // 100%.
-    pattern.miniCycles[0].transitionSteps = 0xF;     // 15 steps. Total 187.5ms.
-    pattern.miniCycles[0].finalStepDuration = 0x0;   // Forced 12.5ms.
-    pattern.miniCycles[1].ledIntensity = 0x0;        // 0%.
-    pattern.miniCycles[1].transitionSteps = 0xF;     // 15 steps. Total 187.5ms.
-    pattern.miniCycles[1].finalStepDuration = 0x0;   // Forced 12.5ms.
-
+    pattern.baseMiniCycleDuration = 0x1;
+    pattern.totalMiniCycles = 0x2;
+    pattern.totalFullCycles = 0x1;
+    pattern.startIntensity = 0x0;
+    pattern.miniCycles[0].ledIntensity = 0xf;
+    pattern.miniCycles[0].transitionSteps = 0xf;
+    pattern.miniCycles[0].finalStepDuration = 0x0;
+    pattern.miniCycles[1].ledIntensity = 0x0;
+    pattern.miniCycles[1].transitionSteps = 0xf;
+    pattern.miniCycles[1].finalStepDuration = 0x0;
     u64 UniquePadIds[2];
     Result rc = hidsysGetUniquePadsFromNpad(hidGetHandheldMode() ? CONTROLLER_HANDHELD : CONTROLLER_PLAYER_1, UniquePadIds, 2, NULL);
-    if (R_SUCCEEDED(rc)) {
-        for(u32 i=0; i<2; i++) { // System will skip sending the subcommand to controllers where this isn't available.
-            rc = hidsysSetNotificationLedPattern(&pattern, UniquePadIds[i]);
-        }
-    }
-
+    if(R_SUCCEEDED(rc)) for(u32 i=0; i<2; i++) hidsysSetNotificationLedPattern(&pattern, UniquePadIds[i]);
     hidsysExit();
 }
 

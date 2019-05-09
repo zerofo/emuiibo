@@ -1,4 +1,5 @@
 #include "nfpemu.h"
+#include <string.h>
 
 bool emuiiboIsPresent()
 {
