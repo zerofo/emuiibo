@@ -2,29 +2,31 @@
 #include "emu-amiibo.hpp"
 
 extern u32 g_toggleEmulation;
+extern HosMutex g_toggleLock;
 
-Result NfpEmulationService::GetAmiiboCount(Out<u32> out)
+Result NfpEmulationService::GetAmiibo(OutBuffer<char> path, Out<bool> ok)
 {
-    u32 c = AmiiboEmulator::GetCount();
-    out.SetValue(c);
+    auto apath = AmiiboEmulator::GetCurrent();
+    if(apath.empty())
+    {
+        ok.SetValue(false);
+        memset(path.buffer, 0, path.num_elements);
+    }
+    else
+    {
+        ok.SetValue(true);
+        strcpy(path.buffer, apath.c_str());
+    }
     return 0;
 }
 
-Result NfpEmulationService::GetCurrentAmiibo(Out<u32> idx)
-{
-    s32 cidx = AmiiboEmulator::GetCurrentIndex();
-    if(cidx < 0) return LibnxError_NotFound;
-    idx.SetValue(cidx);
-    return 0;
-}
-
-Result NfpEmulationService::RequestUseCustomAmiibo(InBuffer<char> path)
+Result NfpEmulationService::SetAmiibo(InBuffer<char> path)
 {
     AmiiboEmulator::SetCustomAmiibo(std::string(path.buffer));
     return 0;
 }
 
-Result NfpEmulationService::RequestResetCustomAmiibo()
+Result NfpEmulationService::ResetAmiibo()
 {
     AmiiboEmulator::ResetCustomAmiibo();
     return 0;
@@ -51,5 +53,12 @@ Result NfpEmulationService::Untoggle()
 Result NfpEmulationService::SwapNext()
 {
     AmiiboEmulator::SwapNext();
+    return 0;
+}
+
+Result NfpEmulationService::GetToggleStatus(Out<u32> status)
+{
+    std::scoped_lock<HosMutex> lck(g_toggleLock);
+    status.SetValue(g_toggleEmulation);
     return 0;
 }

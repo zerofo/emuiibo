@@ -196,6 +196,11 @@ s32 AmiiboEmulator::GetCurrentIndex()
     return g_curIdx;
 }
 
+std::string AmiiboEmulator::GetCurrent()
+{
+    return g_curAmiibo;
+}
+
 std::string AmiiboEmulator::GetCurrentName()
 {
     if(g_curAmiibo.empty()) return g_curAmiibo;
