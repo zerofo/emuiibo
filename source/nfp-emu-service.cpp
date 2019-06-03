@@ -62,3 +62,9 @@ Result NfpEmulationService::GetToggleStatus(Out<u32> status)
     status.SetValue(g_toggleEmulation);
     return 0;
 }
+
+Result NfpEmulationService::RescanAmiibos()
+{
+    AmiiboEmulator::Initialize(true);
+    return 0;
+}
