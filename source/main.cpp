@@ -165,7 +165,6 @@ void ComboCheckerThread(void* arg)
     }
 }
 
-
 int main()
 {
     AmiiboEmulator::Initialize();

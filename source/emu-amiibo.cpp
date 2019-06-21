@@ -62,12 +62,11 @@ NfpuCommonInfo AmiiboLayout::ProcessCommonInfo()
     return cinfo;
 }
 
-void AmiiboEmulator::Initialize(bool external_call)
+void AmiiboEmulator::Initialize(bool ExternalCall)
 {
     g_curAmiibo = "";
     g_curIdx = UINT32_MAX;
-    if(!external_call)
-        DumpConsoleMiis();
+    if(!ExternalCall) DumpConsoleMiis();
     u32 c = GetCount();
     if(c > 0)
     {
