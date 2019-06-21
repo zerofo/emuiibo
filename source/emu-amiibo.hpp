@@ -48,7 +48,7 @@ struct AmiiboLayout
 class AmiiboEmulator
 {
     public:
-        static void Initialize();
+        static void Initialize(bool external_call=false);
         static void Toggle();
         static void ToggleOnce();
         static void Untoggle();

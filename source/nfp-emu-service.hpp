@@ -13,6 +13,7 @@ enum NfpEmulationCmd : u32
     NfpEmulationCmd_Untoggle = 5,
     NfpEmulationCmd_SwapNext = 6,
     NfpEmulationCmd_GetToggleStatus = 7,
+    NfpEmulationCmd_RescanAmiibos = 8,
 };
 
 class NfpEmulationService : public IServiceObject
@@ -26,6 +27,7 @@ class NfpEmulationService : public IServiceObject
         Result Untoggle();
         Result SwapNext();
         Result GetToggleStatus(Out<u32> status);
+        Result RescanAmiibos();
     public:
         DEFINE_SERVICE_DISPATCH_TABLE
         {
@@ -37,5 +39,6 @@ class NfpEmulationService : public IServiceObject
             MakeServiceCommandMeta<NfpEmulationCmd_Untoggle, &NfpEmulationService::Untoggle>(),
             MakeServiceCommandMeta<NfpEmulationCmd_SwapNext, &NfpEmulationService::SwapNext>(),
             MakeServiceCommandMeta<NfpEmulationCmd_GetToggleStatus, &NfpEmulationService::GetToggleStatus>(),
+            MakeServiceCommandMeta<NfpEmulationCmd_RescanAmiibos, &NfpEmulationService::RescanAmiibos>(),
         };
 };
