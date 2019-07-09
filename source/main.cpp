@@ -8,13 +8,14 @@
 #include <vector>
 #include <stratosphere.hpp>
 
-#include "mii-shim.h"
-#include "nfpuser-mitm-service.hpp"
-#include "nfpsys-mitm-service.hpp"
-#include "nfp-emu-service.hpp"
-#include "emu-amiibo.hpp"
+#include <emu/emu_Emulation.hpp>
+#include <emu/emu_Status.hpp>
 
-#define INNER_HEAP_SIZE 0x50000
+#include <nfp/user/user_IUserManager.hpp>
+#include <nfp/sys/sys_ISystemManager.hpp>
+#include <emu/emu_IEmulationService.hpp>
+
+#define INNER_HEAP_SIZE 0x60000
 
 extern "C"
 {
@@ -25,6 +26,7 @@ extern "C"
     void __libnx_initheap(void);
     void __appInit(void);
     void __appExit(void);
+    void __libnx_init_time(void);
 }
 
 void __libnx_initheap(void)
@@ -57,30 +59,23 @@ void __appInit(void)
     rc = fsdevMountSdmc();
     if(R_FAILED(rc)) fatalSimple(MAKERESULT(Module_Libnx, LibnxError_InitFail_FS));
 
+    rc = timeInitialize();
+    if(R_FAILED(rc)) fatalSimple(MAKERESULT(Module_Libnx, LibnxError_InitFail_Time));
+
+    __libnx_init_time();
+
     rc = hidInitialize();
     if(R_FAILED(rc)) fatalSimple(MAKERESULT(Module_Libnx, LibnxError_InitFail_HID));
 }
 
 void __appExit(void)
 {
+    timeExit();
     hidExit();
     fsdevUnmountAll();
     fsExit();
     smExit();
 }
-
-struct NfpUserManagerOptions
-{
-    static const size_t PointerBufferSize = 0x500;
-    static const size_t MaxDomains = 4;
-    static const size_t MaxDomainObjects = 0x100;
-};
-
-using EmuiiboManager = WaitableManager<NfpUserManagerOptions>;
-
-IEvent* g_eactivate = nullptr;
-u32 g_toggleEmulation = 0;
-extern HosMutex g_toggleLock;
 
 bool AllKeysDown(std::vector<u64> keys)
 {
@@ -111,7 +106,7 @@ bool AllKeysDown(std::vector<u64> keys)
     return kk;
 }
 
-void HOMENotificate()
+void HOMENotificateOn()
 {
     hidsysInitialize();
     HidsysNotificationLedPattern pattern;
@@ -132,34 +127,94 @@ void HOMENotificate()
     hidsysExit();
 }
 
-void ComboCheckerThread(void* arg)
+void HOMENotificateOff()
+{
+    hidsysInitialize();
+    HidsysNotificationLedPattern pattern;
+    memset(&pattern, 0, sizeof(pattern));
+    pattern.baseMiniCycleDuration = 0x1;
+    pattern.totalMiniCycles = 0x4;
+    pattern.totalFullCycles = 0x1;
+    pattern.startIntensity = 0x4;
+    for(u32 i = 0; i < 2; i++)
+    {
+        pattern.miniCycles[i].ledIntensity = 0x4;
+        pattern.miniCycles[i].transitionSteps = 0xf;
+        pattern.miniCycles[i].finalStepDuration = 0x1;
+    }
+    pattern.miniCycles[2].ledIntensity = 0x2;
+    pattern.miniCycles[2].transitionSteps = 0xf;
+    pattern.miniCycles[2].finalStepDuration = 0x1;
+    pattern.miniCycles[3].ledIntensity = 0x0;
+    pattern.miniCycles[3].transitionSteps = 0xf;
+    pattern.miniCycles[3].finalStepDuration = 0x1;
+    u64 UniquePadIds[2];
+    Result rc = hidsysGetUniquePadsFromNpad(hidGetHandheldMode() ? CONTROLLER_HANDHELD : CONTROLLER_PLAYER_1, UniquePadIds, 2, NULL);
+    if(R_SUCCEEDED(rc)) for(u32 i=0; i<2; i++) hidsysSetNotificationLedPattern(&pattern, UniquePadIds[i]);
+    hidsysExit();
+}
+
+void HOMENotificateError()
+{
+    hidsysInitialize();
+    HidsysNotificationLedPattern pattern;
+    memset(&pattern, 0, sizeof(pattern));
+    pattern.baseMiniCycleDuration = 0x1;
+    pattern.totalMiniCycles = 0x3;
+    pattern.totalFullCycles = 0x2;
+    pattern.startIntensity = 0x6;
+    pattern.miniCycles[0].ledIntensity = 0x6;
+    pattern.miniCycles[0].transitionSteps = 0x3;
+    pattern.miniCycles[0].finalStepDuration = 0x1;
+    pattern.miniCycles[1] = pattern.miniCycles[0];
+    pattern.miniCycles[2].ledIntensity = 0x0;
+    pattern.miniCycles[2].transitionSteps = 0x3;
+    pattern.miniCycles[2].finalStepDuration = 0x1;
+    u64 UniquePadIds[2];
+    Result rc = hidsysGetUniquePadsFromNpad(hidGetHandheldMode() ? CONTROLLER_HANDHELD : CONTROLLER_PLAYER_1, UniquePadIds, 2, NULL);
+    if(R_SUCCEEDED(rc)) for(u32 i=0; i<2; i++) hidsysSetNotificationLedPattern(&pattern, UniquePadIds[i]);
+    hidsysExit();
+}
+
+void InputHandleThread(void* arg)
 {
     while(true)
     {
         hidScanInput();
         if(AllKeysDown({ KEY_RSTICK, KEY_DUP }))
         {
-            AmiiboEmulator::Toggle();
-            std::scoped_lock<HosMutex> lck(g_toggleLock);
-            if(g_toggleEmulation > 0) HOMENotificate();
+            if(emu::IsStatusOn())
+            {
+                emu::SetStatus(emu::EmulationStatus::Off);
+                HOMENotificateOff();
+            }
+            else
+            {
+                emu::SetStatus(emu::EmulationStatus::OnForever);
+                HOMENotificateOn();
+            }
         }
         else if(AllKeysDown({ KEY_RSTICK, KEY_DRIGHT }))
         {
-            AmiiboEmulator::ToggleOnce();
-            std::scoped_lock<HosMutex> lck(g_toggleLock);
-            if(g_toggleEmulation > 0) HOMENotificate();
+            emu::SetStatus(emu::EmulationStatus::OnOnce);
+            HOMENotificateOn();
         }
         else if(AllKeysDown({ KEY_RSTICK, KEY_DDOWN }))
         {
-            std::scoped_lock<HosMutex> lck(g_toggleLock);
-            if(g_toggleEmulation > 0) HOMENotificate();
-            AmiiboEmulator::Untoggle();
+            if(emu::IsStatusOn())
+            {
+                emu::SetStatus(emu::EmulationStatus::Off);
+                HOMENotificateOff();
+            }
         }
         else if(AllKeysDown({ KEY_RSTICK, KEY_DLEFT }))
         {
-            AmiiboEmulator::SwapNext();
-            std::scoped_lock<HosMutex> lck(g_toggleLock);
-            if(g_toggleEmulation > 0) HOMENotificate();
+            if(emu::IsStatusOn())
+            {
+                if(emu::MoveToNextAmiibo()) HOMENotificateOn();
+                else HOMENotificateError();
+            }
+            else HOMENotificateError();
         }
         svcSleepThread(100000000L);
     }
@@ -167,19 +222,19 @@ void ComboCheckerThread(void* arg)
 
 int main()
 {
-    AmiiboEmulator::Initialize();
-    g_eactivate = CreateWriteOnlySystemEvent<true>();
+    emu::Refresh();
     
-    HosThread comboth;
-    comboth.Initialize(&ComboCheckerThread, nullptr, 0x4000, 0x15);
-    comboth.Start();
+    HosThread thread_Input;
+    thread_Input.Initialize(&InputHandleThread, NULL, 0x4000, 0x15);
+    thread_Input.Start();
     
-    auto server_manager = new EmuiiboManager(2);
-    AddMitmServerToManager<NfpUserMitmService>(server_manager, "nfp:user", 0x10);
-    // AddMitmServerToManager<NfpSystemMitmService>(server_manager, "nfp:sys", 0x10);
-    server_manager->AddWaitable(new ServiceServer<NfpEmulationService>("nfp:emu", 0x10));
-    server_manager->Process();
-    
-    delete server_manager;
+    auto manager = new nfp::ServerManager(2);
+
+    AddMitmServerToManager<nfp::user::IUserManager>(manager, "nfp:user", 4);
+    manager->AddWaitable(new ServiceServer<emu::IEmulationService>("nfp:emu", 4));
+
+    manager->Process();
+    delete manager;
+
     return 0;
 }
