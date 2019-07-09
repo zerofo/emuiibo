@@ -162,7 +162,7 @@ namespace emu
                 FILE *f = fopen((dir + "/mii-charinfo.bin").c_str(), "wb");
                 if(f)
                 {
-                    fwrite(&charinfo, 1, 88, f);
+                    fwrite(&charinfo, 1, sizeof(NfpuMiiCharInfo), f);
                     fclose(f);
                 }
 
@@ -292,6 +292,28 @@ namespace emu
                             fread(&amiibo.Infos.Register.mii, 1, sizeof(NfpuMiiCharInfo), f);
                             fclose(f);
                         }
+                        else
+                        {
+                            memcpy(&amiibo.Infos.Register.mii, DefaultCharInfo, sizeof(NfpuMiiCharInfo));
+
+                            auto rc = mii::Initialize();
+                            if(rc == 0)
+                            {
+                                mii::BuildRandom(&amiibo.Infos.Register.mii);
+                                // Since mii service generates random miis with name "no name", change to "emuiibo"
+                                const char *name = "emuiibo";
+                                utf8_to_utf16(amiibo.Infos.Register.mii.mii_name, (const u8*)name, strlen(name));
+                                mii::Finalize();
+                            }
+
+                            FILE *f = fopen((Path + "/" + miifile).c_str(), "wb");
+                            if(f)
+                            {
+                                fwrite(&amiibo.Infos.Register.mii, 1, sizeof(NfpuMiiCharInfo), f);
+                                fclose(f);
+                            }
+                        }
+                        
                         std::string tmpdate = jreg["firstWriteDate"];
                         amiibo.Infos.Register.first_write_year = (u16)std::stoi(tmpdate.substr(0, 4));
                         amiibo.Infos.Register.first_write_month = (u8)std::stoi(tmpdate.substr(5, 2));
