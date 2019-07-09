@@ -7,6 +7,7 @@
 #include <ctime>
 #include <dirent.h>
 #include <fstream>
+#include <mii/mii_Service.hpp>
 
 namespace emu
 {
@@ -143,12 +144,25 @@ namespace emu
                 auto name = dir.substr(dir.find_last_of("/") + 1);
                 if(name.length() > 10) name = name.substr(0, 10);
                 strcpy(reg.amiibo_name, name.c_str());
-                
-                // Mii random generating!
+
+                NfpuMiiCharInfo charinfo;
+                ZERO_NONPTR(charinfo);
+                memcpy(&charinfo, DefaultCharInfo, sizeof(NfpuMiiCharInfo));
+
+                auto rc = mii::Initialize();
+                if(rc == 0)
+                {
+                    mii::BuildRandom(&charinfo);
+                    // Since mii service generates random miis with name "no name", change to "emuiibo"
+                    const char *name = "emuiibo";
+                    utf8_to_utf16(charinfo.mii_name, (const u8*)name, strlen(name));
+                    mii::Finalize();
+                }
+
                 FILE *f = fopen((dir + "/mii-charinfo.bin").c_str(), "wb");
                 if(f)
                 {
-                    fwrite(DefaultCharInfo, 1, 88, f);
+                    fwrite(&charinfo, 1, 88, f);
                     fclose(f);
                 }
 

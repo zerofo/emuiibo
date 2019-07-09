@@ -19,9 +19,9 @@ include $(DEVKITPRO)/libnx/switch_rules
 #---------------------------------------------------------------------------------
 TARGET		:=	$(notdir $(CURDIR))
 BUILD		:=	build
-SOURCES		:=	Source Source/emu Source/nfp Source/nfp/user Source/nfp/sys
+SOURCES		:=	Source Source/emu Source/nfp Source/nfp/user Source/nfp/sys Source/mii
 DATA		:=	data
-INCLUDES	:=	Include Include/emu Include/nfp Include/nfp/user Include/nfp/sys
+INCLUDES	:=	Include Include/emu Include/nfp Include/nfp/user Include/nfp/sys Include/mii
 EXEFS_SRC	:=	exefs_src
 
 #---------------------------------------------------------------------------------
