@@ -52,7 +52,6 @@ namespace emu
       - string: lastWriteDate (YYYY-MM-DD format, example: "2019-06-15")
       - number: writeCounter (this number shouldn't be change manually, and it increases every time data is written to the amiibo)
       - number: version (defaulted to 0)
-      - number: areaSize (area size for applications, default is 216)
 
     - <amiibo>/areas/:
 
@@ -74,6 +73,7 @@ namespace emu
     struct Amiibo
     {
         std::string Path;
+        bool RandomizeUUID;
         AmiiboInfos Infos;
 
         bool IsValid();

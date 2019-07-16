@@ -110,6 +110,13 @@ namespace emu
             CurrentAmiibo = ProcessAmiibo(amiibo);
             return true;
         }
+        else if(((Index + 1) == LastCount) && (LastCount > 0))
+        {
+            Index = 0;
+            auto amiibo = GetAmiiboPathForIndex(Index);
+            CurrentAmiibo = ProcessAmiibo(amiibo);
+            return true;
+        }
         return false;
     }
 

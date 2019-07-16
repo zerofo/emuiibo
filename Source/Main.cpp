@@ -15,7 +15,7 @@
 #include <nfp/sys/sys_ISystemManager.hpp>
 #include <emu/emu_IEmulationService.hpp>
 
-#define INNER_HEAP_SIZE 0x60000
+#define INNER_HEAP_SIZE 0x75000
 
 extern "C"
 {

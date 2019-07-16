@@ -187,7 +187,6 @@ namespace emu
                 
                 nfp::CommonInfo common;
                 ZERO_NONPTR(common);
-                common.application_area_size = 0xD8;
                 common.last_write_year = timenow->tm_year + 1900;
                 common.last_write_month = timenow->tm_mon + 1;
                 common.last_write_day = timenow->tm_mday;
@@ -200,7 +199,6 @@ namespace emu
                 jcommon["lastWriteDate"] = strm.str();
                 jcommon["writeCounter"] = (int)common.write_counter;
                 jcommon["version"] = (int)common.version;
-                jcommon["areaSize"] = (int)common.application_area_size;
                 ofs = std::ofstream(dir + "/common.json");
                 ofs << std::setw(4) << jcommon;
                 ofs.close();
@@ -220,7 +218,8 @@ namespace emu
             {
                 dt = readdir(dp);
                 if(dt == NULL) break;
-                auto item = AmiiboDir + "/" + std::string(dt->d_name);
+                auto name = std::string(dt->d_name);
+                auto item = AmiiboDir + "/" + name;
                 auto ext = item.substr(item.find_last_of(".") + 1);
                 if(ext == "bin") ProcessRawDump(item);
             }
@@ -231,6 +230,7 @@ namespace emu
     Amiibo ProcessAmiibo(std::string Path)
     {
         Amiibo amiibo;
+        amiibo.RandomizeUUID = false;
         ZERO_NONPTR(amiibo.Infos);
         struct stat st;
         stat(Path.c_str(), &st);
@@ -245,7 +245,10 @@ namespace emu
                 bool randomuuid = jtag.value("randomUuid", false);
                 amiibo.Infos.Tag.uuid_length = 10;
                 amiibo.Infos.Tag.tag_type = 2;
-                if(randomuuid) randomGet(amiibo.Infos.Tag.uuid, 10);
+                if(randomuuid)
+                {
+                    amiibo.RandomizeUUID = true;
+                }
                 else
                 {
                     strm.str("");
@@ -329,7 +332,7 @@ namespace emu
                             amiibo.Infos.Common.last_write_day = (u8)std::stoi(tmpdate.substr(8, 2));
                             amiibo.Infos.Common.write_counter = (u16)jcommon["writeCounter"];
                             amiibo.Infos.Common.version = (u16)jcommon["version"];
-                            amiibo.Infos.Common.application_area_size = (u32)jcommon["areaSize"];
+                            amiibo.Infos.Common.application_area_size = 0xD8;
                             ifs.close();
                             amiibo.Path = Path;
                         }

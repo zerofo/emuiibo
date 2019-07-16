@@ -147,6 +147,7 @@ namespace nfp::user
         auto amiibo = emu::GetCurrentLoadedAmiibo();
         if(!amiibo.IsValid()) return result::ResultDeviceNotFound;
         memcpy(out_info.pointer, &amiibo.Infos.Tag, sizeof(TagInfo));
+        if(amiibo.RandomizeUUID) randomGet(out_info.pointer->uuid, 10);
         return 0;
     }
 
