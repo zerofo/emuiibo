@@ -66,6 +66,8 @@ void __appInit(void)
 
     rc = hidInitialize();
     if(R_FAILED(rc)) fatalSimple(MAKERESULT(Module_Libnx, LibnxError_InitFail_HID));
+
+    SetFirmwareVersionForLibnx();
 }
 
 void __appExit(void)

@@ -86,6 +86,6 @@ namespace emu
     };
 
     bool ProcessKeys();
-    void ProcessSingleDumps();
+    void ProcessDirectory(std::string Path);
     Amiibo ProcessAmiibo(std::string Path);
 }

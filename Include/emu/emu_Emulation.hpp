@@ -11,4 +11,7 @@ namespace emu
     void SetCustomAmiibo(std::string Path);
     bool HasCustomAmiibo();
     void ResetCustomAmiibo();
+
+    void SetCurrentAppId(u64 Id);
+    u64 GetCurrentAppId();
 }

@@ -3,23 +3,32 @@
 #include <sys/stat.h>
 #include <fstream>
 #include <emu/emu_Consts.hpp>
+#include <sstream>
+#include <iomanip>
 
-/*
 template<typename ...FmtArgs>
-static void LogLineFmt(std::string Fmt, FmtArgs &...Args)
+static void LogLineFmt(std::string Fmt, FmtArgs &&...Args)
 {
-    FILE *f = fopen("sdmc:/rw-emuiibo.log", "a");
+    FILE *f = fopen("sdmc:/emu-emuiibo.log", "a");
     fprintf(f, (Fmt + "\n").c_str(), Args...);
     fclose(f);
 }
-*/
 
 namespace emu
 {
     static int Index = -1;
     static Amiibo CurrentAmiibo;
     static int LastCount = -1;
+    static int LastIdCount = 0;
     static std::string CustomPath;
+    static u64 CurrentId = 0;
+
+    static std::string MakeFromId(u64 Id)
+    {
+        std::stringstream strm;
+        strm << std::uppercase << std::setfill('0') << std::setw(16) << std::hex << Id;
+        return strm.str();
+    }
 
     static bool ExistsFile(std::string Path)
     {
@@ -38,10 +47,10 @@ namespace emu
         return (ExistsDir(Path) && ExistsFile(Path + "/tag.json") && ExistsFile(Path + "/model.json") && ExistsFile(Path + "/register.json") && ExistsFile(Path + "/common.json"));
     }
 
-    static u32 GetAmiiboCount()
+    static u32 GetAmiiboCount(std::string Path)
     {
         u32 count = 0;
-        DIR *dp = opendir(AmiiboDir.c_str());
+        DIR *dp = opendir(Path.c_str());
         if(dp)
         {
             dirent *dt;
@@ -49,18 +58,18 @@ namespace emu
             {
                 dt = readdir(dp);
                 if(dt == NULL) break;
-                if(IsValidAmiibo(AmiiboDir + "/" + std::string(dt->d_name))) count++;
+                if(IsValidAmiibo(Path + "/" + std::string(dt->d_name))) count++;
             }
             closedir(dp);
         }
         return count;
     }
 
-    static std::string GetAmiiboPathForIndex(u32 Idx)
+    static std::string GetAmiiboPathForIndex(u32 Idx, std::string Path)
     {
         std::string out;
         u32 count = 0;
-        DIR *dp = opendir(AmiiboDir.c_str());
+        DIR *dp = opendir(Path.c_str());
         if(dp)
         {
             dirent *dt;
@@ -68,7 +77,7 @@ namespace emu
             {
                 dt = readdir(dp);
                 if(dt == NULL) break;
-                auto item = AmiiboDir + "/" + std::string(dt->d_name);
+                auto item = Path + "/" + std::string(dt->d_name);
                 if(IsValidAmiibo(item))
                 {
                     if(Idx == count)
@@ -86,8 +95,14 @@ namespace emu
 
     void Refresh()
     {
-        ProcessSingleDumps();
-        LastCount = GetAmiiboCount();
+        ProcessDirectory(EmuDir); // For <=0.2.x amiibos
+        ProcessDirectory(AmiiboDir);
+        LastCount = GetAmiiboCount(AmiiboDir);
+        if(CurrentId > 0)
+        {
+            ProcessDirectory(AmiiboDir + "/" + MakeFromId(CurrentId));
+            LastIdCount = GetAmiiboCount(AmiiboDir + "/" + MakeFromId(CurrentId));
+        }
         MoveToNextAmiibo();
     }
 
@@ -103,21 +118,42 @@ namespace emu
             ResetCustomAmiibo();
             return MoveToNextAmiibo();
         }
-        if(CanMoveNext())
+
+        auto dir = AmiiboDir;
+
+        if((Index + 1) >= LastCount)
+        {
+            if(LastIdCount > 0)
+            {
+                if((Index + 1) >= (LastCount + LastIdCount))
+                {
+                    Index = 0;
+                    dir = AmiiboDir;
+                }
+                else
+                {
+                    Index++;
+                    dir = AmiiboDir + "/" + MakeFromId(CurrentId);
+                }
+            }
+            else
+            {
+                Index = 0;
+                dir = AmiiboDir;
+            }
+        }
+        else
         {
             Index++;
-            auto amiibo = GetAmiiboPathForIndex(Index);
-            CurrentAmiibo = ProcessAmiibo(amiibo);
-            return true;
+            dir = AmiiboDir;
         }
-        else if(((Index + 1) == LastCount) && (LastCount > 0))
-        {
-            Index = 0;
-            auto amiibo = GetAmiiboPathForIndex(Index);
-            CurrentAmiibo = ProcessAmiibo(amiibo);
-            return true;
-        }
-        return false;
+
+        int idx = Index;
+        if(idx >= LastCount) idx -= LastCount;
+
+        auto amiibo = GetAmiiboPathForIndex(idx, dir);
+        CurrentAmiibo = ProcessAmiibo(amiibo);
+        return true;
     }
 
     bool CanMoveNext()
@@ -140,5 +176,20 @@ namespace emu
     void ResetCustomAmiibo()
     {
         SetCustomAmiibo("");
+    }
+
+    void SetCurrentAppId(u64 Id)
+    {
+        if(CurrentId != Id)
+        {
+            CurrentId = Id;
+            Index = -1;
+            Refresh();
+        }
+    }
+
+    u64 GetCurrentAppId()
+    {
+        return CurrentId;
     }
 }

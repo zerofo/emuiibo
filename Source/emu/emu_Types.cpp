@@ -208,9 +208,119 @@ namespace emu
         return false;
     }
 
-    void ProcessSingleDumps()
+    static void ProcessDeprecated(std::string Path)
     {
-        DIR *dp = opendir(AmiiboDir.c_str());
+        auto amiiboname = Path.substr(Path.find_last_of("/") + 1);
+        auto outdir = EmuDir + "/amiibo2/" + amiiboname;
+        mkdir(outdir.c_str(), 777);
+
+        std::ifstream ifs(Path + "/amiibo.json");
+        auto old = JSON::parse(ifs);
+
+        FILE *f = fopen((Path + "/amiibo.bin").c_str(), "rb");
+        fseek(f, 0, SEEK_END);
+        size_t sz = ftell(f);
+        rewind(f);
+        if(sz < sizeof(RawAmiiboDump))
+        {
+            fclose(f);
+            return;
+        }
+        RawAmiiboDump dump;
+        ZERO_NONPTR(dump);
+        fread(&dump, 1, sizeof(RawAmiiboDump), f);
+        fclose(f);
+
+        nfp::TagInfo tag;
+        ZERO_NONPTR(tag);
+        tag.tag_type = 2;
+        tag.uuid_length = 10;
+        memcpy(tag.uuid, dump.UUID, 10);
+        auto jtag = JSON::object();
+        std::stringstream strm;
+        for(u32 i = 0; i < 9; i++) strm << std::hex << std::setw(2) << std::uppercase << std::setfill('0') << (int)tag.uuid[i];
+        bool randomuuid = old.value("randomizeUuid", false);
+        if(randomuuid) jtag["randomUuid"] = true;
+        else jtag["uuid"] = strm.str();
+        std::ofstream ofs(outdir + "/tag.json");
+        ofs << std::setw(4) << jtag;
+        ofs.close();
+
+        nfp::ModelInfo model;
+        ZERO_NONPTR(model);
+        memcpy(model.amiibo_id, dump.AmiiboIDBlock, 8);
+        auto jmodel = JSON::object();
+        strm.str("");
+        strm.clear();
+        for(u32 i = 0; i < 8; i++) strm << std::hex << std::setw(2) << std::uppercase << std::setfill('0') << (int)model.amiibo_id[i];
+        jmodel["amiiboId"] = strm.str();
+        ofs = std::ofstream(outdir + "/model.json");
+        ofs << std::setw(4) << jmodel;
+        ofs.close();
+
+        nfp::RegisterInfo reg;
+        ZERO_NONPTR(reg);
+        auto name = old.value("name", amiiboname);
+        if(name.length() > 10) name = name.substr(0, 10);
+        strcpy(reg.amiibo_name, name.c_str());
+
+        NfpuMiiCharInfo charinfo;
+        ZERO_NONPTR(charinfo);
+
+        rename((Path + "/mii.dat").c_str(), (outdir + "/mii-charinfo.bin").c_str());
+
+        auto time = std::time(NULL);
+        auto timenow = std::localtime(&time);
+
+        if(old.count("firstWriteDate"))
+        {
+            reg.first_write_year = (u16)old["firstWriteDate"][0];
+            reg.first_write_month = (u8)old["firstWriteDate"][1];
+            reg.first_write_day = (u8)old["firstWriteDate"][2];
+        }
+        else
+        {
+            reg.first_write_year = (u16)(timenow->tm_year + 1900);
+            reg.first_write_month = (u8)(timenow->tm_mon + 1);
+            reg.first_write_day = (u8)timenow->tm_mday;
+        }
+
+        
+        auto jreg = JSON::object();
+        jreg["name"] = std::string(reg.amiibo_name);
+        jreg["miiCharInfo"] = "mii-charinfo.bin";
+        strm.str("");
+        strm.clear();
+        strm << std::dec << reg.first_write_year << "-";
+        strm << std::dec << std::setw(2) << std::setfill('0') << (int)reg.first_write_month << "-";
+        strm << std::dec << std::setw(2) << std::setfill('0') << (int)reg.first_write_day;
+        jreg["firstWriteDate"] = strm.str();
+        ofs = std::ofstream(outdir + "/register.json");
+        ofs << std::setw(4) << jreg;
+        ofs.close();
+        
+        nfp::CommonInfo common;
+        ZERO_NONPTR(common);
+        common.last_write_year = timenow->tm_year + 1900;
+        common.last_write_month = timenow->tm_mon + 1;
+        common.last_write_day = timenow->tm_mday;
+        auto jcommon = JSON::object();
+        strm.str("");
+        strm.clear();
+        strm << std::dec << common.last_write_year << "-";
+        strm << std::dec << std::setw(2) << std::setfill('0') << (int)common.last_write_month << "-";
+        strm << std::dec << std::setw(2) << std::setfill('0') << (int)common.last_write_day;
+        jcommon["lastWriteDate"] = strm.str();
+        jcommon["writeCounter"] = (int)common.write_counter;
+        jcommon["version"] = (int)common.version;
+        ofs = std::ofstream(outdir + "/common.json");
+        ofs << std::setw(4) << jcommon;
+        ofs.close();
+
+        remove((Path + "/amiibo.json").c_str());
+        rename((Path + "/amiibo.bin").c_str(), (outdir + "/raw-amiibo.bin").c_str());
+
+        DIR *dp = opendir((Path + "/areas").c_str());
         if(dp)
         {
             dirent *dt;
@@ -219,9 +329,43 @@ namespace emu
                 dt = readdir(dp);
                 if(dt == NULL) break;
                 auto name = std::string(dt->d_name);
-                auto item = AmiiboDir + "/" + name;
+                if(name.substr(0, 16) == "ApplicationArea-")
+                {
+                    auto strappid = name.substr(16);
+                    auto appid = std::stoi(strappid);
+                    std::stringstream strm;
+                    strm << "0x" << std::hex << std::uppercase << std::setw(8) << std::setfill('0') << AreaAppId;
+                    auto areaname = strm.str() + ".bin";
+                    mkdir((outdir + "/areas").c_str(), 777);
+                    rename((Path + "/" + name).c_str(), (outdir + "/areas/" + areaname).c_str());
+                }
+            }
+            closedir(dp);
+        }
+
+        fsdevDeleteDirectoryRecursively(Path);
+    }
+
+    void ProcessDirectory(std::string Path)
+    {
+        DIR *dp = opendir(Path.c_str());
+        if(dp)
+        {
+            dirent *dt;
+            while(true)
+            {
+                dt = readdir(dp);
+                if(dt == NULL) break;
+                auto name = std::string(dt->d_name);
+                auto item = Path + "/" + name;
                 auto ext = item.substr(item.find_last_of(".") + 1);
                 if(ext == "bin") ProcessRawDump(item);
+                else
+                {
+                    struct stat st;
+                    stat((item + "/amiibo.json").c_str(), &st);
+                    if(st.st_mode & S_IFREG) ProcessDeprecated(item);
+                }
             }
             closedir(dp);
         }

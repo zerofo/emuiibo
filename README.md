@@ -24,7 +24,11 @@ All the input combos are performed with R-Stick pressing and pressing the D-pad 
 
 - **Move to next amiibo**: Same as above, but pressing the D-pad left. Moves to the next amiibo in the amiibo directory, if last one starts again with the first one. Only has effect if amiibo emulation is toggled.
 
-Emuiibo's amiibo directory is `sd:/emuiibo`. Place your amiibo dumps (must be `*.bin` files) there.
+### SD layout
+
+- Emuiibo's directory is `sd:/emuiibo`.
+
+- Amiibos go inside `sd:/emuiibo/amiibo`. For instance, an amiibo named `MyMario` would be `sd:/emuiibo/amiibo/MyMario/<json files>`.
 
 ## Amiibo emulation
 
