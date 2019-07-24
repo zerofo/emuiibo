@@ -16,6 +16,29 @@ namespace emu
         return ((!Path.empty()) && (Infos.Tag.tag_type == 2) && (Infos.Tag.uuid_length == 10));
     }
 
+    void Amiibo::UpdateWrite()
+    {
+        std::ifstream ifs(Path + "/common.json");
+        auto jcommon = JSON::parse(ifs);
+        auto counter = jcommon["writeCounter"].get<int>();
+        if(counter != 0xFFFF)
+        {
+            counter++;
+            jcommon["writeCounter"] = counter;
+        }
+        auto time = std::time(NULL);
+        auto timenow = std::localtime(&time);
+        std::stringstream strm;
+        strm << std::dec << (timenow->tm_year + 1900) << "-";
+        strm << std::dec << std::setw(2) << std::setfill('0') << (int)(timenow->tm_mon + 1) << "-";
+        strm << std::dec << std::setw(2) << std::setfill('0') << (int)timenow->tm_mday;
+        jcommon["lastWriteDate"] = strm.str();
+        ifs.close();
+        std::ofstream ofs(Path + "/common.json");
+        ofs << std::setw(4) << jcommon;
+        ofs.close();
+    }
+
     std::string Amiibo::MakeAreaName(u32 AreaAppId)
     {
         std::stringstream strm;
@@ -46,6 +69,7 @@ namespace emu
         {
             fwrite(Data, 1, Size, f);
             fclose(f);
+            UpdateWrite();
         }
     }
 
@@ -202,6 +226,7 @@ namespace emu
                 ofs = std::ofstream(dir + "/common.json");
                 ofs << std::setw(4) << jcommon;
                 ofs.close();
+                rename(Path.c_str(), (dir + "/raw-amiibo.bin").c_str());
                 return true;
             }
         }
@@ -332,18 +357,27 @@ namespace emu
                 if(name.substr(0, 16) == "ApplicationArea-")
                 {
                     auto strappid = name.substr(16);
-                    auto appid = std::stoi(strappid);
+                    u64 appid = std::stoull(strappid);
                     std::stringstream strm;
-                    strm << "0x" << std::hex << std::uppercase << std::setw(8) << std::setfill('0') << AreaAppId;
+                    strm << "0x" << std::hex << std::uppercase << std::setw(8) << std::setfill('0') << appid;
                     auto areaname = strm.str() + ".bin";
                     mkdir((outdir + "/areas").c_str(), 777);
-                    rename((Path + "/" + name).c_str(), (outdir + "/areas/" + areaname).c_str());
+                    rename((Path + "/areas/" + name).c_str(), (outdir + "/areas/" + areaname).c_str());
                 }
             }
             closedir(dp);
         }
 
-        fsdevDeleteDirectoryRecursively(Path);
+        fsdevDeleteDirectoryRecursively(Path.c_str());
+    }
+
+    static void ConvertToUTF8(char* out, const u16* in, size_t max)
+    {
+        if((out == NULL) || (in == NULL)) return;
+        out[0] = 0;
+        ssize_t units = utf16_to_utf8((u8*)out, in, max);
+        if(units < 0) return;
+        out[units] = 0;
     }
 
     void ProcessDirectory(std::string Path)
@@ -368,6 +402,40 @@ namespace emu
                 }
             }
             closedir(dp);
+        }
+    }
+
+    void DumpConsoleMiis()
+    {
+        mkdir(ConsoleMiisDir.c_str(), 777);
+        auto rc = mii::Initialize();
+        if(rc == 0)
+        {
+            u32 miicount = 0;
+            rc = mii::GetCount(&miicount);
+            if(miicount > 0)
+            {
+                for(u32 i = 0; i < miicount; i++)
+                {
+                    NfpuMiiCharInfo charinfo;
+                    rc = mii::GetCharInfo(i, &charinfo);
+                    if(rc == 0)
+                    {
+                        char mii_name[0xB] = {0};
+                        ConvertToUTF8(mii_name, charinfo.mii_name, 0x11);
+                        auto curmiipath = ConsoleMiisDir + "/" + std::to_string(i) + " - " + std::string(mii_name);
+                        fsdevDeleteDirectoryRecursively(curmiipath.c_str());
+                        mkdir(curmiipath.c_str(), 777);
+                        FILE *f = fopen((curmiipath + "/mii-charinfo.bin").c_str(), "wb");
+                        if(f)
+                        {
+                            fwrite(&charinfo, 1, sizeof(charinfo), f);
+                            fclose(f);
+                        }
+                    }
+                }
+            }
+            mii::Finalize();
         }
     }
 

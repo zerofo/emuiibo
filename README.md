@@ -30,6 +30,8 @@ All the input combos are performed with R-Stick pressing and pressing the D-pad 
 
 - Amiibos go inside `sd:/emuiibo/amiibo`. For instance, an amiibo named `MyMario` would be `sd:/emuiibo/amiibo/MyMario/<json files>`.
 
+- Every time the console is booted, emuiibo saves all the miis inside the console to the SD card. Format is `sd:/emuiibo/miis/<mii name>/mii-charinfo.bin`.
+
 ## Amiibo emulation
 
 Emuiibo no longer requires dumps to emulate amiibos. Instead, you can use `emuGUIibo` PC tool in order to generate virtual amiibos.

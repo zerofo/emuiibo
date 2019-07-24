@@ -77,6 +77,7 @@ namespace emu
         AmiiboInfos Infos;
 
         bool IsValid();
+        void UpdateWrite();
         std::string MakeAreaName(u32 AreaAppId);
         bool ExistsArea(u32 AreaAppId);
         void CreateArea(u32 AreaAppId, u8 *Data, size_t Size, bool Recreate);
@@ -87,5 +88,6 @@ namespace emu
 
     bool ProcessKeys();
     void ProcessDirectory(std::string Path);
+    void DumpConsoleMiis();
     Amiibo ProcessAmiibo(std::string Path);
 }

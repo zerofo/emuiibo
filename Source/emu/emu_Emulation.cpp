@@ -95,6 +95,7 @@ namespace emu
 
     void Refresh()
     {
+        DumpConsoleMiis();
         ProcessDirectory(EmuDir); // For <=0.2.x amiibos
         ProcessDirectory(AmiiboDir);
         LastCount = GetAmiiboCount(AmiiboDir);
