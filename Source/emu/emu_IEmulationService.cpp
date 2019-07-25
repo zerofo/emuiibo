@@ -1,5 +1,6 @@
 #include <emu/emu_IEmulationService.hpp>
 #include <emu/emu_Status.hpp>
+#include <emu/emu_Consts.hpp>
 
 namespace emu
 {
@@ -74,6 +75,14 @@ namespace emu
     Result IEmulationService::Refresh()
     {
         emu::Refresh();
+        return 0;
+    }
+
+    Result IEmulationService::GetVersion(Out<u32> major, Out<u32> minor, Out<u32> micro)
+    {
+        major.SetValue(EmuVersion[0]);
+        minor.SetValue(EmuVersion[1]);
+        micro.SetValue(EmuVersion[2]);
         return 0;
     }
 }

@@ -341,3 +341,43 @@ Result nfpemuRefresh()
 
     return rc;
 }
+
+Result nfpemuGetVersion(EmuVersion *out_ver)
+{
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 10;
+    Result rc = serviceIpcDispatch(&g_nfpEmuSrv);
+
+    if(R_SUCCEEDED(rc))
+    {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+            u32 major;
+            u32 minor;
+            u32 micro;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+        if(R_SUCCEEDED(rc))
+        {
+            out_ver->Major = resp->major;
+            out_ver->Minor = resp->minor;
+            out_ver->Micro = resp->micro;
+        }
+    }
+
+    return rc;
+}

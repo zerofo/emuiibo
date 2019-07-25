@@ -22,6 +22,7 @@ namespace emu
                 MoveToNextAmiibo = 7,
                 GetStatus = 8,
                 Refresh = 9,
+                GetVersion = 10,
             };
 
             Result GetCurrentAmiibo(OutBuffer<char> path, Out<bool> ok);
@@ -34,6 +35,7 @@ namespace emu
             Result MoveToNextAmiibo(Out<bool> ok);
             Result GetStatus(Out<u32> status);
             Result Refresh();
+            Result GetVersion(Out<u32> major, Out<u32> minor, Out<u32> micro);
 
         public:
         
@@ -49,6 +51,7 @@ namespace emu
                 MAKE_SERVICE_COMMAND_META(IEmulationService, MoveToNextAmiibo),
                 MAKE_SERVICE_COMMAND_META(IEmulationService, GetStatus),
                 MAKE_SERVICE_COMMAND_META(IEmulationService, Refresh),
+                MAKE_SERVICE_COMMAND_META(IEmulationService, GetVersion)
             };
     };
 
