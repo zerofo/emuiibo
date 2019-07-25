@@ -1,4 +1,4 @@
-![Logo](emuiibo.png)
+![Logo](emuGUIibo/PcIcon.png)
 
 # emuiibo
 
@@ -10,7 +10,7 @@ Download the latest release and place it on your CFW's `titles` folder (so it wo
 
 According to tests, should work on any CFW which allows NSP sysmodules (Atmosphere, ReiNX).
 
-You also have to set the boot2 flag in the CFW's `/titles` directory: `titles/0100000000000352/flags/boot2.flag`.
+You also have to set the boot2 flag in the CFW's `/titles` directory: `<cfw>/titles/0100000000000352/flags/boot2.flag`.
 
 ### Combos
 
@@ -30,11 +30,13 @@ All the input combos are performed with R-Stick pressing and pressing the D-pad 
 
 - Amiibos go inside `sd:/emuiibo/amiibo`. For instance, an amiibo named `MyMario` would be `sd:/emuiibo/amiibo/MyMario/<json files>`.
 
-- Every time the console is booted, emuiibo saves all the miis inside the console to the SD card. Format is `sd:/emuiibo/miis/<mii name>/mii-charinfo.bin`.
+- Every time the console is booted, emuiibo saves all the miis inside the console to the SD card. Format is `sd:/emuiibo/miis/<index> - <name>/mii-charinfo.bin`.
 
 ## Amiibo emulation
 
 Emuiibo no longer requires dumps to emulate amiibos. Instead, you can use `emuGUIibo` PC tool in order to generate virtual amiibos.
+
+![Screenshot](emuGUIibo/Screenshot.png)
 
 ### How do virtual amiibos work?
 
@@ -50,14 +52,14 @@ Miis can be an issue when attempting to make emuiibo user-friendly. Since mii fo
 
 ## For developers
 
-This process also hosts a custom service, `nfp:emu`, which can be used to control amiibo emulation by IPC commands.
+emuiibo also hosts a custom service, `nfp:emu`, which can be used to control amiibo emulation by IPC commands.
 
 You have an implementation for C/C++ and libnx in [here](nfpemu-libnx).
 
 ## Credits
 
-- All the persons who contributed to the original **nfp-mitm** project: *Subv, ogniK, averne, spx01, SciresM*
+- Everyone who contributed to the original **nfp-mitm** project (forks): *Subv, ogniK, averne, spx01, SciresM*
 
-- **libstratosphere** libraries (SciresM again)
+- **libstratosphere** project and libraries
 
-- **AmiiboAPI** JSON API which is used by `emuGUIibo` PC tool to retrieve all existing amiibos, in order to obtain their unique IDs and other data.
+- **AmiiboAPI** (JSON API), which is used by `emuGUIibo` to get a proper, full amiibo list, in order to generate virtual amiibos without the need of raw dumps.
