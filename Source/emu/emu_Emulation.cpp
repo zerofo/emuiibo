@@ -4,15 +4,6 @@
 #include <fstream>
 #include <emu/emu_Consts.hpp>
 #include <sstream>
-#include <iomanip>
-
-template<typename ...FmtArgs>
-static void LogLineFmt(std::string Fmt, FmtArgs &&...Args)
-{
-    FILE *f = fopen("sdmc:/emu-emuiibo.log", "a");
-    fprintf(f, (Fmt + "\n").c_str(), Args...);
-    fclose(f);
-}
 
 namespace emu
 {
@@ -95,6 +86,9 @@ namespace emu
 
     void Refresh()
     {
+        mkdir(EmuDir.c_str(), 777);
+        mkdir(AmiiboDir.c_str(), 777);
+        mkdir(ConsoleMiisDir.c_str(), 777);
         DumpConsoleMiis();
         ProcessDirectory(EmuDir); // For <=0.2.x amiibos
         ProcessDirectory(AmiiboDir);
@@ -154,6 +148,7 @@ namespace emu
 
         auto amiibo = GetAmiiboPathForIndex(idx, dir);
         CurrentAmiibo = ProcessAmiibo(amiibo);
+        
         return true;
     }
 

@@ -236,7 +236,7 @@ namespace emu
     static void ProcessDeprecated(std::string Path)
     {
         auto amiiboname = Path.substr(Path.find_last_of("/") + 1);
-        auto outdir = EmuDir + "/amiibo2/" + amiiboname;
+        auto outdir = AmiiboDir + "/" + amiiboname;
         mkdir(outdir.c_str(), 777);
 
         std::ifstream ifs(Path + "/amiibo.json");
@@ -367,6 +367,8 @@ namespace emu
             }
             closedir(dp);
         }
+
+        ifs.close();
 
         fsdevDeleteDirectoryRecursively(Path.c_str());
     }

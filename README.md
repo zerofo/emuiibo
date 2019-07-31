@@ -4,6 +4,14 @@
 
 > Virtual amiibo (amiibo emulation) system for Nintendo Switch, no longer requiring dumps :)
 
+# Table of contents
+
+1. [Usage](#usage)
+2. [Amiibo emulation](#amiibo-emulation)
+3. [Important notes](#important-notes)
+4. [For developers](#for-developers)
+5. [Credits](#credits)
+
 ## Usage
 
 Download the latest release and place it on your CFW's `titles` folder (so it would be like `<cfw>/titles/0100000000000352`).
@@ -49,6 +57,10 @@ The only relevant part of an amiibo, which identifies the type of amiibo, is the
 ### Miis
 
 Miis can be an issue when attempting to make emuiibo user-friendly. Since mii format is a 88-byte data block named "CharInfo" and we have no way to see char-infos rendered but in the console itself, there is no simple way to change the mii.
+
+## Important notes
+
+If (**with emuiibo activated!**) the title responds with an error similar to "No controller which supports NFC was found" probably means that emuiibo failed to supply the amiibo (wrong amiibo, internal error...). That error is displayed due to limitations with real NFC error codes.
 
 ## For developers
 
