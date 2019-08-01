@@ -4,6 +4,7 @@
 #include <fstream>
 #include <emu/emu_Consts.hpp>
 #include <sstream>
+#include <iomanip>
 
 namespace emu
 {

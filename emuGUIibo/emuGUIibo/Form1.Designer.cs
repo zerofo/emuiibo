@@ -92,7 +92,7 @@
             // checkBox1
             // 
             this.checkBox1.AutoSize = true;
-            this.checkBox1.Location = new System.Drawing.Point(18, 133);
+            this.checkBox1.Location = new System.Drawing.Point(18, 139);
             this.checkBox1.Name = "checkBox1";
             this.checkBox1.Size = new System.Drawing.Size(168, 17);
             this.checkBox1.TabIndex = 4;
@@ -102,9 +102,9 @@
             // label2
             // 
             this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(18, 82);
+            this.label2.Location = new System.Drawing.Point(18, 77);
             this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(334, 39);
+            this.label2.Size = new System.Drawing.Size(323, 52);
             this.label2.TabIndex = 5;
             this.label2.Text = resources.GetString("label2.Text");
             // 

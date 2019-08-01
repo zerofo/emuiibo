@@ -117,7 +117,11 @@ namespace emu
 
     static bool ProcessRawDump(std::string Path)
     {
-        auto dir = Path.substr(0, Path.find_last_of("."));
+        auto pathnoext = Path.substr(0, Path.find_last_of("."));
+        auto amiiboname = pathnoext.substr(pathnoext.find_last_of("/") + 1);
+        auto dir = AmiiboDir + "/" + amiiboname;
+        mkdir(dir.c_str(), 777);
+
         struct stat st;
         if((stat(dir.c_str(), &st) == 0) && (st.st_mode & S_IFDIR)) return false;
         FILE *f = fopen(Path.c_str(), "rb");
@@ -136,7 +140,6 @@ namespace emu
                 ZERO_NONPTR(dump);
                 fread(&dump, 1, sizeof(RawAmiiboDump), f);
                 fclose(f);
-                mkdir(dir.c_str(), 777);
 
                 nfp::TagInfo tag;
                 ZERO_NONPTR(tag);
