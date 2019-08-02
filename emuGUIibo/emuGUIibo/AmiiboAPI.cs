@@ -1,69 +1,76 @@
-﻿using System;
+﻿using Newtonsoft.Json.Linq;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
-using System.Windows.Forms;
-using Newtonsoft.Json.Linq;
 
 namespace emuGUIibo
 {
     public class Amiibo
     {
-        public string AmiiboName { get; set; }
-
-        public string SeriesName { get; set; }
-
+        public string AmiiboName    { get; set; }
+        public string SeriesName    { get; set; }
         public string CharacterName { get; set; }
-
-        public string ImageURL { get; set; }
-
-        public string AmiiboId { get; set; }
+        public string ImageURL      { get; set; }
+        public string AmiiboId      { get; set; }
     }
 
-    public static class AmiiboAPI
+    static class AmiiboAPI
     {
-        public static List<Amiibo> QueryAllAmiibos()
+        private const string AMIIBO_API_URL = "https://www.amiiboapi.com/api/amiibo/";
+
+        public static List<string> AmiiboSeries = new List<string>();
+        public static List<Amiibo> AllAmiibo    = new List<Amiibo>();
+
+        public static bool GetAllAmiibos()
         {
-            var list = new List<Amiibo>();
             try
             {
-                var raw = new WebClient().DownloadString("https://www.amiiboapi.com/api/amiibo/");
-                var json = JObject.Parse(raw);
-                foreach (var amiibo in json["amiibo"])
+                JObject json = JObject.Parse(new WebClient().DownloadString(AMIIBO_API_URL));
+
+                foreach (JToken amiibo in json["amiibo"])
                 {
-                    var name = amiibo["name"].ToString();
-                    var series = amiibo["amiiboSeries"].ToString();
-                    var character = amiibo["character"].ToString();
-                    var image = amiibo["image"].ToString();
-                    var idhead = amiibo["head"].ToString();
-                    var idtail = amiibo["tail"].ToString();
-                    list.Add(new Amiibo { AmiiboName = name, SeriesName = series, CharacterName = character, ImageURL = image, AmiiboId = idhead + idtail });
+                    if (AmiiboSeries.Where(serie => serie == amiibo["amiiboSeries"].ToString()).Count() == 0)
+                    {
+                        AmiiboSeries.Add(amiibo["amiiboSeries"].ToString());
+                    }
+
+                    AllAmiibo.Add(new Amiibo { AmiiboName    = amiibo["name"].ToString(),
+                                               SeriesName    = amiibo["amiiboSeries"].ToString(),
+                                               CharacterName = amiibo["character"].ToString(),
+                                               ImageURL      = amiibo["image"].ToString(),
+                                               AmiiboId      = amiibo["head"].ToString()
+                                                             + amiibo["tail"].ToString()
+                    });
                 }
-                MessageBox.Show("Amiibo API was accessed. Amiibo list was loaded.");
+
+                return true;
             }
             catch
             {
-                MessageBox.Show("Unable to download amiibo list from amiibo API.");
+                return false;
             }
-            return list;
         }
 
-        public static char MakeRandomHexChar(Random R)
+        public static char MakeRandomHexChar(Random random)
         {
-            string hexchars = "0123456789ABCDEF";
-            int randidx = R.Next(0, hexchars.Length - 1);
-            return hexchars[randidx];
+            string hexChars    = "0123456789ABCDEF";
+            int    randomIndex = random.Next(0, hexChars.Length - 1);
+
+            return hexChars[randomIndex];
         }
 
-        public static string MakeRandomHexString(int Length)
+        public static string MakeRandomHexString(int length)
         {
-            string hex = "";
-            Random r = new Random();
-            for(int i = 0; i < Length; i++)
+            string hexString = "";
+            Random random    = new Random();
+
+            for (int i = 0; i < length; i++)
             {
-                hex += MakeRandomHexChar(r);
+                hexString += MakeRandomHexChar(random);
             }
-            return hex;
+
+            return hexString;
         }
     }
 }
