@@ -48,11 +48,11 @@ namespace emuGUIibo
                 {
                     if(drive.IsReady)
                     {
-                        if(Directory.Exists(drive.Name + "emuiibo\\amiibo")) dir = drive.Name + "emuiibo\\amiibo";
+                        if(Directory.Exists(drive.Name + $"emuiibo{Path.DirectorySeparatorChar}amiibo")) dir = drive.Name + $"emuiibo{Path.DirectorySeparatorChar}amiibo";
                         else if(Directory.Exists(drive.Name + "emuiibo"))
                         {
-                            Directory.CreateDirectory(drive.Name + "emuiibo\\amiibo");
-                            dir = drive.Name + "emuiibo\\amiibo";
+                            Directory.CreateDirectory(drive.Name + $"emuiibo{Path.DirectorySeparatorChar}amiibo");
+                            dir = drive.Name + $"emuiibo{Path.DirectorySeparatorChar}amiibo";
                         }
                         if(!string.IsNullOrEmpty(dir)) MessageBox.Show("Emuiibo directory was found in drive '" + drive.VolumeLabel + "', so defaulting to that directory.");
                     }
@@ -66,7 +66,7 @@ namespace emuGUIibo
             };
             if(fbd.ShowDialog() == DialogResult.OK)
             {
-                string amiibodir = fbd.SelectedPath + "\\" + textBox1.Text;
+                string amiibodir = fbd.SelectedPath + Path.DirectorySeparatorChar + textBox1.Text;
                 if(MessageBox.Show("Virtual amiibo will be created in '" + amiibodir + "'.\nThe directory will be deleted if it already exists.\n\nProceed with amiibo creation?", "Amiibo creation", MessageBoxButtons.OKCancel) != DialogResult.OK) return;
                 if(Directory.Exists(amiibodir)) Directory.Delete(amiibodir, true);
                 try
@@ -75,12 +75,12 @@ namespace emuGUIibo
                     var tag = new JObject();
                     if (checkBox1.Checked) tag["randomUuid"] = true;
                     else tag["uuid"] = AmiiboAPI.MakeRandomHexString(18);
-                    File.WriteAllText(amiibodir + "\\tag.json", tag.ToString());
+                    File.WriteAllText(amiibodir + $"{Path.DirectorySeparatorChar}tag.json", tag.ToString());
                     var model = new JObject()
                     {
                         ["amiiboId"] = QueryAmiibos[comboBox1.SelectedIndex].AmiiboId
                     };
-                    File.WriteAllText(amiibodir + "\\model.json", model.ToString());
+                    File.WriteAllText(amiibodir + $"{Path.DirectorySeparatorChar}model.json", model.ToString());
                     var datestr = DateTime.Now.ToString("yyyy-MM-dd");
                     var register = new JObject()
                     {
@@ -88,14 +88,14 @@ namespace emuGUIibo
                         ["firstWriteDate"] = datestr,
                         ["miiCharInfo"] = "mii-charinfo.bin"
                     };
-                    File.WriteAllText(amiibodir + "\\register.json", register.ToString());
+                    File.WriteAllText(amiibodir + $"{Path.DirectorySeparatorChar}register.json", register.ToString());
                     var common = new JObject()
                     {
                         ["lastWriteDate"] = datestr,
                         ["writeCounter"] = 0,
                         ["version"] = 0
                     };
-                    File.WriteAllText(amiibodir + "\\common.json", common.ToString());
+                    File.WriteAllText(amiibodir + $"{Path.DirectorySeparatorChar}common.json", common.ToString());
                     MessageBox.Show("Virtual amiibo was successfully created.");
                 }
                 catch
