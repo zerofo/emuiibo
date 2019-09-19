@@ -115,8 +115,6 @@ $(BUILD):
 	@[ -d $@ ] || mkdir -p $@
 	@$(MAKE) -C libstratosphere/
 	@$(MAKE) --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
-	@rm -rf /mnt/f/atmosphere/titles/0100000000000352/exefs.nsp
-	@cp $(OUTPUT).nsp /mnt/f/atmosphere/titles/0100000000000352/exefs.nsp
 
 #---------------------------------------------------------------------------------
 clean:
