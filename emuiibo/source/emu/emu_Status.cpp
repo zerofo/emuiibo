@@ -1,4 +1,4 @@
-#include <emu/emu_Status.hpp>
+#include "emu/emu_Status.hpp"
 #include <stratosphere.hpp>
 
 namespace emu

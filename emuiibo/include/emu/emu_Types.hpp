@@ -3,7 +3,7 @@
 #include <switch.h>
 #include <json.hpp>
 #include <string>
-#include <nfp/nfp_Types.hpp>
+#include "nfp/nfp_Types.hpp"
 
 namespace emu
 {

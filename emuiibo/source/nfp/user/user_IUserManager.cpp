@@ -1,6 +1,4 @@
-#include <nfp/user/user_IUserManager.hpp>
-#include <emu/emu_Status.hpp>
-#include <emu/emu_Emulation.hpp>
+#include "nfp/user/user_IUserManager.hpp"
 
 namespace nfp::user
 {
@@ -14,18 +12,6 @@ namespace nfp::user
         );
     }
 
-    CUSTOM_SF_MITM_SERVICE_OBJECT_CTOR(IUserManager::IUserManager)
-    {
-        LOG_FMT("Accessed nfp:user with app ID " << std::hex << std::setw(16) << std::setfill('0') << c.program_id.value)
-        emu::SetCurrentAppId(c.program_id.value);
-    }
-
-    bool IUserManager::ShouldMitm(const ams::sm::MitmProcessInfo &client_info)
-    {
-        LOG_FMT("Should MitM -> status on: " << std::boolalpha << emu::IsStatusOn())
-        return emu::IsStatusOn();
-    }
-
     ams::Result IUserManager::CreateUserInterface(ams::sf::Out<std::shared_ptr<IUser>> out)
     {
         LOG_FMT("Checking status...")
@@ -35,7 +21,7 @@ namespace nfp::user
         R_TRY(_fwd_CreateUserInterface(&outsrv, this->forward_service.get()));
         LOG_FMT("Created interface... object ID: " << outsrv.object_id)
         const ams::sf::cmif::DomainObjectId target_object_id { serviceGetObjectId(&outsrv) };
-        std::shared_ptr<IUser> intf = std::make_shared<IUser>(outsrv);
+        std::shared_ptr<IUser> intf = std::make_shared<IUser>(new Service(outsrv));
         out.SetValue(std::move(intf), target_object_id);
         LOG_FMT("Returning interface...")
         if(emu::IsStatusOnOnce()) emu::SetStatus(emu::EmulationStatus::Off);

@@ -8,10 +8,10 @@
 #include <vector>
 #include <stratosphere.hpp>
 
-#include <emu/emu_Emulation.hpp>
-#include <emu/emu_Status.hpp>
+#include "emu/emu_Emulation.hpp"
+#include "emu/emu_Status.hpp"
 
-#include <nfp/user/user_IUserManager.hpp>
+#include "nfp/user/user_IUserManager.hpp"
 // #include <nfp/sys/sys_ISystemManager.hpp>
 // #include <emu/emu_IEmulationService.hpp>
 
@@ -23,6 +23,7 @@ extern "C"
     u32 __nx_applet_type = AppletType_None;
     u32 __nx_fs_num_sessions = 1;
     u32 __nx_fsdev_direntry_cache_size = 1;
+
     size_t nx_inner_heap_size = INNER_HEAP_SIZE;
     char   nx_inner_heap[INNER_HEAP_SIZE];
     void __libnx_initheap(void);
@@ -229,7 +230,7 @@ void InputHandleThread(void* arg)
             }
             else HOMENotificateError();
         }
-        svcSleepThread(100000000L);
+        svcSleepThread(100'000'000L);
     }
 }
 
@@ -243,51 +244,9 @@ namespace
     };
 
     constexpr size_t MaxServers = 4;
-    constexpr size_t MaxSessions = 37;
+    constexpr size_t MaxSessions = 40;
 
-    ams::sf::hipc::ServerManager<MaxServers, ServerOptions> emuiibo_manager;
- 
-    constexpr size_t TotalThreads = 3;
-    constexpr size_t NumExtraThreads = TotalThreads - 1;
- 
-    constexpr size_t ThreadStackSize = 0x4000;
-    alignas(ams::os::MemoryPageSize) u8 extra_thread_stacks[NumExtraThreads][ThreadStackSize];
-    ams::os::Thread extra_threads[NumExtraThreads];
- 
-    void MainLoopThread(void *arg)
-    {
-        emuiibo_manager.LoopProcess();
-    }
- 
-    void LoopMain()
-    {
-        if constexpr (NumExtraThreads > 0)
-        {
-            const u32 priority = ams::os::GetCurrentThreadPriority();
-            for(size_t i = 0; i < NumExtraThreads; i++)
-            {
-                R_ASSERT(extra_threads[i].Initialize(&MainLoopThread, nullptr, extra_thread_stacks[i], ThreadStackSize, priority));
-            }
-        }
- 
-        if constexpr (NumExtraThreads > 0)
-        {
-            for(size_t i = 0; i < NumExtraThreads; i++)
-            {
-                R_ASSERT(extra_threads[i].Start());
-            }
-        }
- 
-        MainLoopThread(nullptr);
- 
-        if constexpr (NumExtraThreads > 0)
-        {
-            for(size_t i = 0; i < NumExtraThreads; i++)
-            {
-                R_ASSERT(extra_threads[i].Join());
-            }
-        }
-    }
+    ams::sf::hipc::ServerManager<MaxServers, ServerOptions, MaxSessions> emuiibo_manager;
 }
 
 int main(int argc, char **argv)
@@ -301,7 +260,7 @@ int main(int argc, char **argv)
  
     R_ASSERT(emuiibo_manager.RegisterMitmServer<nfp::user::IUserManager>(nfp::UserServiceName));
  
-    LoopMain();
+    emuiibo_manager.LoopProcess();
  
     return 0;
 }

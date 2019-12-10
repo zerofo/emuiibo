@@ -1,0 +1,40 @@
+
+Raw NFC dumps: 532 bytes to be read ( offset[size] = ... )
+
+0x0[0x9] = serial number
+0x9[0x1] = internal value (0x48?)
+0xA[0x2] = 0x0FE0
+0xC[0x4] = 0xF110FFEE
+0x10[0x1] = 0xA5
+0x11[0x1] = 0
+0x12[0x1] = write counter
+0x13[0x1] = 0
+0x14[0x20] = crypto shit?
+0x34[0x20] = encryption hash?
+0x54[0x8] = amiibo ID block
+0x5C[0x4] = ?
+0x60[0x20] = another hash?
+
+... next stuff (from 0x80) crypto related ...
+
+0x208[0x1] = ?
+0x209[0x3] = 0x01000F
+0x20C[0x8] = 0x000000045F000000
+
+Stuff encrypted, aka "amiibo settings" (thus not accessible in dumps unless decryption happens):
+
+* Note: this is the stuff in the amiibo dumps, not the structure NFP services return this
+(while name is in UTF16 it is returned as UTF8 in the service, plus mii format)
+
+- [0x1] Flags (to be documented)
+- [0x1] Country code ID where the amiibo was setup
+- [0x2] ??? counter
+- [0x2] Setup date
+- [0x2] Last write date
+- [0xA * 2] UTF16 (BE) amiibo name
+- [0x60] Mii (3DS format...?)
+- [0x8] Title ID of the amiibo application area
+- [0x2] Write counter
+- [0x4] AppId for the application area
+
+Dates: bits 0-4 = day, 5-8 = month, 9-15 = year (relative to 2000)

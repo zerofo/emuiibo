@@ -1,33 +1,31 @@
-#include <nfp/user/user_IUser.hpp>
-
+#include "nfp/user/user_IUser.hpp"
+#include "emu/emu_Emulation.hpp"
 #include <atomic>
 #include <cstdio>
-#include <array>
 #include <sys/stat.h>
-#include <switch.h>
-#include <emu/emu_Emulation.hpp>
 
 namespace nfp::user
 {
-    IUser::IUser(Service forward_intf)
+    IUser::IUser(Service *fwd)
     {
-        LOG_FMT("Creating IUser... forwarded object ID: " << forward_intf.object_id)
         this->currentAreaAppId = 0;
         this->eventActivate.InitializeAsInterProcessEvent();
         this->eventDeactivate.InitializeAsInterProcessEvent();
         this->eventAvailabilityChange.InitializeAsInterProcessEvent();
         this->state = NfpState_NonInitialized;
         this->deviceState = NfpDeviceState_Unavailable;
-        this->fwd_srv = forward_intf;
+        this->fwd_srv = fwd;
     }
 
     IUser::~IUser()
     {
-        serviceClose(&this->fwd_srv);
+        serviceClose(this->fwd_srv);
+        delete this->fwd_srv;
     }
 
-    ams::Result IUser::Initialize(u64 aruid, u64 zero, const ams::sf::ClientProcessId &client_pid, const ams::sf::InBuffer &input_ver_data)
+    ams::Result IUser::Initialize(const ams::sf::ClientProcessId &client_pid, const ams::sf::InBuffer &input_ver_data, u64 aruid, u64 zero)
     {
+        LOG_FMT("Process ID:" << client_pid.GetValue().value)
         LOG_FMT("ARUID: " << aruid);
         this->state = NfpState_Initialized;
         this->deviceState = NfpDeviceState_Initialized;
@@ -104,7 +102,7 @@ namespace nfp::user
         return result::ResultAreaNotFound;
     }
 
-    ams::Result IUser::GetApplicationArea(ams::sf::OutBuffer &data, ams::sf::Out<u32> data_size, DeviceHandle handle)
+    ams::Result IUser::GetApplicationArea(const ams::sf::OutBuffer &data, ams::sf::Out<u32> data_size, DeviceHandle handle)
     {
         if(currentAreaAppId == 0) return result::ResultAreaNotFound;
         auto amiibo = emu::GetCurrentLoadedAmiibo();
@@ -143,7 +141,7 @@ namespace nfp::user
         return ams::ResultSuccess();
     }
 
-    ams::Result IUser::GetTagInfo(DeviceHandle handle, ams::sf::Out<TagInfo> out_info)
+    ams::Result IUser::GetTagInfo(ams::sf::Out<TagInfo> out_info, DeviceHandle handle)
     {
         auto amiibo = emu::GetCurrentLoadedAmiibo();
         if(!amiibo.IsValid()) return result::ResultDeviceNotFound;
@@ -154,7 +152,7 @@ namespace nfp::user
         return ams::ResultSuccess();
     }
 
-    ams::Result IUser::GetRegisterInfo(DeviceHandle handle, ams::sf::Out<RegisterInfo> out_info)
+    ams::Result IUser::GetRegisterInfo(ams::sf::Out<RegisterInfo> out_info, DeviceHandle handle)
     {
         auto amiibo = emu::GetCurrentLoadedAmiibo();
         if(!amiibo.IsValid()) return result::ResultDeviceNotFound;
@@ -164,7 +162,7 @@ namespace nfp::user
         return ams::ResultSuccess();
     }
 
-    ams::Result IUser::GetModelInfo(DeviceHandle handle, ams::sf::Out<ModelInfo> out_info)
+    ams::Result IUser::GetModelInfo(ams::sf::Out<ModelInfo> out_info, DeviceHandle handle)
     {
         auto amiibo = emu::GetCurrentLoadedAmiibo();
         if(!amiibo.IsValid()) return result::ResultDeviceNotFound;
@@ -174,7 +172,7 @@ namespace nfp::user
         return ams::ResultSuccess();
     }
 
-    ams::Result IUser::GetCommonInfo(DeviceHandle handle, ams::sf::Out<CommonInfo> out_info)
+    ams::Result IUser::GetCommonInfo(ams::sf::Out<CommonInfo> out_info, DeviceHandle handle)
     {
         auto amiibo = emu::GetCurrentLoadedAmiibo();
         if(!amiibo.IsValid()) return result::ResultDeviceNotFound;

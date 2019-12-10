@@ -2,7 +2,7 @@
 #pragma once
 #include <switch.h>
 #include <stratosphere.hpp>
-#include <emu/emu_Emulation.hpp>
+#include "emu/emu_Emulation.hpp"
 
 namespace emu
 {

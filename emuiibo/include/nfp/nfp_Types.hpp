@@ -16,8 +16,8 @@
 
 #define LOG_FMT(...) { \
     std::stringstream strm; \
-    strm << "[ emuiibo | " << __PRETTY_FUNCTION__ << " | " << __VA_ARGS__ << std::endl; \
-    FILE *f = fopen("sdmc:/fuckoff.txt", "a+"); \
+    strm << "[ emuiibo | " << __PRETTY_FUNCTION__ << " ] " << __VA_ARGS__ << std::endl; \
+    FILE *f = fopen("sdmc:/emuiibo-log-test.txt", "a+"); \
     if(f) \
     { \
         fprintf(f, "%s", strm.str().c_str()); \
@@ -53,8 +53,6 @@ namespace nfp
     constexpr ams::sm::ServiceName UserServiceName = ams::sm::ServiceName::Encode("nfp:user");
     constexpr ams::sm::ServiceName SystemServiceName = ams::sm::ServiceName::Encode("nfp:sys");
     constexpr ams::sm::ServiceName EmuServiceName = ams::sm::ServiceName::Encode("nfp:emu");
-
-    #define CUSTOM_SF_MITM_SERVICE_OBJECT_CTOR(cls) cls(std::shared_ptr<::Service> &&s, const ams::sm::MitmProcessInfo &c) : ams::sf::IMitmServiceObject(std::forward<std::shared_ptr<::Service>>(s), c)
 
     namespace result
     {

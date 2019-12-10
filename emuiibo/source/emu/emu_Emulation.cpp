@@ -1,8 +1,8 @@
-#include <emu/emu_Emulation.hpp>
+#include "emu/emu_Emulation.hpp"
+#include "emu/emu_Consts.hpp"
 #include <dirent.h>
 #include <sys/stat.h>
 #include <fstream>
-#include <emu/emu_Consts.hpp>
 #include <sstream>
 #include <iomanip>
 
