@@ -28,9 +28,6 @@ static const Version CurrentVersion =
     EMUIIBO_DEV
 };
 
-#define _VERPARAM_STR(p) #p
-#define FORMAT_VERSION _VERPARAM_STR(EMUIIBO_MAJOR) "." _VERPARAM_STR(EMUIIBO_MINOR) "." _VERPARAM_STR(EMUIIBO_MICRO)
-
 // Some QoL macros for zeroing stuff
 
 #define ZERO(ptr, sizeof_tgt) memset(ptr, 0, sizeof(sizeof_tgt))
@@ -41,7 +38,7 @@ static const Version CurrentVersion =
 
 #define LOG_FMT(...) { \
     std::stringstream strm; \
-    strm << "[ emuiibo v" << FORMAT_VERSION << " | " << __PRETTY_FUNCTION__ << " ] " << __VA_ARGS__ << std::endl; \
+    strm << "[ emuiibo v" << EMUIIBO_VERSION << " | " << __PRETTY_FUNCTION__ << " ] " << __VA_ARGS__ << std::endl; \
     FILE *f = fopen((emu::EmuDir + "/emuiibo-log.txt").c_str(), "a+"); \
     if(f) \
     { \

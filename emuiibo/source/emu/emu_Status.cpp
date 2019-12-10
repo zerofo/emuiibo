@@ -6,11 +6,17 @@ namespace emu
     static EmulationStatus Status = EmulationStatus::Off;
     static ams::os::Mutex StatusLock;
 
-    EmulationStatus GetStatus()
+    // Both functions guarded by the mutex
+
+    EmulationStatus GetStatus() LOCK_SCOPED(StatusLock,
     {
-        LOCK(StatusLock)
         return Status;
-    }
+    })
+
+    void SetStatus(EmulationStatus NewStatus) LOCK_SCOPED(StatusLock,
+    {
+        Status = NewStatus;
+    })
 
     bool IsStatusOnForever()
     {
@@ -27,13 +33,8 @@ namespace emu
         return (IsStatusOnForever() || IsStatusOnOnce());
     }
 
-    bool IsStatusOff() LOCK_SCOPED(StatusLock,
+    bool IsStatusOff()
     {
         return (GetStatus() == EmulationStatus::Off);
-    })
-    
-    void SetStatus(EmulationStatus NewStatus) LOCK_SCOPED(StatusLock,
-    {
-        Status = NewStatus;
-    })
+    }
 }

@@ -2,7 +2,6 @@
 export EMUIIBO_MAJOR := 0
 export EMUIIBO_MINOR := 4
 export EMUIIBO_MICRO := 0
-export EMUIIBO_DEV := false
 
 .PHONY: all dev clean
 

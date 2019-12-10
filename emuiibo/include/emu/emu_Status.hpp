@@ -5,11 +5,10 @@
 namespace emu
 {
     EmulationStatus GetStatus();
+    void SetStatus(EmulationStatus NewStatus);
 
     bool IsStatusOnForever();
     bool IsStatusOnOnce();
     bool IsStatusOn(); // OnOnce or OnForever, any of those
     bool IsStatusOff();
-
-    void SetStatus(EmulationStatus NewStatus);
 }

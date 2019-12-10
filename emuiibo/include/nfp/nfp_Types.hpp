@@ -9,7 +9,6 @@ namespace nfp
         u32 npad_id;
         u8 reserved[4];
     };
-
     static_assert(sizeof(DeviceHandle) == sizeof(u64), "Invalid DeviceHandle struct!");
 
     #define _NFP_INFO_STRUCT_FOR_IPC(name) \
