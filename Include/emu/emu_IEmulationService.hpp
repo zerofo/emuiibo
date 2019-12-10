@@ -6,7 +6,7 @@
 
 namespace emu
 {
-    class IEmulationService final : public IServiceObject
+    class IEmulationService final : public ams::sf::IServiceObject
     {
         private:
 
@@ -25,35 +25,33 @@ namespace emu
                 GetVersion = 10,
             };
 
-            Result GetCurrentAmiibo(OutBuffer<char> path, Out<bool> ok);
-            Result SetCustomAmiibo(InBuffer<char> path);
-            Result HasCustomAmiibo(Out<bool> has);
-            Result ResetCustomAmiibo();
-            Result SetEmulationOnForever();
-            Result SetEmulationOnOnce();
-            Result SetEmulationOff();
-            Result MoveToNextAmiibo(Out<bool> ok);
-            Result GetStatus(Out<u32> status);
-            Result Refresh();
-            Result GetVersion(Out<u32> major, Out<u32> minor, Out<u32> micro);
+            ams::Result GetCurrentAmiibo(ams::sf::OutBuffer &path, ams::sf::Out<bool> ok);
+            ams::Result SetCustomAmiibo(ams::sf::InBuffer &path);
+            ams::Result HasCustomAmiibo(ams::sf::Out<bool> has);
+            ams::Result ResetCustomAmiibo();
+            ams::Result SetEmulationOnForever();
+            ams::Result SetEmulationOnOnce();
+            ams::Result SetEmulationOff();
+            ams::Result MoveToNextAmiibo(ams::sf::Out<bool> ok);
+            ams::Result GetStatus(ams::sf::Out<u32> status);
+            ams::Result Refresh();
+            ams::Result GetVersion(ams::sf::Out<u32> major, ams::sf::Out<u32> minor, ams::sf::Out<u32> micro);
 
         public:
         
             DEFINE_SERVICE_DISPATCH_TABLE
             {
-                MAKE_SERVICE_COMMAND_META(IEmulationService, GetCurrentAmiibo),
-                MAKE_SERVICE_COMMAND_META(IEmulationService, SetCustomAmiibo),
-                MAKE_SERVICE_COMMAND_META(IEmulationService, HasCustomAmiibo),
-                MAKE_SERVICE_COMMAND_META(IEmulationService, ResetCustomAmiibo),
-                MAKE_SERVICE_COMMAND_META(IEmulationService, SetEmulationOnForever),
-                MAKE_SERVICE_COMMAND_META(IEmulationService, SetEmulationOnOnce),
-                MAKE_SERVICE_COMMAND_META(IEmulationService, SetEmulationOff),
-                MAKE_SERVICE_COMMAND_META(IEmulationService, MoveToNextAmiibo),
-                MAKE_SERVICE_COMMAND_META(IEmulationService, GetStatus),
-                MAKE_SERVICE_COMMAND_META(IEmulationService, Refresh),
-                MAKE_SERVICE_COMMAND_META(IEmulationService, GetVersion)
+                MAKE_SERVICE_COMMAND_META(GetCurrentAmiibo),
+                MAKE_SERVICE_COMMAND_META(SetCustomAmiibo),
+                MAKE_SERVICE_COMMAND_META(HasCustomAmiibo),
+                MAKE_SERVICE_COMMAND_META(ResetCustomAmiibo),
+                MAKE_SERVICE_COMMAND_META(SetEmulationOnForever),
+                MAKE_SERVICE_COMMAND_META(SetEmulationOnOnce),
+                MAKE_SERVICE_COMMAND_META(SetEmulationOff),
+                MAKE_SERVICE_COMMAND_META(MoveToNextAmiibo),
+                MAKE_SERVICE_COMMAND_META(GetStatus),
+                MAKE_SERVICE_COMMAND_META(Refresh),
+                MAKE_SERVICE_COMMAND_META(GetVersion)
             };
     };
-
-    void CreateCommonActivateEvent();
 }

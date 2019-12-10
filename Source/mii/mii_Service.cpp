@@ -56,7 +56,7 @@ namespace mii
         }
     }
 
-    Result BuildRandom(NfpuMiiCharInfo *out, u32 Unk1, u32 Unk2, u32 Unk3)
+    Result BuildRandom(NfpMiiCharInfo *out, u32 Unk1, u32 Unk2, u32 Unk3)
     {
         IpcCommand cmd;
         ipcInitialize(&cmd);
@@ -86,11 +86,11 @@ namespace mii
             {
                 u64 magic;
                 u64 res;
-                NfpuMiiCharInfo charinfo;
+                NfpMiiCharInfo charinfo;
             } *oraw = (OutRaw*)pcmd.Raw;
 
             rc = oraw->res;
-            if(R_SUCCEEDED(rc) && out) memcpy(out, &oraw->charinfo, sizeof(NfpuMiiCharInfo));
+            if(R_SUCCEEDED(rc) && out) memcpy(out, &oraw->charinfo, sizeof(NfpMiiCharInfo));
         }
 
         return rc;
@@ -132,13 +132,13 @@ namespace mii
         return rc;
     }
 
-    Result GetCharInfo(u32 idx, NfpuMiiCharInfo *out_info)
+    Result GetCharInfo(u32 idx, NfpMiiCharInfo *out_info)
     {
         u32 mc = 0;
         GetCount(&mc);
         if(mc < 1) return 0xDEAD;
-        size_t szbuf = mc * sizeof(NfpuMiiCharInfo);
-        NfpuMiiCharInfo *buf = new NfpuMiiCharInfo[mc];
+        size_t szbuf = mc * sizeof(NfpMiiCharInfo);
+        NfpMiiCharInfo *buf = new NfpMiiCharInfo[mc];
 
         IpcCommand cmd;
         ipcInitialize(&cmd);
@@ -169,7 +169,7 @@ namespace mii
             } *oraw = (OutRaw*)pcmd.Raw;
 
             rc = oraw->res;
-            if(R_SUCCEEDED(rc) && out_info) memcpy(out_info, &buf[idx], sizeof(NfpuMiiCharInfo));
+            if(R_SUCCEEDED(rc) && out_info) memcpy(out_info, &buf[idx], sizeof(NfpMiiCharInfo));
         }
 
         delete[] buf;

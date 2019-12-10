@@ -12,21 +12,32 @@
 #include <emu/emu_Status.hpp>
 
 #include <nfp/user/user_IUserManager.hpp>
-#include <nfp/sys/sys_ISystemManager.hpp>
-#include <emu/emu_IEmulationService.hpp>
+// #include <nfp/sys/sys_ISystemManager.hpp>
+// #include <emu/emu_IEmulationService.hpp>
 
-#define INNER_HEAP_SIZE 0x75000
+#define INNER_HEAP_SIZE 0x40000
 
 extern "C"
 {
     extern u32 __start__;
     u32 __nx_applet_type = AppletType_None;
+    u32 __nx_fs_num_sessions = 1;
+    u32 __nx_fsdev_direntry_cache_size = 1;
     size_t nx_inner_heap_size = INNER_HEAP_SIZE;
     char   nx_inner_heap[INNER_HEAP_SIZE];
     void __libnx_initheap(void);
     void __appInit(void);
     void __appExit(void);
     void __libnx_init_time(void);
+}
+
+namespace ams
+{
+    ncm::ProgramId CurrentProgramId = { 0x0100000000000352 };
+    namespace result
+    {
+        bool CallFatalOnResultAssertion = true;
+    }
 }
 
 void __libnx_initheap(void)
@@ -42,7 +53,7 @@ void __libnx_initheap(void)
 void __appInit(void)
 {
     Result rc = smInitialize();
-    if(R_FAILED(rc)) fatalSimple(MAKERESULT(Module_Libnx, LibnxError_InitFail_SM));
+    if(R_FAILED(rc)) fatalThrow(MAKERESULT(Module_Libnx, LibnxError_InitFail_SM));
 
     rc = setsysInitialize();
     if(R_SUCCEEDED(rc))
@@ -54,20 +65,20 @@ void __appInit(void)
     }
     
     rc = fsInitialize();
-    if(R_FAILED(rc)) fatalSimple(MAKERESULT(Module_Libnx, LibnxError_InitFail_FS));
+    if(R_FAILED(rc)) fatalThrow(MAKERESULT(Module_Libnx, LibnxError_InitFail_FS));
 
     rc = fsdevMountSdmc();
-    if(R_FAILED(rc)) fatalSimple(MAKERESULT(Module_Libnx, LibnxError_InitFail_FS));
+    if(R_FAILED(rc)) fatalThrow(MAKERESULT(Module_Libnx, LibnxError_InitFail_FS));
 
     rc = timeInitialize();
-    if(R_FAILED(rc)) fatalSimple(MAKERESULT(Module_Libnx, LibnxError_InitFail_Time));
+    if(R_FAILED(rc)) fatalThrow(MAKERESULT(Module_Libnx, LibnxError_InitFail_Time));
 
     __libnx_init_time();
 
     rc = hidInitialize();
-    if(R_FAILED(rc)) fatalSimple(MAKERESULT(Module_Libnx, LibnxError_InitFail_HID));
+    if(R_FAILED(rc)) fatalThrow(MAKERESULT(Module_Libnx, LibnxError_InitFail_HID));
 
-    SetFirmwareVersionForLibnx();
+    ams::hos::SetVersionForLibnx();
 }
 
 void __appExit(void)
@@ -222,21 +233,75 @@ void InputHandleThread(void* arg)
     }
 }
 
-int main()
+namespace
 {
+    struct ServerOptions
+    {
+        static const size_t PointerBufferSize = 0x1000;
+        static const size_t MaxDomains = 9;
+        static const size_t MaxDomainObjects = 10;
+    };
+
+    constexpr size_t MaxServers = 4;
+    constexpr size_t MaxSessions = 37;
+
+    ams::sf::hipc::ServerManager<MaxServers, ServerOptions> emuiibo_manager;
+ 
+    constexpr size_t TotalThreads = 3;
+    constexpr size_t NumExtraThreads = TotalThreads - 1;
+ 
+    constexpr size_t ThreadStackSize = 0x4000;
+    alignas(ams::os::MemoryPageSize) u8 extra_thread_stacks[NumExtraThreads][ThreadStackSize];
+    ams::os::Thread extra_threads[NumExtraThreads];
+ 
+    void MainLoopThread(void *arg)
+    {
+        emuiibo_manager.LoopProcess();
+    }
+ 
+    void LoopMain()
+    {
+        if constexpr (NumExtraThreads > 0)
+        {
+            const u32 priority = ams::os::GetCurrentThreadPriority();
+            for(size_t i = 0; i < NumExtraThreads; i++)
+            {
+                R_ASSERT(extra_threads[i].Initialize(&MainLoopThread, nullptr, extra_thread_stacks[i], ThreadStackSize, priority));
+            }
+        }
+ 
+        if constexpr (NumExtraThreads > 0)
+        {
+            for(size_t i = 0; i < NumExtraThreads; i++)
+            {
+                R_ASSERT(extra_threads[i].Start());
+            }
+        }
+ 
+        MainLoopThread(nullptr);
+ 
+        if constexpr (NumExtraThreads > 0)
+        {
+            for(size_t i = 0; i < NumExtraThreads; i++)
+            {
+                R_ASSERT(extra_threads[i].Join());
+            }
+        }
+    }
+}
+
+int main(int argc, char **argv)
+{
+    LOG_FMT("Booting up...")
     emu::Refresh();
-    
-    HosThread thread_Input;
-    thread_Input.Initialize(&InputHandleThread, NULL, 0x4000, 0x15);
-    thread_Input.Start();
-    
-    auto manager = new nfp::ServerManager(2);
-
-    AddMitmServerToManager<nfp::user::IUserManager>(manager, "nfp:user", 4);
-    manager->AddWaitable(new ServiceServer<emu::IEmulationService>("nfp:emu", 4));
-
-    manager->Process();
-    delete manager;
-
+   
+    ams::os::Thread thread_Input;
+    R_ASSERT(thread_Input.Initialize(&InputHandleThread, nullptr, 0x4000, 0x15));
+    R_ASSERT(thread_Input.Start());
+ 
+    R_ASSERT(emuiibo_manager.RegisterMitmServer<nfp::user::IUserManager>(nfp::UserServiceName));
+ 
+    LoopMain();
+ 
     return 0;
 }

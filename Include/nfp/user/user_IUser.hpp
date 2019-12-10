@@ -1,25 +1,24 @@
  
 #pragma once
-#include <switch.h>
-#include <stratosphere.hpp>
 #include <nfp/nfp_Types.hpp>
 
 namespace nfp::user
 {
-    class IUser final : public IServiceObject
+    class IUser final : public ams::sf::IServiceObject
     {
         private:
 
-            NfpuState state;
-            NfpuDeviceState deviceState;
-            IEvent *eventActivate;
-            IEvent *eventDeactivate;
-            IEvent *eventAvailabilityChange;
+            NfpState state;
+            NfpDeviceState deviceState;
+            ams::os::SystemEvent eventActivate;
+            ams::os::SystemEvent eventDeactivate;
+            ams::os::SystemEvent eventAvailabilityChange;
             u32 currentAreaAppId;
+            Service fwd_srv;
 
         public:
 
-            IUser();
+            IUser(Service forward_intf);
             ~IUser();
 
         private:
@@ -53,61 +52,61 @@ namespace nfp::user
                 RecreateApplicationArea = 24,
             };
 
-            Result Initialize(u64 aruid, u64 unk, PidDescriptor pid_desc, InBuffer<u8> buf);
-            Result Finalize();
-            Result ListDevices(OutPointerWithClientSize<u64> out_devices, Out<u32> out_count);
-            Result StartDetection(DeviceHandle handle);
-            Result StopDetection(DeviceHandle handle);
-            Result Mount(DeviceHandle handle, u32 type, u32 target);
-            Result Unmount(DeviceHandle handle);
-            Result OpenApplicationArea(Out<u32> npad_id, DeviceHandle handle, u32 id);
-            Result GetApplicationArea(OutBuffer<u8> data, Out<u32> data_size, DeviceHandle handle);
-            Result SetApplicationArea(InBuffer<u8> data, DeviceHandle handle);
-            Result Flush(DeviceHandle handle);
-            Result Restore(DeviceHandle handle);
-            Result CreateApplicationArea(InBuffer<u8> data, DeviceHandle handle, u32 id);
-            Result GetTagInfo(DeviceHandle handle, OutPointerWithServerSize<TagInfo, 1> out_info);
-            Result GetRegisterInfo(DeviceHandle handle, OutPointerWithServerSize<RegisterInfo, 1> out_info);
-            Result GetCommonInfo(DeviceHandle handle, OutPointerWithServerSize<CommonInfo, 1> out_info);
-            Result GetModelInfo(DeviceHandle handle, OutPointerWithServerSize<ModelInfo, 1> out_info);
-            Result AttachActivateEvent(DeviceHandle handle, Out<CopiedHandle> event);
-            Result AttachDeactivateEvent(DeviceHandle handle, Out<CopiedHandle> event);
-            Result GetState(Out<u32> state);
-            Result GetDeviceState(DeviceHandle handle, Out<u32> state);
-            Result GetNpadId(DeviceHandle handle, Out<u32> npad_id);
-            Result GetApplicationAreaSize(DeviceHandle handle, Out<u32> size);
-            Result AttachAvailabilityChangeEvent(Out<CopiedHandle> event);
-            Result RecreateApplicationArea(InBuffer<u8> data, DeviceHandle handle, u32 id);
+            ams::Result Initialize(u64 aruid, u64 zero, const ams::sf::ClientProcessId &client_pid, const ams::sf::InBuffer &input_ver_data);
+            ams::Result Finalize();
+            ams::Result ListDevices(const ams::sf::OutPointerArray<DeviceHandle> &out_devices, ams::sf::Out<s32> out_count);
+            ams::Result StartDetection(DeviceHandle handle);
+            ams::Result StopDetection(DeviceHandle handle);
+            ams::Result Mount(DeviceHandle handle, u32 type, u32 target);
+            ams::Result Unmount(DeviceHandle handle);
+            ams::Result OpenApplicationArea(ams::sf::Out<u32> npad_id, DeviceHandle handle, u32 id);
+            ams::Result GetApplicationArea(ams::sf::OutBuffer &data, ams::sf::Out<u32> data_size, DeviceHandle handle);
+            ams::Result SetApplicationArea(const ams::sf::InBuffer &data, DeviceHandle handle);
+            ams::Result Flush(DeviceHandle handle);
+            ams::Result Restore(DeviceHandle handle);
+            ams::Result CreateApplicationArea(const ams::sf::InBuffer &data, DeviceHandle handle, u32 id);
+            ams::Result GetTagInfo(DeviceHandle handle, ams::sf::Out<TagInfo> out_info);
+            ams::Result GetRegisterInfo(DeviceHandle handle, ams::sf::Out<RegisterInfo> out_info);
+            ams::Result GetCommonInfo(DeviceHandle handle, ams::sf::Out<CommonInfo> out_info);
+            ams::Result GetModelInfo(DeviceHandle handle, ams::sf::Out<ModelInfo> out_info);
+            ams::Result AttachActivateEvent(DeviceHandle handle, ams::sf::Out<ams::sf::CopyHandle> event);
+            ams::Result AttachDeactivateEvent(DeviceHandle handle, ams::sf::Out<ams::sf::CopyHandle> event);
+            ams::Result GetState(ams::sf::Out<u32> state);
+            ams::Result GetDeviceState(DeviceHandle handle, ams::sf::Out<u32> state);
+            ams::Result GetNpadId(DeviceHandle handle, ams::sf::Out<u32> npad_id);
+            ams::Result GetApplicationAreaSize(DeviceHandle handle, ams::sf::Out<u32> size);
+            ams::Result AttachAvailabilityChangeEvent(ams::sf::Out<ams::sf::CopyHandle> event);
+            ams::Result RecreateApplicationArea(const ams::sf::InBuffer &data, DeviceHandle handle, u32 id);
 
         public:
         
             DEFINE_SERVICE_DISPATCH_TABLE
             {
-                MAKE_SERVICE_COMMAND_META(IUser, Initialize),
-                MAKE_SERVICE_COMMAND_META(IUser, Finalize),
-                MAKE_SERVICE_COMMAND_META(IUser, ListDevices),
-                MAKE_SERVICE_COMMAND_META(IUser, StartDetection),
-                MAKE_SERVICE_COMMAND_META(IUser, StopDetection),
-                MAKE_SERVICE_COMMAND_META(IUser, Mount),
-                MAKE_SERVICE_COMMAND_META(IUser, Unmount),
-                MAKE_SERVICE_COMMAND_META(IUser, OpenApplicationArea),
-                MAKE_SERVICE_COMMAND_META(IUser, GetApplicationArea),
-                MAKE_SERVICE_COMMAND_META(IUser, SetApplicationArea),
-                MAKE_SERVICE_COMMAND_META(IUser, Flush),
-                MAKE_SERVICE_COMMAND_META(IUser, Restore),
-                MAKE_SERVICE_COMMAND_META(IUser, CreateApplicationArea),
-                MAKE_SERVICE_COMMAND_META(IUser, GetTagInfo),
-                MAKE_SERVICE_COMMAND_META(IUser, GetRegisterInfo),
-                MAKE_SERVICE_COMMAND_META(IUser, GetCommonInfo),
-                MAKE_SERVICE_COMMAND_META(IUser, GetModelInfo),
-                MAKE_SERVICE_COMMAND_META(IUser, AttachActivateEvent),
-                MAKE_SERVICE_COMMAND_META(IUser, AttachDeactivateEvent),
-                MAKE_SERVICE_COMMAND_META(IUser, GetState),
-                MAKE_SERVICE_COMMAND_META(IUser, GetDeviceState),
-                MAKE_SERVICE_COMMAND_META(IUser, GetNpadId),
-                MAKE_SERVICE_COMMAND_META(IUser, AttachAvailabilityChangeEvent),
-                MAKE_SERVICE_COMMAND_META(IUser, GetApplicationAreaSize),
-                MAKE_SERVICE_COMMAND_META(IUser, RecreateApplicationArea),
+                MAKE_SERVICE_COMMAND_META(Initialize),
+                MAKE_SERVICE_COMMAND_META(Finalize),
+                MAKE_SERVICE_COMMAND_META(ListDevices),
+                MAKE_SERVICE_COMMAND_META(StartDetection),
+                MAKE_SERVICE_COMMAND_META(StopDetection),
+                MAKE_SERVICE_COMMAND_META(Mount),
+                MAKE_SERVICE_COMMAND_META(Unmount),
+                MAKE_SERVICE_COMMAND_META(OpenApplicationArea),
+                MAKE_SERVICE_COMMAND_META(GetApplicationArea),
+                MAKE_SERVICE_COMMAND_META(SetApplicationArea),
+                MAKE_SERVICE_COMMAND_META(Flush),
+                MAKE_SERVICE_COMMAND_META(Restore),
+                MAKE_SERVICE_COMMAND_META(CreateApplicationArea),
+                MAKE_SERVICE_COMMAND_META(GetTagInfo),
+                MAKE_SERVICE_COMMAND_META(GetRegisterInfo),
+                MAKE_SERVICE_COMMAND_META(GetCommonInfo),
+                MAKE_SERVICE_COMMAND_META(GetModelInfo),
+                MAKE_SERVICE_COMMAND_META(AttachActivateEvent),
+                MAKE_SERVICE_COMMAND_META(AttachDeactivateEvent),
+                MAKE_SERVICE_COMMAND_META(GetState),
+                MAKE_SERVICE_COMMAND_META(GetDeviceState),
+                MAKE_SERVICE_COMMAND_META(GetNpadId),
+                MAKE_SERVICE_COMMAND_META(AttachAvailabilityChangeEvent),
+                MAKE_SERVICE_COMMAND_META(GetApplicationAreaSize),
+                MAKE_SERVICE_COMMAND_META(RecreateApplicationArea),
             };
     };
 

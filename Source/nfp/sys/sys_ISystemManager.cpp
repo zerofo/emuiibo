@@ -22,6 +22,6 @@ namespace nfp::sys
         std::shared_ptr<ISystem> intf = std::make_shared<ISystem>();
         out.SetValue(std::move(intf));
         if(emu::IsStatusOnOnce()) emu::SetStatus(emu::EmulationStatus::Off);
-        return 0;
+        return ams::ResultSuccess();
     }
 }

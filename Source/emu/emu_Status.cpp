@@ -4,11 +4,11 @@
 namespace emu
 {
     static EmulationStatus Status = EmulationStatus::Off;
-    static HosMutex StatusLock;
+    static ams::os::Mutex StatusLock;
 
     EmulationStatus GetStatus()
     {
-        std::scoped_lock<HosMutex> lock(StatusLock);
+        std::scoped_lock<ams::os::Mutex> lock(StatusLock);
         return Status;
     }
 
@@ -34,7 +34,7 @@ namespace emu
     
     void SetStatus(EmulationStatus NewStatus)
     {
-        std::scoped_lock<HosMutex> lock(StatusLock);
+        std::scoped_lock<ams::os::Mutex> lock(StatusLock);
         Status = NewStatus;
     }
 }

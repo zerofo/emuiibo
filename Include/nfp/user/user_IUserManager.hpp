@@ -6,13 +6,12 @@
 
 namespace nfp::user
 {
-    class IUserManager final : public IMitmServiceObject
+    class IUserManager final : public ams::sf::IMitmServiceObject
     {
         public:
 
-            IUserManager(std::shared_ptr<Service> s, u64 pid, sts::ncm::TitleId tid);
-            static bool ShouldMitm(u64 pid, sts::ncm::TitleId tid);
-            static void PostProcess(IMitmServiceObject *obj, IpcResponseContext *ctx);  
+            IUserManager(std::shared_ptr<::Service> &&s, const ams::sm::MitmProcessInfo &c);
+            static bool ShouldMitm(const ams::sm::MitmProcessInfo &client_info);
 
         private:
 
@@ -21,13 +20,13 @@ namespace nfp::user
                 CreateUserInterface = 0,
             };
 
-            Result CreateUserInterface(Out<std::shared_ptr<IUser>> out);
+            ams::Result CreateUserInterface(ams::sf::Out<std::shared_ptr<IUser>> out);
 
         public:
         
             DEFINE_SERVICE_DISPATCH_TABLE
             {
-                MAKE_SERVICE_COMMAND_META(IUserManager, CreateUserInterface),
+                MAKE_SERVICE_COMMAND_META(CreateUserInterface),
             };
     };
 }

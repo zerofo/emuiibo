@@ -9,222 +9,231 @@
 
 namespace nfp::user
 {
-    // #define LogCommand do { FILE *f = fopen("sdmc:/emuiibo-cmd.log", "a"); fprintf(f, "%s\n", __PRETTY_FUNCTION__); fclose(f); } while(0)
-
-    IUser::IUser()
+    IUser::IUser(Service forward_intf)
     {
-        currentAreaAppId = 0;
-        eventActivate = CreateWriteOnlySystemEvent();
-        eventDeactivate = CreateWriteOnlySystemEvent();
-        eventAvailabilityChange = CreateWriteOnlySystemEvent();
-        state = NfpuState_NonInitialized;
-        deviceState = NfpuDeviceState_Unavailable;
+        LOG_FMT("Creating IUser... forwarded object ID: " << forward_intf.object_id)
+        this->currentAreaAppId = 0;
+        this->eventActivate.InitializeAsInterProcessEvent();
+        this->eventDeactivate.InitializeAsInterProcessEvent();
+        this->eventAvailabilityChange.InitializeAsInterProcessEvent();
+        this->state = NfpState_NonInitialized;
+        this->deviceState = NfpDeviceState_Unavailable;
+        this->fwd_srv = forward_intf;
     }
 
     IUser::~IUser()
     {
-        delete eventActivate;
-        delete eventDeactivate;
-        delete eventAvailabilityChange;
+        serviceClose(&this->fwd_srv);
     }
 
-    Result IUser::Initialize(u64 aruid, u64 unk, PidDescriptor pid_desc, InBuffer<u8> buf)
+    ams::Result IUser::Initialize(u64 aruid, u64 zero, const ams::sf::ClientProcessId &client_pid, const ams::sf::InBuffer &input_ver_data)
     {
-        state = NfpuState_Initialized;
-        deviceState = NfpuDeviceState_Initialized;
-        return 0;
+        LOG_FMT("ARUID: " << aruid);
+        this->state = NfpState_Initialized;
+        this->deviceState = NfpDeviceState_Initialized;
+        return ams::ResultSuccess();
     }
 
-    Result IUser::Finalize()
+    ams::Result IUser::Finalize()
     {
-        state = NfpuState_NonInitialized;
-        deviceState = NfpuDeviceState_Finalized;
-        return 0;
+        this->state = NfpState_NonInitialized;
+        this->deviceState = NfpDeviceState_Finalized;
+        return ams::ResultSuccess();
     }
 
-    Result IUser::ListDevices(OutPointerWithClientSize<u64> out_devices, Out<u32> out_count)
+    ams::Result IUser::ListDevices(const ams::sf::OutPointerArray<DeviceHandle> &out_devices, ams::sf::Out<s32> out_count)
     {
-        u64 dvcid = 0x20;
+        u64 id = 0x20;
         hidScanInput();
-        if(hidIsControllerConnected(CONTROLLER_PLAYER_1)) dvcid = (u64)CONTROLLER_PLAYER_1;
-        memcpy(out_devices.pointer, &dvcid, sizeof(u64));
+        if(hidIsControllerConnected(CONTROLLER_PLAYER_1)) id = (u64)CONTROLLER_PLAYER_1;
+        DeviceHandle handle = {};
+        handle.NpadId = (u32)id;
+        out_devices[0] = handle;
         out_count.SetValue(1);
-        return 0;
+        return ams::ResultSuccess();
     }
 
-    Result IUser::StartDetection(DeviceHandle handle)
+    ams::Result IUser::StartDetection(DeviceHandle handle)
     {
-        eventActivate->Signal();
-        eventAvailabilityChange->Signal();
-        deviceState = NfpuDeviceState_TagFound;
-        return 0;
+        this->eventActivate.Signal();
+        this->eventAvailabilityChange.Signal();
+        this->deviceState = NfpDeviceState_TagFound;
+        return ams::ResultSuccess();
     }
 
-    Result IUser::StopDetection(DeviceHandle handle)
+    ams::Result IUser::StopDetection(DeviceHandle handle)
     {
         switch(deviceState)
         {
-            case NfpuDeviceState_TagFound:
-            case NfpuDeviceState_TagMounted:
-                eventDeactivate->Signal();
-            case NfpuDeviceState_SearchingForTag:
-            case NfpuDeviceState_TagRemoved:
-                deviceState = NfpuDeviceState_Initialized;
+            case NfpDeviceState_TagFound:
+            case NfpDeviceState_TagMounted:
+                this->eventDeactivate.Signal();
+            case NfpDeviceState_SearchingForTag:
+            case NfpDeviceState_TagRemoved:
+                this->deviceState = NfpDeviceState_Initialized;
                 break;
             default:
                 break;
         }
-        return 0;
+        return ams::ResultSuccess();
     }
 
-    Result IUser::Mount(DeviceHandle handle, u32 type, u32 target)
+    ams::Result IUser::Mount(DeviceHandle handle, u32 type, u32 target)
     {
-        eventActivate->Signal();
-        deviceState = NfpuDeviceState_TagMounted;
-        return 0;
+        this->eventActivate.Signal();
+        this->deviceState = NfpDeviceState_TagMounted;
+        return ams::ResultSuccess();
     }
 
-    Result IUser::Unmount(DeviceHandle handle)
+    ams::Result IUser::Unmount(DeviceHandle handle)
     {
-        eventDeactivate->Signal();
-        deviceState = NfpuDeviceState_SearchingForTag;
-        return 0;
+        this->eventDeactivate.Signal();
+        this->deviceState = NfpDeviceState_SearchingForTag;
+        return ams::ResultSuccess();
     }
 
-    Result IUser::OpenApplicationArea(Out<u32> npad_id, DeviceHandle handle, u32 id)
+    ams::Result IUser::OpenApplicationArea(ams::sf::Out<u32> npad_id, DeviceHandle handle, u32 id)
     {
         auto amiibo = emu::GetCurrentLoadedAmiibo();
         if(amiibo.ExistsArea(id))
         {
-            currentAreaAppId = id;
+            this->currentAreaAppId = id;
             npad_id.SetValue(handle.NpadId);
-            return 0;
+            return ams::ResultSuccess();
         }
         return result::ResultAreaNotFound;
     }
 
-    Result IUser::GetApplicationArea(OutBuffer<u8> data, Out<u32> data_size, DeviceHandle handle)
+    ams::Result IUser::GetApplicationArea(ams::sf::OutBuffer &data, ams::sf::Out<u32> data_size, DeviceHandle handle)
     {
         if(currentAreaAppId == 0) return result::ResultAreaNotFound;
         auto amiibo = emu::GetCurrentLoadedAmiibo();
-        u64 sz = (u64)amiibo.GetAreaSize(currentAreaAppId);
+        u64 sz = (u64)amiibo.GetAreaSize(this->currentAreaAppId);
         if(sz == 0) return result::ResultAreaNotFound;
-        amiibo.ReadArea(currentAreaAppId, data.buffer, sz);
+        amiibo.ReadArea(this->currentAreaAppId, data.GetPointer(), sz);
         data_size.SetValue(sz);
-        return 0;
+        return ams::ResultSuccess();
     }
 
-    Result IUser::SetApplicationArea(InBuffer<u8> data, DeviceHandle handle)
+    ams::Result IUser::SetApplicationArea(const ams::sf::InBuffer &data, DeviceHandle handle)
     {
         if(currentAreaAppId == 0) return result::ResultAreaNotFound;
         auto amiibo = emu::GetCurrentLoadedAmiibo();
-        amiibo.WriteArea(currentAreaAppId, data.buffer, data.num_elements);
-        return 0;
+        amiibo.WriteArea(this->currentAreaAppId, (u8*)data.GetPointer(), data.GetSize());
+        return ams::ResultSuccess();
     }
 
-    Result IUser::Flush(DeviceHandle handle)
+    ams::Result IUser::Flush(DeviceHandle handle)
     {
-        deviceState = NfpuDeviceState_TagFound;
-        return 0;
+        this->deviceState = NfpDeviceState_TagFound;
+        return ams::ResultSuccess();
     }
 
-    Result IUser::Restore(DeviceHandle handle)
+    ams::Result IUser::Restore(DeviceHandle handle)
     {
-        deviceState = NfpuDeviceState_TagFound;
-        return 0;
+        this->deviceState = NfpDeviceState_TagFound;
+        return ams::ResultSuccess();
     }
 
-    Result IUser::CreateApplicationArea(InBuffer<u8> data, DeviceHandle handle, u32 id)
+    ams::Result IUser::CreateApplicationArea(const ams::sf::InBuffer &data, DeviceHandle handle, u32 id)
     {
         auto amiibo = emu::GetCurrentLoadedAmiibo();
         if(amiibo.ExistsArea(id)) return result::ResultAreaAlreadyCreated;
-        amiibo.CreateArea(id, data.buffer, data.num_elements, false);
-        return 0;
+        amiibo.CreateArea(id, (u8*)data.GetPointer(), data.GetSize(), false);
+        return ams::ResultSuccess();
     }
 
-    Result IUser::GetTagInfo(DeviceHandle handle, OutPointerWithServerSize<TagInfo, 1> out_info)
+    ams::Result IUser::GetTagInfo(DeviceHandle handle, ams::sf::Out<TagInfo> out_info)
     {
         auto amiibo = emu::GetCurrentLoadedAmiibo();
         if(!amiibo.IsValid()) return result::ResultDeviceNotFound;
-        memcpy(out_info.pointer, &amiibo.Infos.Tag, sizeof(TagInfo));
-        if(amiibo.RandomizeUUID) randomGet(out_info.pointer->uuid, 10);
-        return 0;
+        TagInfo info = {};
+        memcpy(&info, &amiibo.Infos.Tag, sizeof(info));
+        if(amiibo.RandomizeUUID) randomGet(info.info.uuid, 10);
+        out_info.SetValue(info);
+        return ams::ResultSuccess();
     }
 
-    Result IUser::GetRegisterInfo(DeviceHandle handle, OutPointerWithServerSize<RegisterInfo, 1> out_info)
+    ams::Result IUser::GetRegisterInfo(DeviceHandle handle, ams::sf::Out<RegisterInfo> out_info)
     {
         auto amiibo = emu::GetCurrentLoadedAmiibo();
         if(!amiibo.IsValid()) return result::ResultDeviceNotFound;
-        memcpy(out_info.pointer, &amiibo.Infos.Register, sizeof(RegisterInfo));
-        return 0;
+        RegisterInfo info = {};
+        memcpy(&info, &amiibo.Infos.Register, sizeof(info));
+        out_info.SetValue(info);
+        return ams::ResultSuccess();
     }
 
-    Result IUser::GetModelInfo(DeviceHandle handle, OutPointerWithServerSize<ModelInfo, 1> out_info)
+    ams::Result IUser::GetModelInfo(DeviceHandle handle, ams::sf::Out<ModelInfo> out_info)
     {
         auto amiibo = emu::GetCurrentLoadedAmiibo();
         if(!amiibo.IsValid()) return result::ResultDeviceNotFound;
-        memcpy(out_info.pointer, &amiibo.Infos.Model, sizeof(ModelInfo));
-        return 0;
+        ModelInfo info = {};
+        memcpy(&info, &amiibo.Infos.Model, sizeof(info));
+        out_info.SetValue(info);
+        return ams::ResultSuccess();
     }
 
-    Result IUser::GetCommonInfo(DeviceHandle handle, OutPointerWithServerSize<CommonInfo, 1> out_info)
+    ams::Result IUser::GetCommonInfo(DeviceHandle handle, ams::sf::Out<CommonInfo> out_info)
     {
         auto amiibo = emu::GetCurrentLoadedAmiibo();
         if(!amiibo.IsValid()) return result::ResultDeviceNotFound;
-        memcpy(out_info.pointer, &amiibo.Infos.Common, sizeof(CommonInfo));
-        return 0;
+        CommonInfo info = {};
+        memcpy(&info, &amiibo.Infos.Common, sizeof(info));
+        out_info.SetValue(info);
+        return ams::ResultSuccess();
     }
 
-    Result IUser::AttachActivateEvent(DeviceHandle handle, Out<CopiedHandle> event)
+    ams::Result IUser::AttachActivateEvent(DeviceHandle handle, ams::sf::Out<ams::sf::CopyHandle> event)
     {
-        event.SetValue(eventActivate->GetHandle());
-        return 0;
+        event.SetValue(eventActivate.GetReadableHandle());
+        return ams::ResultSuccess();
     }
 
-    Result IUser::AttachDeactivateEvent(DeviceHandle handle, Out<CopiedHandle> event)
+    ams::Result IUser::AttachDeactivateEvent(DeviceHandle handle, ams::sf::Out<ams::sf::CopyHandle> event)
     {
-        event.SetValue(eventDeactivate->GetHandle());
-        return 0;
+        event.SetValue(eventDeactivate.GetReadableHandle());
+        return ams::ResultSuccess();
     }
 
-    Result IUser::GetState(Out<u32> out_state)
+    ams::Result IUser::GetState(ams::sf::Out<u32> out_state)
     {
-        out_state.SetValue(static_cast<u32>(state));
-        return 0;
+        out_state.SetValue(static_cast<u32>(this->state));
+        return ams::ResultSuccess();
     }
 
-    Result IUser::GetDeviceState(DeviceHandle handle, Out<u32> out_state)
+    ams::Result IUser::GetDeviceState(DeviceHandle handle, ams::sf::Out<u32> out_state)
     {
-        out_state.SetValue(static_cast<u32>(deviceState));
-        return 0;
+        out_state.SetValue(static_cast<u32>(this->deviceState));
+        return ams::ResultSuccess();
     }
 
-    Result IUser::GetNpadId(DeviceHandle handle, Out<u32> out_npad_id)
+    ams::Result IUser::GetNpadId(DeviceHandle handle, ams::sf::Out<u32> out_npad_id)
     {
         out_npad_id.SetValue(handle.NpadId);
-        return 0;
+        return ams::ResultSuccess();
     }
 
-    Result IUser::AttachAvailabilityChangeEvent(Out<CopiedHandle> event)
+    ams::Result IUser::AttachAvailabilityChangeEvent(ams::sf::Out<ams::sf::CopyHandle> event)
     {
-        event.SetValue(eventAvailabilityChange->GetHandle());
-        return 0;
+        event.SetValue(eventAvailabilityChange.GetReadableHandle());
+        return ams::ResultSuccess();
     }
 
-    Result IUser::GetApplicationAreaSize(DeviceHandle handle, Out<u32> size)
+    ams::Result IUser::GetApplicationAreaSize(DeviceHandle handle, ams::sf::Out<u32> size)
     {
         auto amiibo = emu::GetCurrentLoadedAmiibo();
-        if(currentAreaAppId == 0) return result::ResultAreaNotFound;
-        if(!amiibo.ExistsArea(currentAreaAppId)) return result::ResultAreaNotFound;
-        size.SetValue(amiibo.GetAreaSize(currentAreaAppId));
-        return 0;
+        if(this->currentAreaAppId == 0) return result::ResultAreaNotFound;
+        if(!amiibo.ExistsArea(this->currentAreaAppId)) return result::ResultAreaNotFound;
+        size.SetValue(amiibo.GetAreaSize(this->currentAreaAppId));
+        return ams::ResultSuccess();
     }
 
-    Result IUser::RecreateApplicationArea(InBuffer<u8> data, DeviceHandle handle, u32 id)
+    ams::Result IUser::RecreateApplicationArea(const ams::sf::InBuffer &data, DeviceHandle handle, u32 id)
     {
         auto amiibo = emu::GetCurrentLoadedAmiibo();
         if(amiibo.ExistsArea(id)) return result::ResultAreaAlreadyCreated;
-        amiibo.CreateArea(id, data.buffer, data.num_elements, true);
-        return 0;
+        amiibo.CreateArea(id, (u8*)data.GetPointer(), data.GetSize(), true);
+        return ams::ResultSuccess();
     }
 }

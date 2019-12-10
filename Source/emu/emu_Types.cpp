@@ -13,7 +13,7 @@ namespace emu
 {
     bool Amiibo::IsValid()
     {
-        return ((!Path.empty()) && (Infos.Tag.tag_type == 2) && (Infos.Tag.uuid_length == 10));
+        return ((!Path.empty()) && (Infos.Tag.info.tag_type == 2) && (Infos.Tag.info.uuid_length == 10));
     }
 
     void Amiibo::UpdateWrite()
@@ -143,12 +143,12 @@ namespace emu
 
                 nfp::TagInfo tag;
                 ZERO_NONPTR(tag);
-                tag.tag_type = 2;
-                tag.uuid_length = 10;
-                memcpy(tag.uuid, dump.UUID, 10);
+                tag.info.tag_type = 2;
+                tag.info.uuid_length = 10;
+                memcpy(tag.info.uuid, dump.UUID, 10);
                 auto jtag = JSON::object();
                 std::stringstream strm;
-                for(u32 i = 0; i < 9; i++) strm << std::hex << std::setw(2) << std::uppercase << std::setfill('0') << (int)tag.uuid[i];
+                for(u32 i = 0; i < 9; i++) strm << std::hex << std::setw(2) << std::uppercase << std::setfill('0') << (int)tag.info.uuid[i];
                 jtag["uuid"] = strm.str();
                 std::ofstream ofs(dir + "/tag.json");
                 ofs << std::setw(4) << jtag;
@@ -156,11 +156,11 @@ namespace emu
                 
                 nfp::ModelInfo model;
                 ZERO_NONPTR(model);
-                memcpy(model.amiibo_id, dump.AmiiboIDBlock, 8);
+                memcpy(model.info.amiibo_id, dump.AmiiboIDBlock, 8);
                 auto jmodel = JSON::object();
                 strm.str("");
                 strm.clear();
-                for(u32 i = 0; i < 8; i++) strm << std::hex << std::setw(2) << std::uppercase << std::setfill('0') << (int)model.amiibo_id[i];
+                for(u32 i = 0; i < 8; i++) strm << std::hex << std::setw(2) << std::uppercase << std::setfill('0') << (int)model.info.amiibo_id[i];
                 jmodel["amiiboId"] = strm.str();
                 ofs = std::ofstream(dir + "/model.json");
                 ofs << std::setw(4) << jmodel;
@@ -170,11 +170,11 @@ namespace emu
                 ZERO_NONPTR(reg);
                 auto name = dir.substr(dir.find_last_of("/") + 1);
                 if(name.length() > 10) name = name.substr(0, 10);
-                strcpy(reg.amiibo_name, name.c_str());
+                strcpy(reg.info.amiibo_name, name.c_str());
 
-                NfpuMiiCharInfo charinfo;
+                NfpMiiCharInfo charinfo;
                 ZERO_NONPTR(charinfo);
-                memcpy(&charinfo, DefaultCharInfo, sizeof(NfpuMiiCharInfo));
+                memcpy(&charinfo, DefaultCharInfo, sizeof(NfpMiiCharInfo));
 
                 auto rc = mii::Initialize();
                 if(rc == 0)
@@ -189,24 +189,24 @@ namespace emu
                 FILE *f = fopen((dir + "/mii-charinfo.bin").c_str(), "wb");
                 if(f)
                 {
-                    fwrite(&charinfo, 1, sizeof(NfpuMiiCharInfo), f);
+                    fwrite(&charinfo, 1, sizeof(NfpMiiCharInfo), f);
                     fclose(f);
                 }
 
                 auto time = std::time(NULL);
                 auto timenow = std::localtime(&time);
 
-                reg.first_write_year = (u16)(timenow->tm_year + 1900);
-                reg.first_write_month = (u8)(timenow->tm_mon + 1);
-                reg.first_write_day = (u8)timenow->tm_mday;
+                reg.info.first_write_year = (u16)(timenow->tm_year + 1900);
+                reg.info.first_write_month = (u8)(timenow->tm_mon + 1);
+                reg.info.first_write_day = (u8)timenow->tm_mday;
                 auto jreg = JSON::object();
-                jreg["name"] = std::string(reg.amiibo_name);
+                jreg["name"] = std::string(reg.info.amiibo_name);
                 jreg["miiCharInfo"] = "mii-charinfo.bin";
                 strm.str("");
                 strm.clear();
-                strm << std::dec << reg.first_write_year << "-";
-                strm << std::dec << std::setw(2) << std::setfill('0') << (int)reg.first_write_month << "-";
-                strm << std::dec << std::setw(2) << std::setfill('0') << (int)reg.first_write_day;
+                strm << std::dec << reg.info.first_write_year << "-";
+                strm << std::dec << std::setw(2) << std::setfill('0') << (int)reg.info.first_write_month << "-";
+                strm << std::dec << std::setw(2) << std::setfill('0') << (int)reg.info.first_write_day;
                 jreg["firstWriteDate"] = strm.str();
                 ofs = std::ofstream(dir + "/register.json");
                 ofs << std::setw(4) << jreg;
@@ -214,18 +214,18 @@ namespace emu
                 
                 nfp::CommonInfo common;
                 ZERO_NONPTR(common);
-                common.last_write_year = timenow->tm_year + 1900;
-                common.last_write_month = timenow->tm_mon + 1;
-                common.last_write_day = timenow->tm_mday;
+                common.info.last_write_year = timenow->tm_year + 1900;
+                common.info.last_write_month = timenow->tm_mon + 1;
+                common.info.last_write_day = timenow->tm_mday;
                 auto jcommon = JSON::object();
                 strm.str("");
                 strm.clear();
-                strm << std::dec << common.last_write_year << "-";
-                strm << std::dec << std::setw(2) << std::setfill('0') << (int)common.last_write_month << "-";
-                strm << std::dec << std::setw(2) << std::setfill('0') << (int)common.last_write_day;
+                strm << std::dec << common.info.last_write_year << "-";
+                strm << std::dec << std::setw(2) << std::setfill('0') << (int)common.info.last_write_month << "-";
+                strm << std::dec << std::setw(2) << std::setfill('0') << (int)common.info.last_write_day;
                 jcommon["lastWriteDate"] = strm.str();
-                jcommon["writeCounter"] = (int)common.write_counter;
-                jcommon["version"] = (int)common.version;
+                jcommon["writeCounter"] = (int)common.info.write_counter;
+                jcommon["version"] = (int)common.info.version;
                 ofs = std::ofstream(dir + "/common.json");
                 ofs << std::setw(4) << jcommon;
                 ofs.close();
@@ -261,12 +261,12 @@ namespace emu
 
         nfp::TagInfo tag;
         ZERO_NONPTR(tag);
-        tag.tag_type = 2;
-        tag.uuid_length = 10;
-        memcpy(tag.uuid, dump.UUID, 10);
+        tag.info.tag_type = 2;
+        tag.info.uuid_length = 10;
+        memcpy(tag.info.uuid, dump.UUID, 10);
         auto jtag = JSON::object();
         std::stringstream strm;
-        for(u32 i = 0; i < 9; i++) strm << std::hex << std::setw(2) << std::uppercase << std::setfill('0') << (int)tag.uuid[i];
+        for(u32 i = 0; i < 9; i++) strm << std::hex << std::setw(2) << std::uppercase << std::setfill('0') << (int)tag.info.uuid[i];
         bool randomuuid = old.value("randomizeUuid", false);
         if(randomuuid) jtag["randomUuid"] = true;
         else jtag["uuid"] = strm.str();
@@ -276,11 +276,11 @@ namespace emu
 
         nfp::ModelInfo model;
         ZERO_NONPTR(model);
-        memcpy(model.amiibo_id, dump.AmiiboIDBlock, 8);
+        memcpy(model.info.amiibo_id, dump.AmiiboIDBlock, 8);
         auto jmodel = JSON::object();
         strm.str("");
         strm.clear();
-        for(u32 i = 0; i < 8; i++) strm << std::hex << std::setw(2) << std::uppercase << std::setfill('0') << (int)model.amiibo_id[i];
+        for(u32 i = 0; i < 8; i++) strm << std::hex << std::setw(2) << std::uppercase << std::setfill('0') << (int)model.info.amiibo_id[i];
         jmodel["amiiboId"] = strm.str();
         ofs = std::ofstream(outdir + "/model.json");
         ofs << std::setw(4) << jmodel;
@@ -290,9 +290,9 @@ namespace emu
         ZERO_NONPTR(reg);
         auto name = old.value("name", amiiboname);
         if(name.length() > 10) name = name.substr(0, 10);
-        strcpy(reg.amiibo_name, name.c_str());
+        strcpy(reg.info.amiibo_name, name.c_str());
 
-        NfpuMiiCharInfo charinfo;
+        NfpMiiCharInfo charinfo;
         ZERO_NONPTR(charinfo);
 
         rename((Path + "/mii.dat").c_str(), (outdir + "/mii-charinfo.bin").c_str());
@@ -302,26 +302,25 @@ namespace emu
 
         if(old.count("firstWriteDate"))
         {
-            reg.first_write_year = (u16)old["firstWriteDate"][0];
-            reg.first_write_month = (u8)old["firstWriteDate"][1];
-            reg.first_write_day = (u8)old["firstWriteDate"][2];
+            reg.info.first_write_year = (u16)old["firstWriteDate"][0];
+            reg.info.first_write_month = (u8)old["firstWriteDate"][1];
+            reg.info.first_write_day = (u8)old["firstWriteDate"][2];
         }
         else
         {
-            reg.first_write_year = (u16)(timenow->tm_year + 1900);
-            reg.first_write_month = (u8)(timenow->tm_mon + 1);
-            reg.first_write_day = (u8)timenow->tm_mday;
+            reg.info.first_write_year = (u16)(timenow->tm_year + 1900);
+            reg.info.first_write_month = (u8)(timenow->tm_mon + 1);
+            reg.info.first_write_day = (u8)timenow->tm_mday;
         }
-
         
         auto jreg = JSON::object();
-        jreg["name"] = std::string(reg.amiibo_name);
+        jreg["name"] = std::string(reg.info.amiibo_name);
         jreg["miiCharInfo"] = "mii-charinfo.bin";
         strm.str("");
         strm.clear();
-        strm << std::dec << reg.first_write_year << "-";
-        strm << std::dec << std::setw(2) << std::setfill('0') << (int)reg.first_write_month << "-";
-        strm << std::dec << std::setw(2) << std::setfill('0') << (int)reg.first_write_day;
+        strm << std::dec << reg.info.first_write_year << "-";
+        strm << std::dec << std::setw(2) << std::setfill('0') << (int)reg.info.first_write_month << "-";
+        strm << std::dec << std::setw(2) << std::setfill('0') << (int)reg.info.first_write_day;
         jreg["firstWriteDate"] = strm.str();
         ofs = std::ofstream(outdir + "/register.json");
         ofs << std::setw(4) << jreg;
@@ -329,18 +328,18 @@ namespace emu
         
         nfp::CommonInfo common;
         ZERO_NONPTR(common);
-        common.last_write_year = timenow->tm_year + 1900;
-        common.last_write_month = timenow->tm_mon + 1;
-        common.last_write_day = timenow->tm_mday;
+        common.info.last_write_year = timenow->tm_year + 1900;
+        common.info.last_write_month = timenow->tm_mon + 1;
+        common.info.last_write_day = timenow->tm_mday;
         auto jcommon = JSON::object();
         strm.str("");
         strm.clear();
-        strm << std::dec << common.last_write_year << "-";
-        strm << std::dec << std::setw(2) << std::setfill('0') << (int)common.last_write_month << "-";
-        strm << std::dec << std::setw(2) << std::setfill('0') << (int)common.last_write_day;
+        strm << std::dec << common.info.last_write_year << "-";
+        strm << std::dec << std::setw(2) << std::setfill('0') << (int)common.info.last_write_month << "-";
+        strm << std::dec << std::setw(2) << std::setfill('0') << (int)common.info.last_write_day;
         jcommon["lastWriteDate"] = strm.str();
-        jcommon["writeCounter"] = (int)common.write_counter;
-        jcommon["version"] = (int)common.version;
+        jcommon["writeCounter"] = (int)common.info.write_counter;
+        jcommon["version"] = (int)common.info.version;
         ofs = std::ofstream(outdir + "/common.json");
         ofs << std::setw(4) << jcommon;
         ofs.close();
@@ -422,7 +421,7 @@ namespace emu
             {
                 for(u32 i = 0; i < miicount; i++)
                 {
-                    NfpuMiiCharInfo charinfo;
+                    NfpMiiCharInfo charinfo;
                     rc = mii::GetCharInfo(i, &charinfo);
                     if(rc == 0)
                     {
@@ -460,8 +459,8 @@ namespace emu
                 auto jtag = JSON::parse(ifs);
                 std::stringstream strm;
                 bool randomuuid = jtag.value("randomUuid", false);
-                amiibo.Infos.Tag.uuid_length = 10;
-                amiibo.Infos.Tag.tag_type = 2;
+                amiibo.Infos.Tag.info.uuid_length = 10;
+                amiibo.Infos.Tag.info.tag_type = 2;
                 if(randomuuid)
                 {
                     amiibo.RandomizeUUID = true;
@@ -476,7 +475,7 @@ namespace emu
                         strm << std::hex << tmpuuid.substr(i, 2);
                         int tmpbyte = 0;
                         strm >> tmpbyte;
-                        amiibo.Infos.Tag.uuid[i / 2] = tmpbyte & 0xFF;
+                        amiibo.Infos.Tag.info.uuid[i / 2] = tmpbyte & 0xFF;
                         strm.str("");
                         strm.clear();
                     }
@@ -494,7 +493,7 @@ namespace emu
                         strm << std::hex << tmpid.substr(i, 2);
                         int tmpbyte = 0;
                         strm >> tmpbyte;
-                        amiibo.Infos.Model.amiibo_id[i / 2] = tmpbyte & 0xFF;
+                        amiibo.Infos.Model.info.amiibo_id[i / 2] = tmpbyte & 0xFF;
                         strm.str("");
                         strm.clear();
                     }
@@ -504,52 +503,52 @@ namespace emu
                     {
                         auto jreg = JSON::parse(ifs);
                         std::string tmpname = jreg["name"];
-                        strcpy(amiibo.Infos.Register.amiibo_name, tmpname.c_str());
+                        strcpy(amiibo.Infos.Register.info.amiibo_name, tmpname.c_str());
                         std::string miifile = jreg["miiCharInfo"];
                         FILE *f = fopen((Path + "/" + miifile).c_str(), "rb");
                         if(f)
                         {
-                            fread(&amiibo.Infos.Register.mii, 1, sizeof(NfpuMiiCharInfo), f);
+                            fread(&amiibo.Infos.Register.info.mii, 1, sizeof(NfpMiiCharInfo), f);
                             fclose(f);
                         }
                         else
                         {
-                            memcpy(&amiibo.Infos.Register.mii, DefaultCharInfo, sizeof(NfpuMiiCharInfo));
+                            memcpy(&amiibo.Infos.Register.info.mii, DefaultCharInfo, sizeof(NfpMiiCharInfo));
 
                             auto rc = mii::Initialize();
                             if(rc == 0)
                             {
-                                mii::BuildRandom(&amiibo.Infos.Register.mii);
+                                mii::BuildRandom(&amiibo.Infos.Register.info.mii);
                                 // Since mii service generates random miis with name "no name", change to "emuiibo"
                                 const char *name = "emuiibo";
-                                utf8_to_utf16(amiibo.Infos.Register.mii.mii_name, (const u8*)name, strlen(name));
+                                utf8_to_utf16(amiibo.Infos.Register.info.mii.mii_name, (const u8*)name, strlen(name));
                                 mii::Finalize();
                             }
 
                             FILE *f = fopen((Path + "/" + miifile).c_str(), "wb");
                             if(f)
                             {
-                                fwrite(&amiibo.Infos.Register.mii, 1, sizeof(NfpuMiiCharInfo), f);
+                                fwrite(&amiibo.Infos.Register.info.mii, 1, sizeof(NfpMiiCharInfo), f);
                                 fclose(f);
                             }
                         }
                         
                         std::string tmpdate = jreg["firstWriteDate"];
-                        amiibo.Infos.Register.first_write_year = (u16)std::stoi(tmpdate.substr(0, 4));
-                        amiibo.Infos.Register.first_write_month = (u8)std::stoi(tmpdate.substr(5, 2));
-                        amiibo.Infos.Register.first_write_day = (u8)std::stoi(tmpdate.substr(8, 2));
+                        amiibo.Infos.Register.info.first_write_year = (u16)std::stoi(tmpdate.substr(0, 4));
+                        amiibo.Infos.Register.info.first_write_month = (u8)std::stoi(tmpdate.substr(5, 2));
+                        amiibo.Infos.Register.info.first_write_day = (u8)std::stoi(tmpdate.substr(8, 2));
                         ifs.close();
                         ifs = std::ifstream(Path + "/common.json");
                         if(ifs.good())
                         {
                             auto jcommon = JSON::parse(ifs);
                             tmpdate = jcommon["lastWriteDate"];
-                            amiibo.Infos.Common.last_write_year = (u16)std::stoi(tmpdate.substr(0, 4));
-                            amiibo.Infos.Common.last_write_month = (u8)std::stoi(tmpdate.substr(5, 2));
-                            amiibo.Infos.Common.last_write_day = (u8)std::stoi(tmpdate.substr(8, 2));
-                            amiibo.Infos.Common.write_counter = (u16)jcommon["writeCounter"];
-                            amiibo.Infos.Common.version = (u16)jcommon["version"];
-                            amiibo.Infos.Common.application_area_size = 0xD8;
+                            amiibo.Infos.Common.info.last_write_year = (u16)std::stoi(tmpdate.substr(0, 4));
+                            amiibo.Infos.Common.info.last_write_month = (u8)std::stoi(tmpdate.substr(5, 2));
+                            amiibo.Infos.Common.info.last_write_day = (u8)std::stoi(tmpdate.substr(8, 2));
+                            amiibo.Infos.Common.info.write_counter = (u16)jcommon["writeCounter"];
+                            amiibo.Infos.Common.info.version = (u16)jcommon["version"];
+                            amiibo.Infos.Common.info.application_area_size = 0xD8;
                             ifs.close();
                             amiibo.Path = Path;
                         }

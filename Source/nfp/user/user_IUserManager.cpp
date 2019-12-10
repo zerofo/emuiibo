@@ -2,40 +2,43 @@
 #include <emu/emu_Status.hpp>
 #include <emu/emu_Emulation.hpp>
 
-template<typename ...FmtArgs>
-static void LogLineFmt(std::string Fmt, FmtArgs &...Args)
-{
-    FILE *f = fopen("sdmc:/tid-emuiibo.log", "a");
-    fprintf(f, (Fmt + "\n").c_str(), Args...);
-    fclose(f);
-}
-
 namespace nfp::user
 {
-    IUserManager::IUserManager(std::shared_ptr<Service> s, u64 pid, sts::ncm::TitleId tid) : IMitmServiceObject(s, pid, tid)
+    // Forwards
+    
+    static Result _fwd_CreateUserInterface(Service *out, Service *base)
     {
-        pminfoInitialize();
-        u64 ttid = 0;
-        pminfoGetTitleId(&ttid, pid);
-        pminfoExit();
-        emu::SetCurrentAppId(ttid);
+        return serviceDispatch(base, 0,
+            .out_num_objects = 1,
+            .out_objects = out,
+        );
     }
 
-    void IUserManager::PostProcess(IMitmServiceObject *obj, IpcResponseContext *ctx)
+    CUSTOM_SF_MITM_SERVICE_OBJECT_CTOR(IUserManager::IUserManager)
     {
+        LOG_FMT("Accessed nfp:user with app ID " << std::hex << std::setw(16) << std::setfill('0') << c.program_id.value)
+        emu::SetCurrentAppId(c.program_id.value);
     }
 
-    bool IUserManager::ShouldMitm(u64 pid, sts::ncm::TitleId tid)
+    bool IUserManager::ShouldMitm(const ams::sm::MitmProcessInfo &client_info)
     {
+        LOG_FMT("Should MitM -> status on: " << std::boolalpha << emu::IsStatusOn())
         return emu::IsStatusOn();
     }
 
-    Result IUserManager::CreateUserInterface(Out<std::shared_ptr<IUser>> out)
+    ams::Result IUserManager::CreateUserInterface(ams::sf::Out<std::shared_ptr<IUser>> out)
     {
-        if(emu::IsStatusOff()) return ResultAtmosphereMitmShouldForwardToSession;
-        std::shared_ptr<IUser> intf = std::make_shared<IUser>();
-        out.SetValue(std::move(intf));
+        LOG_FMT("Checking status...")
+        R_UNLESS(emu::IsStatusOn(), ams::sm::mitm::ResultShouldForwardToSession());
+        LOG_FMT("Creating interface...")
+        Service outsrv;
+        R_TRY(_fwd_CreateUserInterface(&outsrv, this->forward_service.get()));
+        LOG_FMT("Created interface... object ID: " << outsrv.object_id)
+        const ams::sf::cmif::DomainObjectId target_object_id { serviceGetObjectId(&outsrv) };
+        std::shared_ptr<IUser> intf = std::make_shared<IUser>(outsrv);
+        out.SetValue(std::move(intf), target_object_id);
+        LOG_FMT("Returning interface...")
         if(emu::IsStatusOnOnce()) emu::SetStatus(emu::EmulationStatus::Off);
-        return 0;
+        return ams::ResultSuccess();
     }
 }

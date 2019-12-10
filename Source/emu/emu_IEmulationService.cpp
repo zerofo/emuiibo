@@ -4,85 +4,85 @@
 
 namespace emu
 {
-    Result IEmulationService::GetCurrentAmiibo(OutBuffer<char> path, Out<bool> ok)
+    ams::Result IEmulationService::GetCurrentAmiibo(ams::sf::OutBuffer &path, ams::sf::Out<bool> ok)
     {
         auto amiibo = GetCurrentLoadedAmiibo();
         if(amiibo.IsValid())
         {
             ok.SetValue(true);
-            strcpy(path.buffer, amiibo.Path.c_str());
+            strcpy((char*)path.GetPointer(), amiibo.Path.c_str());
         }
         else
         {
             ok.SetValue(false);
-            memset(path.buffer, 0, path.num_elements);
+            memset(path.GetPointer(), 0, path.GetSize());
         }
-        return 0;
+        return ams::ResultSuccess();
     }
 
-    Result IEmulationService::SetCustomAmiibo(InBuffer<char> path)
+    ams::Result IEmulationService::SetCustomAmiibo(ams::sf::InBuffer &path)
     {
-        emu::SetCustomAmiibo(std::string(path.buffer));
-        return 0;
+        emu::SetCustomAmiibo(std::string((char*)path.GetPointer()));
+        return ams::ResultSuccess();
     }
 
-    Result IEmulationService::HasCustomAmiibo(Out<bool> has)
+    ams::Result IEmulationService::HasCustomAmiibo(ams::sf::Out<bool> has)
     {
         bool hasc = emu::HasCustomAmiibo();
         has.SetValue(hasc);
-        return 0;
+        return ams::ResultSuccess();
     }
 
-    Result IEmulationService::ResetCustomAmiibo()
+    ams::Result IEmulationService::ResetCustomAmiibo()
     {
         emu::ResetCustomAmiibo();
-        return 0;
+        return ams::ResultSuccess();
     }
 
-    Result IEmulationService::SetEmulationOnForever()
+    ams::Result IEmulationService::SetEmulationOnForever()
     {
         SetStatus(EmulationStatus::OnForever);
-        return 0;
+        return ams::ResultSuccess();
     }
 
-    Result IEmulationService::SetEmulationOnOnce()
+    ams::Result IEmulationService::SetEmulationOnOnce()
     {
         SetStatus(EmulationStatus::OnOnce);
-        return 0;
+        return ams::ResultSuccess();
     }
 
-    Result IEmulationService::SetEmulationOff()
+    ams::Result IEmulationService::SetEmulationOff()
     {
         SetStatus(EmulationStatus::Off);
-        return 0;
+        return ams::ResultSuccess();
     }
 
-    Result IEmulationService::MoveToNextAmiibo(Out<bool> ok)
+    ams::Result IEmulationService::MoveToNextAmiibo(ams::sf::Out<bool> ok)
     {
         bool ook = false;
         if(IsStatusOn()) ook = emu::MoveToNextAmiibo();
         ok.SetValue(ook);
-        return 0;
+        return ams::ResultSuccess();
     }
 
-    Result IEmulationService::GetStatus(Out<u32> status)
+    ams::Result IEmulationService::GetStatus(ams::sf::Out<u32> status)
     {
         auto rawstatus = emu::GetStatus();
         status.SetValue(static_cast<u32>(rawstatus));
-        return 0;
+        return ams::ResultSuccess();
     }
 
-    Result IEmulationService::Refresh()
+    ams::Result IEmulationService::Refresh()
     {
         emu::Refresh();
-        return 0;
+        return ams::ResultSuccess();
     }
 
-    Result IEmulationService::GetVersion(Out<u32> major, Out<u32> minor, Out<u32> micro)
+    ams::Result IEmulationService::GetVersion(ams::sf::Out<u32> major, ams::sf::Out<u32> minor, ams::sf::Out<u32> micro)
     {
         major.SetValue(EmuVersion[0]);
         minor.SetValue(EmuVersion[1]);
         micro.SetValue(EmuVersion[2]);
-        return 0;
+        return ams::ResultSuccess();
     }
 }

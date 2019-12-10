@@ -10,8 +10,8 @@ namespace nfp::sys
     {
         private:
 
-            NfpuState state;
-            NfpuDeviceState deviceState;
+            NfpState state;
+            NfpDeviceState deviceState;
             IEvent *eventActivate;
             IEvent *eventDeactivate;
             IEvent *eventAvailabilityChange;
