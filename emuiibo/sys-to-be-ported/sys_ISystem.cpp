@@ -97,7 +97,7 @@ namespace nfp::sys
         if(amiibo.ExistsArea(id))
         {
             currentAreaAppId = id;
-            npad_id.SetValue(handle.NpadId);
+            npad_id.SetValue(handle.npad_id);
             return ams::ResultSuccess();
         }
         return result::ResultAreaNotFound;
@@ -200,7 +200,7 @@ namespace nfp::sys
 
     Result ISystem::GetNpadId(DeviceHandle handle, Out<u32> out_npad_id)
     {
-        out_npad_id.SetValue(handle.NpadId);
+        out_npad_id.SetValue(handle.npad_id);
         return ams::ResultSuccess();
     }
 

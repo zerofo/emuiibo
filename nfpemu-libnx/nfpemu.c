@@ -1,7 +1,7 @@
 #include "nfpemu.h"
 #include <string.h>
 
-bool emuiiboIsPresent()
+bool nfpemuIsAccessible()
 {
     Handle tmph = 0;
     Result rc = smRegisterService(&tmph, "nfp:emu", false, 1);
@@ -15,8 +15,6 @@ static u64 g_refCnt;
 
 Result nfpemuInitialize()
 {
-    if(!emuiiboIsPresent()) return MAKERESULT(Module_Libnx, LibnxError_NotFound);
-
     atomicIncrement64(&g_refCnt);
     if(serviceIsActive(&g_nfpEmuSrv)) return 0;
     return smGetService(&g_nfpEmuSrv, "nfp:emu");
@@ -27,7 +25,7 @@ void nfpemuExit()
     if(atomicDecrement64(&g_refCnt) == 0) serviceClose(&g_nfpEmuSrv);
 }
 
-Result nfpemuGetCurrentAmiibo(char *out, bool *out_ok)
+Result nfpemuGetCurrentAmiibo(char *out)
 {
     IpcCommand c;
     ipcInitialize(&c);
@@ -51,11 +49,9 @@ Result nfpemuGetCurrentAmiibo(char *out, bool *out_ok)
         struct {
             u64 magic;
             u64 result;
-            bool ok;
         } *resp = r.Raw;
 
         rc = resp->result;
-        if(R_SUCCEEDED(rc) && out_ok) *out_ok = resp->ok;
     }
 
     return rc;
@@ -247,7 +243,7 @@ Result nfpemuSetEmulationOff()
     return rc;
 }
 
-Result nfpemuMoveToNextAmiibo(bool *out_ok)
+Result nfpemuMoveToNextAmiibo()
 {
     IpcCommand c;
     ipcInitialize(&c);
@@ -270,17 +266,15 @@ Result nfpemuMoveToNextAmiibo(bool *out_ok)
         struct {
             u64 magic;
             u64 result;
-            bool ok;
         } *resp = r.Raw;
 
         rc = resp->result;
-        if(R_SUCCEEDED(rc) && out_ok) *out_ok = resp->ok;
     }
 
     return rc;
 }
 
-Result nfpemuGetStatus(EmuEmulationStatus *out)
+Result nfpemuGetStatus(NfpEmuEmulationStatus *out)
 {
     IpcCommand c;
     ipcInitialize(&c);
@@ -306,7 +300,7 @@ Result nfpemuGetStatus(EmuEmulationStatus *out)
         } *resp = r.Raw;
 
         rc = resp->result;
-        if(R_SUCCEEDED(rc)) *out = (EmuEmulationStatus)resp->status;
+        if(R_SUCCEEDED(rc) && out) *out = (NfpEmuEmulationStatus)resp->status;
     }
 
     return rc;
@@ -342,7 +336,7 @@ Result nfpemuRefresh()
     return rc;
 }
 
-Result nfpemuGetVersion(EmuVersion *out_ver)
+Result nfpemuGetVersion(NfpEmuVersion *out_ver)
 {
     IpcCommand c;
     ipcInitialize(&c);
@@ -365,18 +359,11 @@ Result nfpemuGetVersion(EmuVersion *out_ver)
         struct {
             u64 magic;
             u64 result;
-            u32 major;
-            u32 minor;
-            u32 micro;
+            NfpEmuVersion ver;
         } *resp = r.Raw;
 
         rc = resp->result;
-        if(R_SUCCEEDED(rc))
-        {
-            out_ver->Major = resp->major;
-            out_ver->Minor = resp->minor;
-            out_ver->Micro = resp->micro;
-        }
+        if(R_SUCCEEDED(rc) && out_ver) *out_ver = resp->ver;
     }
 
     return rc;

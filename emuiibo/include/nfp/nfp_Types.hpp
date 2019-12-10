@@ -1,37 +1,16 @@
 
 #pragma once
-#include <switch.h>
-#include <stratosphere.hpp>
-#include <sstream>
-#include <cstdio>
-#include <iomanip>
-
-// Some QoL macros for zeroing stuff
-
-#define ZERO(ptr, sizeof_tgt) memset(ptr, 0, sizeof(sizeof_tgt))
-#define ZERO_PTR(ptr) ZERO(ptr, *ptr)
-#define ZERO_NONPTR(nonptr) ZERO(&nonptr, nonptr)
-
-// Logging macro
-
-#define LOG_FMT(...) { \
-    std::stringstream strm; \
-    strm << "[ emuiibo | " << __PRETTY_FUNCTION__ << " ] " << __VA_ARGS__ << std::endl; \
-    FILE *f = fopen("sdmc:/emuiibo-log-test.txt", "a+"); \
-    if(f) \
-    { \
-        fprintf(f, "%s", strm.str().c_str()); \
-        fclose(f); \
-    } \
-}
+#include "Types.hpp"
 
 namespace nfp
 {
     struct DeviceHandle
     {
-        u32 NpadId;
-        u8 Reserved[4];
-    } PACKED;
+        u32 npad_id;
+        u8 reserved[4];
+    };
+
+    static_assert(sizeof(DeviceHandle) == sizeof(u64), "Invalid DeviceHandle struct!");
 
     #define _NFP_INFO_STRUCT_FOR_IPC(name) \
     struct name##Info : public ams::sf::LargeData \
@@ -52,14 +31,15 @@ namespace nfp
 
     constexpr ams::sm::ServiceName UserServiceName = ams::sm::ServiceName::Encode("nfp:user");
     constexpr ams::sm::ServiceName SystemServiceName = ams::sm::ServiceName::Encode("nfp:sys");
-    constexpr ams::sm::ServiceName EmuServiceName = ams::sm::ServiceName::Encode("nfp:emu");
 
     namespace result
     {
-        static constexpr Result ResultNeedRestart = MAKERESULT(115, 96);
-        static constexpr Result ResultDeviceNotFound = MAKERESULT(115, 64);
-        static constexpr Result ResultAreaNotFound = MAKERESULT(115, 128);
-        static constexpr Result ResultAreaAlreadyCreated = MAKERESULT(115, 168);
-        static constexpr Result ResultAccessIdMismatch = MAKERESULT(115, 152);
+        static constexpr u32 Module = 115;
+
+        DEFINE_RESULT(DeviceNotFound, Module, 64)
+        DEFINE_RESULT(NeedRestart, Module, 96)
+        DEFINE_RESULT(AreaNotFound, Module, 128)
+        DEFINE_RESULT(AccessIdMismatch, Module, 152)
+        DEFINE_RESULT(AreaAlreadyCreated, Module, 168)
     }
 }

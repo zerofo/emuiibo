@@ -1,14 +1,9 @@
 
 #pragma once
-#include <switch.h>
-#include <json.hpp>
-#include <string>
 #include "nfp/nfp_Types.hpp"
 
 namespace emu
 {
-    using JSON = nlohmann::json;
-
     enum class EmulationStatus
     {
         OnForever,
@@ -90,4 +85,17 @@ namespace emu
     void ProcessDirectory(std::string Path);
     void DumpConsoleMiis();
     Amiibo ProcessAmiibo(std::string Path);
+
+    // IPC-related types
+
+    constexpr ams::sm::ServiceName EmuServiceName = ams::sm::ServiceName::Encode("nfp:emu");
+
+    namespace result
+    {
+        static constexpr u32 Module = 352; // Like our program ID (0100000000000352)
+
+        DEFINE_RESULT(NoAmiiboLoaded, Module, 1)
+        DEFINE_RESULT(UnableToMove, Module, 2)
+        DEFINE_RESULT(StatusOff, Module, 3)
+    }
 }

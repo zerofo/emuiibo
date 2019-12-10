@@ -1,7 +1,9 @@
 #---------------------------------------------------------------------------------
-# pull in common stratosphere sysmodule configuration
+# pull in (modded) common stratosphere sysmodule configuration
 #---------------------------------------------------------------------------------
 include $(dir $(abspath $(lastword $(MAKEFILE_LIST))))/../libstratosphere/config/templates/stratosphere.mk
+
+CXXFLAGS	+=	-DEMUIIBO_MAJOR=$(EMUIIBO_MAJOR) -DEMUIIBO_MINOR=$(EMUIIBO_MINOR) -DEMUIIBO_MICRO=$(EMUIIBO_MICRO) -DEMUIIBO_DEV=$(EMUIIBO_DEV)
 
 #---------------------------------------------------------------------------------
 # no real need to edit anything past this point unless you need to add additional

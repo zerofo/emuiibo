@@ -22,20 +22,20 @@ namespace emu
                 MoveToNextAmiibo = 7,
                 GetStatus = 8,
                 Refresh = 9,
-                GetVersion = 10,
+                GetVersion = 10
             };
 
-            ams::Result GetCurrentAmiibo(ams::sf::OutBuffer &path, ams::sf::Out<bool> ok);
-            ams::Result SetCustomAmiibo(ams::sf::InBuffer &path);
-            ams::Result HasCustomAmiibo(ams::sf::Out<bool> has);
-            ams::Result ResetCustomAmiibo();
-            ams::Result SetEmulationOnForever();
-            ams::Result SetEmulationOnOnce();
-            ams::Result SetEmulationOff();
-            ams::Result MoveToNextAmiibo(ams::sf::Out<bool> ok);
-            ams::Result GetStatus(ams::sf::Out<u32> status);
-            ams::Result Refresh();
-            ams::Result GetVersion(ams::sf::Out<u32> major, ams::sf::Out<u32> minor, ams::sf::Out<u32> micro);
+            ams::Result GetCurrentAmiibo(const ams::sf::OutBuffer &path);
+            void SetCustomAmiibo(const ams::sf::InBuffer &path);
+            void HasCustomAmiibo(ams::sf::Out<bool> out_has);
+            void ResetCustomAmiibo();
+            void SetEmulationOnForever();
+            void SetEmulationOnOnce();
+            void SetEmulationOff();
+            ams::Result MoveToNextAmiibo();
+            void GetStatus(ams::sf::Out<u32> out_status);
+            void Refresh();
+            void GetVersion(ams::sf::Out<Version> out_version);
 
         public:
         

@@ -12,8 +12,8 @@
 #include "emu/emu_Status.hpp"
 
 #include "nfp/user/user_IUserManager.hpp"
+#include "emu/emu_IEmulationService.hpp"
 // #include <nfp/sys/sys_ISystemManager.hpp>
-// #include <emu/emu_IEmulationService.hpp>
 
 #define INNER_HEAP_SIZE 0x40000
 
@@ -258,7 +258,11 @@ int main(int argc, char **argv)
     R_ASSERT(thread_Input.Initialize(&InputHandleThread, nullptr, 0x4000, 0x15));
     R_ASSERT(thread_Input.Start());
  
+    // Register nfp:user MitM
     R_ASSERT(emuiibo_manager.RegisterMitmServer<nfp::user::IUserManager>(nfp::UserServiceName));
+    
+    // Register custom nfp:emu service
+    R_ASSERT(emuiibo_manager.RegisterServer<emu::IEmulationService>(emu::EmuServiceName, MaxSessions));
  
     emuiibo_manager.LoopProcess();
  

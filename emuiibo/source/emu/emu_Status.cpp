@@ -8,7 +8,7 @@ namespace emu
 
     EmulationStatus GetStatus()
     {
-        std::scoped_lock<ams::os::Mutex> lock(StatusLock);
+        LOCK(StatusLock)
         return Status;
     }
 
@@ -27,14 +27,13 @@ namespace emu
         return (IsStatusOnForever() || IsStatusOnOnce());
     }
 
-    bool IsStatusOff()
+    bool IsStatusOff() LOCK_SCOPED(StatusLock,
     {
         return (GetStatus() == EmulationStatus::Off);
-    }
+    })
     
-    void SetStatus(EmulationStatus NewStatus)
+    void SetStatus(EmulationStatus NewStatus) LOCK_SCOPED(StatusLock,
     {
-        std::scoped_lock<ams::os::Mutex> lock(StatusLock);
         Status = NewStatus;
-    }
+    })
 }

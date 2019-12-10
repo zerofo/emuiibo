@@ -45,7 +45,7 @@ namespace nfp::user
         hidScanInput();
         if(hidIsControllerConnected(CONTROLLER_PLAYER_1)) id = (u64)CONTROLLER_PLAYER_1;
         DeviceHandle handle = {};
-        handle.NpadId = (u32)id;
+        handle.npad_id = (u32)id;
         out_devices[0] = handle;
         out_count.SetValue(1);
         return ams::ResultSuccess();
@@ -96,7 +96,7 @@ namespace nfp::user
         if(amiibo.ExistsArea(id))
         {
             this->currentAreaAppId = id;
-            npad_id.SetValue(handle.NpadId);
+            npad_id.SetValue(handle.npad_id);
             return ams::ResultSuccess();
         }
         return result::ResultAreaNotFound;
@@ -208,7 +208,7 @@ namespace nfp::user
 
     ams::Result IUser::GetNpadId(DeviceHandle handle, ams::sf::Out<u32> out_npad_id)
     {
-        out_npad_id.SetValue(handle.NpadId);
+        out_npad_id.SetValue(handle.npad_id);
         return ams::ResultSuccess();
     }
 
