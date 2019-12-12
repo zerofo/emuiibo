@@ -5,7 +5,7 @@
 namespace emu
 {
     void Refresh();
-    Amiibo &GetCurrentLoadedAmiibo();
+    Amiibo GetCurrentLoadedAmiibo();
     bool MoveToNextAmiibo();
     bool CanMoveNext();
     void SetCustomAmiibo(std::string Path);

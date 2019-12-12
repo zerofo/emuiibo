@@ -100,11 +100,6 @@ namespace emu
         return sz;
     }
 
-    bool ProcessKeys()
-    {
-        return false;
-    }
-
     static const u8 DefaultCharInfo[88] =
     {
         0xAE, 0x37, 0x34, 0x32, 0xF7, 0x43, 0x4B, 0x39, 0x94, 0xC6, 0xFF, 0xAA, 0x5E, 0xFA, 0x1F, 0xC4,
@@ -114,6 +109,12 @@ namespace emu
         0x02, 0x0A, 0x04, 0x04, 0x09, 0x0C, 0x13, 0x04, 0x03, 0x0D, 0x08, 0x00, 0x00, 0x04, 0x0A, 0x00,
         0x08, 0x04, 0x0A, 0x00, 0x04, 0x02, 0x14, 0x00
     };
+
+    static void GenerateRandomCharInfo(NfpMiiCharInfo *out)
+    {
+        auto rc = mii::BuildRandom(out);
+        if(R_SUCCEEDED(rc)) utf8_to_utf16(out->mii_name, (const u8*)EMU_DEFAULT_AMIIBO_NAME, strlen(EMU_DEFAULT_AMIIBO_NAME));
+    }
 
     static bool ProcessRawDump(std::string Path)
     {
@@ -136,13 +137,11 @@ namespace emu
             }
             else
             {
-                RawAmiiboDump dump;
-                ZERO_NONPTR(dump);
+                RawAmiiboDump dump = {};
                 fread(&dump, 1, sizeof(RawAmiiboDump), f);
                 fclose(f);
 
-                nfp::TagInfo tag;
-                ZERO_NONPTR(tag);
+                nfp::TagInfo tag = {};
                 tag.info.tag_type = 2;
                 tag.info.uuid_length = 10;
                 memcpy(tag.info.uuid, dump.UUID, 10);
@@ -154,8 +153,7 @@ namespace emu
                 ofs << std::setw(4) << jtag;
                 ofs.close();
                 
-                nfp::ModelInfo model;
-                ZERO_NONPTR(model);
+                nfp::ModelInfo model = {};
                 memcpy(model.info.amiibo_id, dump.AmiiboIDBlock, 8);
                 auto jmodel = JSON::object();
                 strm.str("");
@@ -166,30 +164,20 @@ namespace emu
                 ofs << std::setw(4) << jmodel;
                 ofs.close();
 
-                nfp::RegisterInfo reg;
-                ZERO_NONPTR(reg);
+                nfp::RegisterInfo reg = {};
                 auto name = dir.substr(dir.find_last_of("/") + 1);
                 if(name.length() > 10) name = name.substr(0, 10);
                 strcpy(reg.info.amiibo_name, name.c_str());
 
-                NfpMiiCharInfo charinfo;
-                ZERO_NONPTR(charinfo);
-                memcpy(&charinfo, DefaultCharInfo, sizeof(NfpMiiCharInfo));
+                NfpMiiCharInfo charinfo = {};
+                memcpy(&charinfo, DefaultCharInfo, sizeof(charinfo));
 
-                auto rc = mii::Initialize();
-                if(rc == 0)
-                {
-                    mii::BuildRandom(&charinfo);
-                    // Since mii service generates random miis with name "no name", change to "emuiibo"
-                    const char *name = "emuiibo";
-                    utf8_to_utf16(charinfo.mii_name, (const u8*)name, strlen(name));
-                    mii::Finalize();
-                }
+                GenerateRandomCharInfo(&charinfo);
 
                 FILE *f = fopen((dir + "/mii-charinfo.bin").c_str(), "wb");
                 if(f)
                 {
-                    fwrite(&charinfo, 1, sizeof(NfpMiiCharInfo), f);
+                    fwrite(&charinfo, 1, sizeof(charinfo), f);
                     fclose(f);
                 }
 
@@ -212,8 +200,7 @@ namespace emu
                 ofs << std::setw(4) << jreg;
                 ofs.close();
                 
-                nfp::CommonInfo common;
-                ZERO_NONPTR(common);
+                nfp::CommonInfo common = {};
                 common.info.last_write_year = timenow->tm_year + 1900;
                 common.info.last_write_month = timenow->tm_mon + 1;
                 common.info.last_write_day = timenow->tm_mday;
@@ -254,13 +241,11 @@ namespace emu
             fclose(f);
             return;
         }
-        RawAmiiboDump dump;
-        ZERO_NONPTR(dump);
-        fread(&dump, 1, sizeof(RawAmiiboDump), f);
+        RawAmiiboDump dump = {};
+        fread(&dump, 1, sizeof(dump), f);
         fclose(f);
 
-        nfp::TagInfo tag;
-        ZERO_NONPTR(tag);
+        nfp::TagInfo tag = {};
         tag.info.tag_type = 2;
         tag.info.uuid_length = 10;
         memcpy(tag.info.uuid, dump.UUID, 10);
@@ -274,8 +259,7 @@ namespace emu
         ofs << std::setw(4) << jtag;
         ofs.close();
 
-        nfp::ModelInfo model;
-        ZERO_NONPTR(model);
+        nfp::ModelInfo model = {};
         memcpy(model.info.amiibo_id, dump.AmiiboIDBlock, 8);
         auto jmodel = JSON::object();
         strm.str("");
@@ -286,14 +270,12 @@ namespace emu
         ofs << std::setw(4) << jmodel;
         ofs.close();
 
-        nfp::RegisterInfo reg;
-        ZERO_NONPTR(reg);
+        nfp::RegisterInfo reg = {};
         auto name = old.value("name", amiiboname);
         if(name.length() > 10) name = name.substr(0, 10);
         strcpy(reg.info.amiibo_name, name.c_str());
 
-        NfpMiiCharInfo charinfo;
-        ZERO_NONPTR(charinfo);
+        NfpMiiCharInfo charinfo = {};
 
         rename((Path + "/mii.dat").c_str(), (outdir + "/mii-charinfo.bin").c_str());
 
@@ -326,8 +308,7 @@ namespace emu
         ofs << std::setw(4) << jreg;
         ofs.close();
         
-        nfp::CommonInfo common;
-        ZERO_NONPTR(common);
+        nfp::CommonInfo common = {};
         common.info.last_write_year = timenow->tm_year + 1900;
         common.info.last_write_month = timenow->tm_mon + 1;
         common.info.last_write_day = timenow->tm_mday;
@@ -375,15 +356,6 @@ namespace emu
         fsdevDeleteDirectoryRecursively(Path.c_str());
     }
 
-    static void ConvertToUTF8(char* out, const u16* in, size_t max)
-    {
-        if((out == NULL) || (in == NULL)) return;
-        out[0] = 0;
-        ssize_t units = utf16_to_utf8((u8*)out, in, max);
-        if(units < 0) return;
-        out[units] = 0;
-    }
-
     void ProcessDirectory(std::string Path)
     {
         DIR *dp = opendir(Path.c_str());
@@ -412,45 +384,42 @@ namespace emu
     void DumpConsoleMiis()
     {
         mkdir(ConsoleMiisDir.c_str(), 777);
-        auto rc = mii::Initialize();
-        if(rc == 0)
+        u32 miicount = 0;
+        auto rc = mii::GetCount(&miicount);
+        LOG_FMT("Get Mii count: 0x" << std::hex << rc)
+        if(R_SUCCEEDED(rc) && (miicount > 0))
         {
-            u32 miicount = 0;
-            rc = mii::GetCount(&miicount);
-            if(miicount > 0)
+            LOG_FMT("Mii count: " << miicount)
+            for(u32 i = 0; i < miicount; i++)
             {
-                for(u32 i = 0; i < miicount; i++)
+                NfpMiiCharInfo charinfo;
+                rc = mii::GetCharInfo(i, &charinfo);
+                LOG_FMT("Get Mii charinfo: 0x" << std::hex << rc)
+                if(R_SUCCEEDED(rc))
                 {
-                    NfpMiiCharInfo charinfo;
-                    rc = mii::GetCharInfo(i, &charinfo);
-                    if(rc == 0)
+                    char mii_name[0xB] = {0};
+                    utf16_to_utf8((u8*)mii_name, (const u16*)charinfo.mii_name, 0x11);
+                    LOG_FMT("Got mii name: " << std::hex << mii_name)
+                    auto curmiipath = ConsoleMiisDir + "/" + std::to_string(i) + " - " + std::string(mii_name);
+                    fsdevDeleteDirectoryRecursively(curmiipath.c_str());
+                    mkdir(curmiipath.c_str(), 777);
+                    FILE *f = fopen((curmiipath + "/mii-charinfo.bin").c_str(), "wb");
+                    if(f)
                     {
-                        char mii_name[0xB] = {0};
-                        ConvertToUTF8(mii_name, charinfo.mii_name, 0x11);
-                        auto curmiipath = ConsoleMiisDir + "/" + std::to_string(i) + " - " + std::string(mii_name);
-                        fsdevDeleteDirectoryRecursively(curmiipath.c_str());
-                        mkdir(curmiipath.c_str(), 777);
-                        FILE *f = fopen((curmiipath + "/mii-charinfo.bin").c_str(), "wb");
-                        if(f)
-                        {
-                            fwrite(&charinfo, 1, sizeof(charinfo), f);
-                            fclose(f);
-                        }
+                        fwrite(&charinfo, 1, sizeof(charinfo), f);
+                        fclose(f);
                     }
                 }
             }
-            mii::Finalize();
         }
     }
 
     Amiibo ProcessAmiibo(std::string Path)
     {
-        Amiibo amiibo;
+        Amiibo amiibo = {};
         amiibo.RandomizeUUID = false;
-        ZERO_NONPTR(amiibo.Infos);
         struct stat st;
         stat(Path.c_str(), &st);
-        auto ext = Path.substr(Path.find_last_of(".") + 1);
         if(st.st_mode & S_IFDIR)
         {
             std::ifstream ifs(Path + "/tag.json");
@@ -515,15 +484,7 @@ namespace emu
                         {
                             memcpy(&amiibo.Infos.Register.info.mii, DefaultCharInfo, sizeof(NfpMiiCharInfo));
 
-                            auto rc = mii::Initialize();
-                            if(rc == 0)
-                            {
-                                mii::BuildRandom(&amiibo.Infos.Register.info.mii);
-                                // Since mii service generates random miis with name "no name", change to "emuiibo"
-                                const char *name = "emuiibo";
-                                utf8_to_utf16(amiibo.Infos.Register.info.mii.mii_name, (const u8*)name, strlen(name));
-                                mii::Finalize();
-                            }
+                            GenerateRandomCharInfo(&amiibo.Infos.Register.info.mii);
 
                             FILE *f = fopen((Path + "/" + miifile).c_str(), "wb");
                             if(f)

@@ -81,7 +81,6 @@ namespace emu
         size_t GetAreaSize(u32 AreaAppId);
     };
 
-    bool ProcessKeys();
     void ProcessDirectory(std::string Path);
     void DumpConsoleMiis();
     Amiibo ProcessAmiibo(std::string Path);
@@ -97,5 +96,10 @@ namespace emu
         DEFINE_RESULT(NoAmiiboLoaded, Module, 1)
         DEFINE_RESULT(UnableToMove, Module, 2)
         DEFINE_RESULT(StatusOff, Module, 3)
+        DEFINE_RESULT(NoMiisFound, Module, 4)
+        DEFINE_RESULT(MiiIndexOOB, Module, 5)
     }
+
+    // Since mii service generates random miis with name "no name", change to "emuiibo"
+    #define EMU_DEFAULT_AMIIBO_NAME "emuiibo"
 }

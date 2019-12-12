@@ -11,6 +11,8 @@
 #include "emu/emu_Emulation.hpp"
 #include "emu/emu_Status.hpp"
 
+#include "mii/mii_Service.hpp"
+
 #include "nfp/user/user_IUserManager.hpp"
 #include "nfp/sys/sys_ISystemManager.hpp"
 #include "emu/emu_IEmulationService.hpp"
@@ -51,39 +53,32 @@ void __libnx_initheap(void)
 	fake_heap_end = (char*)addr + size;
 }
 
+namespace
+{
+    Result Initialize()
+    {
+        R_TRY(smInitialize());
+        R_TRY(fsInitialize());
+        R_TRY(fsdevMountSdmc());
+        R_TRY(timeInitialize());
+        __libnx_init_time();
+        R_TRY(hidInitialize());
+        R_TRY(mii::Initialize());
+        ams::hos::SetVersionForLibnx();
+
+        return 0;
+    }
+}
+
 void __appInit(void)
 {
-    Result rc = smInitialize();
-    if(R_FAILED(rc)) fatalThrow(MAKERESULT(Module_Libnx, LibnxError_InitFail_SM));
-
-    rc = setsysInitialize();
-    if(R_SUCCEEDED(rc))
-    {
-        SetSysFirmwareVersion fw;
-        rc = setsysGetFirmwareVersion(&fw);
-        if(R_SUCCEEDED(rc)) hosversionSet(MAKEHOSVERSION(fw.major, fw.minor, fw.micro));
-        setsysExit();
-    }
-    
-    rc = fsInitialize();
-    if(R_FAILED(rc)) fatalThrow(MAKERESULT(Module_Libnx, LibnxError_InitFail_FS));
-
-    rc = fsdevMountSdmc();
-    if(R_FAILED(rc)) fatalThrow(MAKERESULT(Module_Libnx, LibnxError_InitFail_FS));
-
-    rc = timeInitialize();
-    if(R_FAILED(rc)) fatalThrow(MAKERESULT(Module_Libnx, LibnxError_InitFail_Time));
-
-    __libnx_init_time();
-
-    rc = hidInitialize();
-    if(R_FAILED(rc)) fatalThrow(MAKERESULT(Module_Libnx, LibnxError_InitFail_HID));
-
-    ams::hos::SetVersionForLibnx();
+    auto rc = Initialize();
+    if(R_FAILED(rc)) fatalThrow(rc);
 }
 
 void __appExit(void)
 {
+    mii::Finalize();
     timeExit();
     hidExit();
     fsdevUnmountAll();
@@ -122,72 +117,87 @@ bool AllKeysDown(std::vector<u64> keys)
 
 void HOMENotificateOn()
 {
-    hidsysInitialize();
-    HidsysNotificationLedPattern pattern;
-    memset(&pattern, 0, sizeof(pattern));
-    pattern.baseMiniCycleDuration = 0x1;
-    pattern.totalMiniCycles = 0x2;
-    pattern.totalFullCycles = 0x1;
-    pattern.startIntensity = 0x0;
-    pattern.miniCycles[0].ledIntensity = 0xf;
-    pattern.miniCycles[0].transitionSteps = 0xf;
-    pattern.miniCycles[0].finalStepDuration = 0x0;
-    pattern.miniCycles[1].ledIntensity = 0x0;
-    pattern.miniCycles[1].transitionSteps = 0xf;
-    pattern.miniCycles[1].finalStepDuration = 0x0;
-    u64 UniquePadIds[2];
-    Result rc = hidsysGetUniquePadsFromNpad(hidGetHandheldMode() ? CONTROLLER_HANDHELD : CONTROLLER_PLAYER_1, UniquePadIds, 2, NULL);
-    if(R_SUCCEEDED(rc)) for(u32 i=0; i<2; i++) hidsysSetNotificationLedPattern(&pattern, UniquePadIds[i]);
-    hidsysExit();
+    auto rc = hidsysInitialize();
+    if(R_SUCCEEDED(rc))
+    {
+        HidsysNotificationLedPattern pattern = {};
+        pattern.baseMiniCycleDuration = 0x1;
+        pattern.totalMiniCycles = 0x2;
+        pattern.totalFullCycles = 0x1;
+        pattern.startIntensity = 0x0;
+        pattern.miniCycles[0].ledIntensity = 0xf;
+        pattern.miniCycles[0].transitionSteps = 0xf;
+        pattern.miniCycles[0].finalStepDuration = 0x0;
+        pattern.miniCycles[1].ledIntensity = 0x0;
+        pattern.miniCycles[1].transitionSteps = 0xf;
+        pattern.miniCycles[1].finalStepDuration = 0x0;
+        u64 UniquePadIds[2];
+        rc = hidsysGetUniquePadsFromNpad(hidGetHandheldMode() ? CONTROLLER_HANDHELD : CONTROLLER_PLAYER_1, UniquePadIds, 2, NULL);
+        if(R_SUCCEEDED(rc))
+        {
+            for(u32 i = 0; i < 2; i++) hidsysSetNotificationLedPattern(&pattern, UniquePadIds[i]);
+        }
+        hidsysExit();
+    }
 }
 
 void HOMENotificateOff()
 {
-    hidsysInitialize();
-    HidsysNotificationLedPattern pattern;
-    memset(&pattern, 0, sizeof(pattern));
-    pattern.baseMiniCycleDuration = 0x1;
-    pattern.totalMiniCycles = 0x4;
-    pattern.totalFullCycles = 0x1;
-    pattern.startIntensity = 0x4;
-    for(u32 i = 0; i < 2; i++)
+    auto rc = hidsysInitialize();
+    if(R_SUCCEEDED(rc))
     {
-        pattern.miniCycles[i].ledIntensity = 0x4;
-        pattern.miniCycles[i].transitionSteps = 0xf;
-        pattern.miniCycles[i].finalStepDuration = 0x1;
+        HidsysNotificationLedPattern pattern = {};
+        pattern.baseMiniCycleDuration = 0x1;
+        pattern.totalMiniCycles = 0x4;
+        pattern.totalFullCycles = 0x1;
+        pattern.startIntensity = 0x4;
+        for(u32 i = 0; i < 2; i++)
+        {
+            pattern.miniCycles[i].ledIntensity = 0x4;
+            pattern.miniCycles[i].transitionSteps = 0xf;
+            pattern.miniCycles[i].finalStepDuration = 0x1;
+        }
+        pattern.miniCycles[2].ledIntensity = 0x2;
+        pattern.miniCycles[2].transitionSteps = 0xf;
+        pattern.miniCycles[2].finalStepDuration = 0x1;
+        pattern.miniCycles[3].ledIntensity = 0x0;
+        pattern.miniCycles[3].transitionSteps = 0xf;
+        pattern.miniCycles[3].finalStepDuration = 0x1;
+        u64 UniquePadIds[2];
+        rc = hidsysGetUniquePadsFromNpad(hidGetHandheldMode() ? CONTROLLER_HANDHELD : CONTROLLER_PLAYER_1, UniquePadIds, 2, NULL);
+        if(R_SUCCEEDED(rc))
+        {
+            for(u32 i = 0; i < 2; i++) hidsysSetNotificationLedPattern(&pattern, UniquePadIds[i]);
+        }
+        hidsysExit();
     }
-    pattern.miniCycles[2].ledIntensity = 0x2;
-    pattern.miniCycles[2].transitionSteps = 0xf;
-    pattern.miniCycles[2].finalStepDuration = 0x1;
-    pattern.miniCycles[3].ledIntensity = 0x0;
-    pattern.miniCycles[3].transitionSteps = 0xf;
-    pattern.miniCycles[3].finalStepDuration = 0x1;
-    u64 UniquePadIds[2];
-    Result rc = hidsysGetUniquePadsFromNpad(hidGetHandheldMode() ? CONTROLLER_HANDHELD : CONTROLLER_PLAYER_1, UniquePadIds, 2, NULL);
-    if(R_SUCCEEDED(rc)) for(u32 i=0; i<2; i++) hidsysSetNotificationLedPattern(&pattern, UniquePadIds[i]);
-    hidsysExit();
 }
 
 void HOMENotificateError()
 {
-    hidsysInitialize();
-    HidsysNotificationLedPattern pattern;
-    memset(&pattern, 0, sizeof(pattern));
-    pattern.baseMiniCycleDuration = 0x1;
-    pattern.totalMiniCycles = 0x3;
-    pattern.totalFullCycles = 0x2;
-    pattern.startIntensity = 0x6;
-    pattern.miniCycles[0].ledIntensity = 0x6;
-    pattern.miniCycles[0].transitionSteps = 0x3;
-    pattern.miniCycles[0].finalStepDuration = 0x1;
-    pattern.miniCycles[1] = pattern.miniCycles[0];
-    pattern.miniCycles[2].ledIntensity = 0x0;
-    pattern.miniCycles[2].transitionSteps = 0x3;
-    pattern.miniCycles[2].finalStepDuration = 0x1;
-    u64 UniquePadIds[2];
-    Result rc = hidsysGetUniquePadsFromNpad(hidGetHandheldMode() ? CONTROLLER_HANDHELD : CONTROLLER_PLAYER_1, UniquePadIds, 2, NULL);
-    if(R_SUCCEEDED(rc)) for(u32 i=0; i<2; i++) hidsysSetNotificationLedPattern(&pattern, UniquePadIds[i]);
-    hidsysExit();
+    auto rc = hidsysInitialize();
+    if(R_SUCCEEDED(rc))
+    {
+        HidsysNotificationLedPattern pattern = {};
+        pattern.baseMiniCycleDuration = 0x1;
+        pattern.totalMiniCycles = 0x3;
+        pattern.totalFullCycles = 0x2;
+        pattern.startIntensity = 0x6;
+        pattern.miniCycles[0].ledIntensity = 0x6;
+        pattern.miniCycles[0].transitionSteps = 0x3;
+        pattern.miniCycles[0].finalStepDuration = 0x1;
+        pattern.miniCycles[1] = pattern.miniCycles[0];
+        pattern.miniCycles[2].ledIntensity = 0x0;
+        pattern.miniCycles[2].transitionSteps = 0x3;
+        pattern.miniCycles[2].finalStepDuration = 0x1;
+        u64 UniquePadIds[2];
+        rc = hidsysGetUniquePadsFromNpad(hidGetHandheldMode() ? CONTROLLER_HANDHELD : CONTROLLER_PLAYER_1, UniquePadIds, 2, NULL);
+        if(R_SUCCEEDED(rc))
+        {
+            for(u32 i = 0; i < 2; i++) hidsysSetNotificationLedPattern(&pattern, UniquePadIds[i]);
+        }
+        hidsysExit();
+    }
 }
 
 void InputHandleThread(void* arg)

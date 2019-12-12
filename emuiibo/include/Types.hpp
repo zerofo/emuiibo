@@ -28,12 +28,6 @@ static const Version CurrentVersion =
     EMUIIBO_DEV
 };
 
-// Some QoL macros for zeroing stuff
-
-#define ZERO(ptr, sizeof_tgt) memset(ptr, 0, sizeof(sizeof_tgt))
-#define ZERO_PTR(ptr) ZERO(ptr, *ptr)
-#define ZERO_NONPTR(nonptr) ZERO(&nonptr, nonptr)
-
 // Logging macro
 
 #define LOG_FMT(...) { \
