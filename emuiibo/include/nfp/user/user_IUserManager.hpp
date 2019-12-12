@@ -1,40 +1,18 @@
 
 #pragma once
 #include <switch.h>
-#include <stratosphere.hpp>
 #include "nfp/user/user_IUser.hpp"
 #include "emu/emu_Status.hpp"
 #include "emu/emu_Emulation.hpp"
 
 namespace nfp::user
 {
-    class IUserManager : public ams::sf::IMitmServiceObject
+    class IUserManager : public ICommonManager
     {
-        private:
-            enum class CommandId
-            {
-                CreateUserInterface = 0,
-            };
+        NFP_REGISTER_CTOR(ICommonManager)
 
-        public:
-            IUserManager(std::shared_ptr<::Service> &&s, const ams::sm::MitmProcessInfo &c) : IMitmServiceObject(std::forward<std::shared_ptr<::Service>>(s), c)
-            {
-                LOG_FMT("Accessed nfp:user with app ID " << std::hex << std::setw(16) << std::setfill('0') << c.program_id.value)
-                emu::SetCurrentAppId(c.program_id.value);
-            }
+        NFP_COMMON_MANAGER_CREATE_CMD(IUser)
 
-            static bool ShouldMitm(const ams::sm::MitmProcessInfo &client_info)
-            {
-                return emu::IsStatusOn();
-            }
-
-        protected:
-            ams::Result CreateUserInterface(ams::sf::Out<std::shared_ptr<IUser>> out);
-
-        public:
-            DEFINE_SERVICE_DISPATCH_TABLE
-            {
-                MAKE_SERVICE_COMMAND_META(CreateUserInterface),
-            };
+        NFP_COMMON_MANAGER_BASE
     };
 }

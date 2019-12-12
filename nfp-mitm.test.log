@@ -1,3 +1,6 @@
+
+* Note: this is a log from very early emuiibo builds (before it became emuiibo), I keep it in here as a reference for possible commands (this shows pretty well how games access NFP services)
+
 NfpUserMitmService::CreateUserInterface()
 NfpUserInterface::NfpUserInterface()
 Is domain with objid 5

@@ -23,9 +23,9 @@ namespace nfp
     _NFP_INFO_STRUCT_FOR_IPC(Common)
     _NFP_INFO_STRUCT_FOR_IPC(Register)
 
-    struct AdminInfo
+    struct AdminInfo : public ams::sf::LargeData
     {
-        u8 Data[0x40]; // I guess we have to RE this...
+        u8 data[0x40]; // I have to RE this...
     } PACKED;
 
     constexpr ams::sm::ServiceName UserServiceName = ams::sm::ServiceName::Encode("nfp:user");

@@ -12,8 +12,8 @@
 #include "emu/emu_Status.hpp"
 
 #include "nfp/user/user_IUserManager.hpp"
+#include "nfp/sys/sys_ISystemManager.hpp"
 #include "emu/emu_IEmulationService.hpp"
-// #include <nfp/sys/sys_ISystemManager.hpp>
 
 #define INNER_HEAP_SIZE 0x40000
 
@@ -260,6 +260,11 @@ int main(int argc, char **argv)
  
     // Register nfp:user MitM
     R_ASSERT(emuiibo_manager.RegisterMitmServer<nfp::user::IUserManager>(nfp::UserServiceName));
+
+    /*
+    // Register nfp:sys MitM - why is this still fucking broken?
+    R_ASSERT(emuiibo_manager.RegisterMitmServer<nfp::sys::ISystemManager>(nfp::SystemServiceName));
+    */
     
     // Register custom nfp:emu service
     R_ASSERT(emuiibo_manager.RegisterServer<emu::IEmulationService>(emu::EmuServiceName, MaxSessions));
