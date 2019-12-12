@@ -25,8 +25,6 @@ namespace nfp::user
 
             static bool ShouldMitm(const ams::sm::MitmProcessInfo &client_info)
             {
-                LOG_FMT("Should MitM -> status on: " << std::boolalpha << emu::IsStatusOn())
-                // We only MitM NFP if emulation is on.
                 return emu::IsStatusOn();
             }
 

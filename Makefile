@@ -6,6 +6,7 @@ export EMUIIBO_MICRO := 0
 .PHONY: all dev clean
 
 base:
+	@$(MAKE) -C libstratosphere/
 	@$(MAKE) -C emuiibo/
 	@rm -rf $(CURDIR)/SdOut
 	@mkdir -p $(CURDIR)/SdOut/contents/0100000000000352/flags
@@ -14,16 +15,17 @@ base:
 
 setdev:
 	$(eval export EMUIIBO_DEV := true)
-
-nodev:
-	$(eval export EMUIIBO_DEV := false)
 	@echo
 	@echo WARNING! Building in development mode - use this at your own risk...
 	@echo
+
+nodev:
+	$(eval export EMUIIBO_DEV := false)
 
 all: nodev base
 dev: setdev base
 
 clean:
 	@rm -rf $(CURDIR)/SdOut
+	@$(MAKE) clean -C libstratosphere/
 	@$(MAKE) clean -C emuiibo/

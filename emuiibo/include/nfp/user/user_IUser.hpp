@@ -50,7 +50,7 @@ namespace nfp::user
             ~IUser();
 
         protected:
-            ams::Result Initialize(const ams::sf::ClientProcessId &client_pid, const ams::sf::InBuffer &input_ver_data, u64 aruid, u64 zero);
+            ams::Result Initialize(const ams::sf::ClientAppletResourceUserId &client_aruid, const ams::sf::ClientProcessId &client_pid, const ams::sf::InBuffer &mcu_data);
             ams::Result Finalize();
             ams::Result ListDevices(const ams::sf::OutPointerArray<DeviceHandle> &out_devices, ams::sf::Out<s32> out_count);
             ams::Result StartDetection(DeviceHandle handle);

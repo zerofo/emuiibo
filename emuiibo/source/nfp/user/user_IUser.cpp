@@ -23,10 +23,10 @@ namespace nfp::user
         delete this->fwd_srv;
     }
 
-    ams::Result IUser::Initialize(const ams::sf::ClientProcessId &client_pid, const ams::sf::InBuffer &input_ver_data, u64 aruid, u64 zero)
+    ams::Result IUser::Initialize(const ams::sf::ClientAppletResourceUserId &client_aruid, const ams::sf::ClientProcessId &client_pid, const ams::sf::InBuffer &mcu_data)
     {
-        LOG_FMT("Process ID:" << client_pid.GetValue().value)
-        LOG_FMT("ARUID: " << aruid);
+        LOG_FMT("Process ID: 0x" << std::hex << client_pid.GetValue().value)
+        LOG_FMT("ARUID: 0x" << std:: hex << client_aruid.GetValue().value)
         this->state = NfpState_Initialized;
         this->deviceState = NfpDeviceState_Initialized;
         return ams::ResultSuccess();
