@@ -1,0 +1,10 @@
+build/
+.vscode/
+*.nso
+*.npdm
+*.nsp
+*.elf
+bin/
+obj/
+.vs/
+SdOut/
