@@ -42,8 +42,8 @@
             this.label3 = new System.Windows.Forms.Label();
             this.groupBox3 = new System.Windows.Forms.GroupBox();
             this.statusStrip1 = new System.Windows.Forms.StatusStrip();
-            this.toolStripStatusLabel1 = new System.Windows.Forms.ToolStripStatusLabel();
             this.toolStripStatusLabel2 = new System.Windows.Forms.ToolStripStatusLabel();
+            this.toolStripStatusLabel1 = new System.Windows.Forms.ToolStripStatusLabel();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             this.groupBox1.SuspendLayout();
             this.groupBox2.SuspendLayout();
@@ -63,6 +63,7 @@
             // textBox1
             // 
             this.textBox1.Location = new System.Drawing.Point(18, 42);
+            this.textBox1.MaxLength = 10;
             this.textBox1.Name = "textBox1";
             this.textBox1.Size = new System.Drawing.Size(361, 20);
             this.textBox1.TabIndex = 1;
@@ -112,19 +113,20 @@
             // checkBox1
             // 
             this.checkBox1.AutoSize = true;
-            this.checkBox1.Location = new System.Drawing.Point(18, 149);
+            this.checkBox1.Location = new System.Drawing.Point(18, 170);
             this.checkBox1.Name = "checkBox1";
             this.checkBox1.Size = new System.Drawing.Size(168, 17);
             this.checkBox1.TabIndex = 4;
             this.checkBox1.Text = "Randomize UUID in emulation";
             this.checkBox1.UseVisualStyleBackColor = true;
+            this.checkBox1.CheckedChanged += new System.EventHandler(this.CheckBox1_CheckedChanged);
             // 
             // label2
             // 
             this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(15, 79);
+            this.label2.Location = new System.Drawing.Point(15, 87);
             this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(323, 52);
+            this.label2.Size = new System.Drawing.Size(361, 65);
             this.label2.TabIndex = 5;
             this.label2.Text = resources.GetString("label2.Text");
             // 
@@ -136,7 +138,7 @@
             this.groupBox2.Controls.Add(this.checkBox1);
             this.groupBox2.Location = new System.Drawing.Point(418, 12);
             this.groupBox2.Name = "groupBox2";
-            this.groupBox2.Size = new System.Drawing.Size(396, 182);
+            this.groupBox2.Size = new System.Drawing.Size(396, 206);
             this.groupBox2.TabIndex = 6;
             this.groupBox2.TabStop = false;
             this.groupBox2.Text = "2 - Virtual Amiibo Settings";
@@ -156,19 +158,19 @@
             this.label3.AutoSize = true;
             this.label3.BackColor = System.Drawing.SystemColors.Control;
             this.label3.ForeColor = System.Drawing.Color.DimGray;
-            this.label3.Location = new System.Drawing.Point(59, 193);
+            this.label3.Location = new System.Drawing.Point(58, 181);
             this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(279, 13);
+            this.label3.Size = new System.Drawing.Size(291, 13);
             this.label3.TabIndex = 8;
-            this.label3.Text = "In console, emuiibo generates a random mii for the amiibo.";
+            this.label3.Text = "In console, emuiibo will generate a random mii for the amiibo.";
             // 
             // groupBox3
             // 
             this.groupBox3.Controls.Add(this.button1);
             this.groupBox3.Controls.Add(this.label3);
-            this.groupBox3.Location = new System.Drawing.Point(418, 206);
+            this.groupBox3.Location = new System.Drawing.Point(418, 224);
             this.groupBox3.Name = "groupBox3";
-            this.groupBox3.Size = new System.Drawing.Size(396, 223);
+            this.groupBox3.Size = new System.Drawing.Size(396, 205);
             this.groupBox3.TabIndex = 9;
             this.groupBox3.TabStop = false;
             this.groupBox3.Text = "3 - Create";
@@ -185,6 +187,12 @@
             this.statusStrip1.TabIndex = 10;
             this.statusStrip1.Text = "statusStrip1";
             // 
+            // toolStripStatusLabel2
+            // 
+            this.toolStripStatusLabel2.Name = "toolStripStatusLabel2";
+            this.toolStripStatusLabel2.Size = new System.Drawing.Size(776, 17);
+            this.toolStripStatusLabel2.Spring = true;
+            // 
             // toolStripStatusLabel1
             // 
             this.toolStripStatusLabel1.Image = global::emuGUIibo.Properties.Resources.accept;
@@ -192,12 +200,6 @@
             this.toolStripStatusLabel1.Size = new System.Drawing.Size(35, 17);
             this.toolStripStatusLabel1.Text = "    ";
             this.toolStripStatusLabel1.TextImageRelation = System.Windows.Forms.TextImageRelation.TextBeforeImage;
-            // 
-            // toolStripStatusLabel2
-            // 
-            this.toolStripStatusLabel2.Name = "toolStripStatusLabel2";
-            this.toolStripStatusLabel2.Size = new System.Drawing.Size(761, 17);
-            this.toolStripStatusLabel2.Spring = true;
             // 
             // mainForm
             // 

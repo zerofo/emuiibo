@@ -6,17 +6,15 @@
 
 namespace nfp::user
 {
-    ams::Result IUser::OpenApplicationArea(ams::sf::Out<u32> npad_id, DeviceHandle handle, u32 id)
+    ams::Result IUser::OpenApplicationArea(DeviceHandle handle, u32 id)
     {
         auto amiibo = emu::GetCurrentLoadedAmiibo();
         LOG_FMT("Open area - is amiibo valid? " << std::boolalpha << amiibo.IsValid() << ", exists area? " << std::boolalpha << amiibo.ExistsArea(id))
-        if(amiibo.ExistsArea(id))
-        {
-            this->currentAreaAppId = id;
-            npad_id.SetValue(handle.npad_id);
-            return ams::ResultSuccess();
-        }
-        return result::ResultAreaNotFound;
+
+        R_UNLESS(amiibo.ExistsArea(id), result::ResultAreaNotFound);
+
+        this->currentAreaAppId = id;
+        return ams::ResultSuccess();
     }
 
     ams::Result IUser::GetApplicationArea(const ams::sf::OutBuffer &data, ams::sf::Out<u32> data_size, DeviceHandle handle)

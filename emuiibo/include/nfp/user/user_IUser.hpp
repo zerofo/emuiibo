@@ -23,7 +23,7 @@ namespace nfp::user
         NFP_REGISTER_CTOR(ICommonInterface)
 
         protected:
-            ams::Result OpenApplicationArea(ams::sf::Out<u32> npad_id, DeviceHandle handle, u32 id);
+            ams::Result OpenApplicationArea(DeviceHandle handle, u32 id);
             ams::Result GetApplicationArea(const ams::sf::OutBuffer &data, ams::sf::Out<u32> data_size, DeviceHandle handle);
             ams::Result SetApplicationArea(const ams::sf::InBuffer &data, DeviceHandle handle);
             ams::Result CreateApplicationArea(const ams::sf::InBuffer &data, DeviceHandle handle, u32 id);

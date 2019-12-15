@@ -3,7 +3,7 @@
 
 bool nfpemuIsAccessible()
 {
-	SmServiceName nfpemuService = smEncodeName("nfp:emu");
+    SmServiceName nfpemuService = smEncodeName("nfp:emu");
     Handle tmph = 0;
     Result rc = smRegisterService(&tmph, nfpemuService, false, 1);
     if(R_FAILED(rc)) return true;

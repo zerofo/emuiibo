@@ -275,8 +275,6 @@ namespace emu
         if(name.length() > 10) name = name.substr(0, 10);
         strcpy(reg.info.amiibo_name, name.c_str());
 
-        NfpMiiCharInfo charinfo = {};
-
         rename((Path + "/mii.dat").c_str(), (outdir + "/mii-charinfo.bin").c_str());
 
         auto time = std::time(NULL);
@@ -483,7 +481,6 @@ namespace emu
                         else
                         {
                             memcpy(&amiibo.Infos.Register.info.mii, DefaultCharInfo, sizeof(NfpMiiCharInfo));
-
                             GenerateRandomCharInfo(&amiibo.Infos.Register.info.mii);
 
                             FILE *f = fopen((Path + "/" + miifile).c_str(), "wb");

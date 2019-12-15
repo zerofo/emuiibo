@@ -27,7 +27,7 @@ namespace nfp::sys
             ams::Result Format(DeviceHandle handle);
             ams::Result GetAdminInfo(ams::sf::Out<AdminInfo> out_info, DeviceHandle handle);
             ams::Result GetRegisterInfo2(ams::sf::Out<RegisterInfo> out_info, DeviceHandle handle);
-            ams::Result SetRegisterInfo(DeviceHandle handle, RegisterInfo info);
+            ams::Result SetRegisterInfo(DeviceHandle handle, const RegisterInfo &info);
             ams::Result DeleteRegisterInfo(DeviceHandle handle);
             ams::Result DeleteApplicationArea(DeviceHandle handle);
             ams::Result ExistsApplicationArea(ams::sf::Out<u8> out_exists, DeviceHandle handle);
