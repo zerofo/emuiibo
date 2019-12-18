@@ -142,12 +142,13 @@ namespace emu
                 fclose(f);
 
                 nfp::TagInfo tag = {};
+                tag.info.protocol = 1;
                 tag.info.tag_type = 2;
                 tag.info.uuid_length = 10;
                 memcpy(tag.info.uuid, dump.UUID, 10);
                 auto jtag = JSON::object();
                 std::stringstream strm;
-                for(u32 i = 0; i < 9; i++) strm << std::hex << std::setw(2) << std::uppercase << std::setfill('0') << (int)tag.info.uuid[i];
+                for(u32 i = 0; i < 10; i++) strm << std::hex << std::setw(2) << std::setfill('0') << (int)tag.info.uuid[i];
                 jtag["uuid"] = strm.str();
                 std::ofstream ofs(dir + "/tag.json");
                 ofs << std::setw(4) << jtag;
@@ -158,7 +159,7 @@ namespace emu
                 auto jmodel = JSON::object();
                 strm.str("");
                 strm.clear();
-                for(u32 i = 0; i < 8; i++) strm << std::hex << std::setw(2) << std::uppercase << std::setfill('0') << (int)model.info.amiibo_id[i];
+                for(u32 i = 0; i < 8; i++) strm << std::hex << std::setw(2) << std::setfill('0') << (int)model.info.amiibo_id[i];
                 jmodel["amiiboId"] = strm.str();
                 ofs = std::ofstream(dir + "/model.json");
                 ofs << std::setw(4) << jmodel;
@@ -247,11 +248,12 @@ namespace emu
 
         nfp::TagInfo tag = {};
         tag.info.tag_type = 2;
+        tag.info.protocol = 1;
         tag.info.uuid_length = 10;
         memcpy(tag.info.uuid, dump.UUID, 10);
         auto jtag = JSON::object();
         std::stringstream strm;
-        for(u32 i = 0; i < 9; i++) strm << std::hex << std::setw(2) << std::uppercase << std::setfill('0') << (int)tag.info.uuid[i];
+        for(u32 i = 0; i < 10; i++) strm << std::hex << std::setw(2) << std::setfill('0') << (int)tag.info.uuid[i];
         bool randomuuid = old.value("randomizeUuid", false);
         if(randomuuid) jtag["randomUuid"] = true;
         else jtag["uuid"] = strm.str();
@@ -264,7 +266,7 @@ namespace emu
         auto jmodel = JSON::object();
         strm.str("");
         strm.clear();
-        for(u32 i = 0; i < 8; i++) strm << std::hex << std::setw(2) << std::uppercase << std::setfill('0') << (int)model.info.amiibo_id[i];
+        for(u32 i = 0; i < 8; i++) strm << std::hex << std::setw(2) << std::setfill('0') << (int)model.info.amiibo_id[i];
         jmodel["amiiboId"] = strm.str();
         ofs = std::ofstream(outdir + "/model.json");
         ofs << std::setw(4) << jmodel;
@@ -384,20 +386,16 @@ namespace emu
         mkdir(ConsoleMiisDir.c_str(), 777);
         u32 miicount = 0;
         auto rc = mii::GetCount(&miicount);
-        LOG_FMT("Get Mii count: 0x" << std::hex << rc)
         if(R_SUCCEEDED(rc) && (miicount > 0))
         {
-            LOG_FMT("Mii count: " << miicount)
             for(u32 i = 0; i < miicount; i++)
             {
                 NfpMiiCharInfo charinfo;
                 rc = mii::GetCharInfo(i, &charinfo);
-                LOG_FMT("Get Mii charinfo: 0x" << std::hex << rc)
                 if(R_SUCCEEDED(rc))
                 {
                     char mii_name[0xB] = {0};
                     utf16_to_utf8((u8*)mii_name, (const u16*)charinfo.mii_name, 0x11);
-                    LOG_FMT("Got mii name: " << std::hex << mii_name)
                     auto curmiipath = ConsoleMiisDir + "/" + std::to_string(i) + " - " + std::string(mii_name);
                     fsdevDeleteDirectoryRecursively(curmiipath.c_str());
                     mkdir(curmiipath.c_str(), 777);
@@ -428,10 +426,8 @@ namespace emu
                 bool randomuuid = jtag.value("randomUuid", false);
                 amiibo.Infos.Tag.info.uuid_length = 10;
                 amiibo.Infos.Tag.info.tag_type = 2;
-                if(randomuuid)
-                {
-                    amiibo.RandomizeUUID = true;
-                }
+                amiibo.Infos.Tag.info.protocol = 1;
+                if(randomuuid) amiibo.RandomizeUUID = true;
                 else
                 {
                     strm.str("");
@@ -506,7 +502,7 @@ namespace emu
                             amiibo.Infos.Common.info.last_write_day = (u8)std::stoi(tmpdate.substr(8, 2));
                             amiibo.Infos.Common.info.write_counter = (u16)jcommon["writeCounter"];
                             amiibo.Infos.Common.info.version = (u16)jcommon["version"];
-                            amiibo.Infos.Common.info.application_area_size = 0xD8;
+                            amiibo.Infos.Common.info.application_area_size = 0xd8;
                             ifs.close();
                             amiibo.Path = Path;
                         }

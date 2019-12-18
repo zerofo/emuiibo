@@ -26,7 +26,7 @@ namespace nfp
     struct AdminInfo : public ams::sf::LargeData
     {
         u8 data[0x40]; // I have to RE this...
-    } PACKED;
+    };
 
     constexpr ams::sm::ServiceName UserServiceName = ams::sm::ServiceName::Encode("nfp:user");
     constexpr ams::sm::ServiceName SystemServiceName = ams::sm::ServiceName::Encode("nfp:sys");

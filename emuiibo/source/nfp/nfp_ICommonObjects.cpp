@@ -139,6 +139,13 @@ namespace nfp
         if(!amiibo.IsValid()) return result::ResultDeviceNotFound;
         ModelInfo info = {};
         memcpy(&info, &amiibo.Infos.Model, sizeof(info));
+
+        // Do some magic to return the amiibo ID same way N does...
+        u8 tmpvalues[2] = { info.info.amiibo_id[4], info.info.amiibo_id[5] };
+        info.info.amiibo_id[5] = tmpvalues[0];
+        info.info.amiibo_id[4] = tmpvalues[1];
+        info.info.amiibo_id[7] = 0;
+
         out_info.SetValue(info);
         return ams::ResultSuccess();
     }
