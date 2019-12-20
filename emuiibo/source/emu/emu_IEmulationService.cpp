@@ -4,8 +4,12 @@
 
 namespace emu
 {
+    #define EMU_CHECK_ON R_UNLESS(emu::IsStatusOn(), result::ResultStatusOff);
+
     ams::Result IEmulationService::GetCurrentAmiibo(const ams::sf::OutBuffer &path)
     {
+        EMU_CHECK_ON
+
         auto amiibo = GetCurrentLoadedAmiibo();
         R_UNLESS(amiibo.IsValid(), result::ResultNoAmiiboLoaded);
 
@@ -14,20 +18,29 @@ namespace emu
         return ams::ResultSuccess();
     }
 
-    void IEmulationService::SetCustomAmiibo(const ams::sf::InBuffer &path)
+    ams::Result IEmulationService::SetCustomAmiibo(const ams::sf::InBuffer &path)
     {
+        EMU_CHECK_ON
+
         emu::SetCustomAmiibo(std::string((char*)path.GetPointer()));
+        return ams::ResultSuccess();
     }
 
-    void IEmulationService::HasCustomAmiibo(ams::sf::Out<bool> out_has)
+    ams::Result IEmulationService::HasCustomAmiibo(ams::sf::Out<bool> out_has)
     {
+        EMU_CHECK_ON
+
         bool has = emu::HasCustomAmiibo();
         out_has.SetValue(has);
+        return ams::ResultSuccess();
     }
 
-    void IEmulationService::ResetCustomAmiibo()
+    ams::Result IEmulationService::ResetCustomAmiibo()
     {
+        EMU_CHECK_ON
+
         emu::ResetCustomAmiibo();
+        return ams::ResultSuccess();
     }
 
     void IEmulationService::SetEmulationOnForever()
@@ -47,7 +60,7 @@ namespace emu
 
     ams::Result IEmulationService::MoveToNextAmiibo()
     {
-        R_UNLESS(IsStatusOn(), result::ResultStatusOff);
+        EMU_CHECK_ON
 
         bool ok = emu::MoveToNextAmiibo();
         R_UNLESS(ok, result::ResultUnableToMove);
@@ -61,9 +74,12 @@ namespace emu
         out_status.SetValue(static_cast<u32>(status));
     }
 
-    void IEmulationService::Refresh()
+    ams::Result IEmulationService::Refresh()
     {
+        EMU_CHECK_ON
+        
         emu::Refresh();
+        return ams::ResultSuccess();
     }
 
     void IEmulationService::GetVersion(ams::sf::Out<Version> out_version)

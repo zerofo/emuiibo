@@ -26,15 +26,15 @@ namespace emu
             };
 
             ams::Result GetCurrentAmiibo(const ams::sf::OutBuffer &path);
-            void SetCustomAmiibo(const ams::sf::InBuffer &path);
-            void HasCustomAmiibo(ams::sf::Out<bool> out_has);
-            void ResetCustomAmiibo();
+            ams::Result SetCustomAmiibo(const ams::sf::InBuffer &path);
+            ams::Result HasCustomAmiibo(ams::sf::Out<bool> out_has);
+            ams::Result ResetCustomAmiibo();
             void SetEmulationOnForever();
             void SetEmulationOnOnce();
             void SetEmulationOff();
             ams::Result MoveToNextAmiibo();
             void GetStatus(ams::sf::Out<u32> out_status);
-            void Refresh();
+            ams::Result Refresh();
             void GetVersion(ams::sf::Out<Version> out_version);
 
         public:

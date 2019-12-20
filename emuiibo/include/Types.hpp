@@ -33,7 +33,7 @@ static const Version CurrentVersion =
 #define LOG_FMT(...) { \
     std::stringstream strm; \
     strm << "[ emuiibo v" << EMUIIBO_VERSION << " | " << __PRETTY_FUNCTION__ << " ] " << __VA_ARGS__ << std::endl; \
-    FILE *f = fopen((emu::EmuDir + "/emuiibo-log.txt").c_str(), "a+"); \
+    FILE *f = fopen(emu::LogFilePath.c_str(), "a+"); \
     if(f) \
     { \
         fprintf(f, "%s", strm.str().c_str()); \

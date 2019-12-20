@@ -8,13 +8,13 @@
 
 namespace emu
 {
-    static int Index = -1;
-    static Amiibo CurrentAmiibo;
-    static int LastCount = -1;
-    static int LastIdCount = 0;
-    static std::string CustomPath;
-    static u64 CurrentId = 0;
-    static ams::os::Mutex AmiiboLock;
+    static int cur_amiibo_idx = -1;
+    static Amiibo cur_amiibo = {};
+    static int last_global_count = -1;
+    static int last_appid_count = 0;
+    static std::string custom_amiibo_path;
+    static u64 current_appid = 0;
+    static ams::os::Mutex emulation_lock;
 
     static std::string MakeFromId(u64 Id)
     {
@@ -58,7 +58,7 @@ namespace emu
         return count;
     }
 
-    static std::string GetAmiiboPathForIndex(u32 Idx, std::string Path)
+    static std::string GetAmiiboPathForcur_amiibo_idx(u32 Idx, std::string Path)
     {
         std::string out;
         u32 count = 0;
@@ -88,7 +88,7 @@ namespace emu
 
     void Refresh()
     {
-        LOCK_SCOPED(AmiiboLock,
+        LOCK_SCOPED(emulation_lock,
         {
             mkdir(EmuDir.c_str(), 777);
             mkdir(AmiiboDir.c_str(), 777);
@@ -96,19 +96,19 @@ namespace emu
             DumpConsoleMiis();
             ProcessDirectory(EmuDir); // For <=0.2.x amiibos
             ProcessDirectory(AmiiboDir);
-            LastCount = GetAmiiboCount(AmiiboDir);
-            if(CurrentId > 0)
+            last_global_count = GetAmiiboCount(AmiiboDir);
+            if(current_appid > 0)
             {
-                ProcessDirectory(AmiiboDir + "/" + MakeFromId(CurrentId));
-                LastIdCount = GetAmiiboCount(AmiiboDir + "/" + MakeFromId(CurrentId));
+                ProcessDirectory(AmiiboDir + "/" + MakeFromId(current_appid));
+                last_appid_count = GetAmiiboCount(AmiiboDir + "/" + MakeFromId(current_appid));
             }
         })
         MoveToNextAmiibo();
     }
 
-    Amiibo GetCurrentLoadedAmiibo() LOCK_SCOPED(AmiiboLock,
+    Amiibo GetCurrentLoadedAmiibo() LOCK_SCOPED(emulation_lock,
     {
-        return CurrentAmiibo;
+        return cur_amiibo;
     })
 
     bool MoveToNextAmiibo()
@@ -119,42 +119,42 @@ namespace emu
             return MoveToNextAmiibo();
         }
 
-        LOCK_SCOPED(AmiiboLock,
+        LOCK_SCOPED(emulation_lock,
         {
             auto dir = AmiiboDir;
 
-            if((Index + 1) >= LastCount)
+            if((cur_amiibo_idx + 1) >= last_global_count)
             {
-                if(LastIdCount > 0)
+                if(last_appid_count > 0)
                 {
-                    if((Index + 1) >= (LastCount + LastIdCount))
+                    if((cur_amiibo_idx + 1) >= (last_global_count + last_appid_count))
                     {
-                        Index = 0;
+                        cur_amiibo_idx = 0;
                         dir = AmiiboDir;
                     }
                     else
                     {
-                        Index++;
-                        dir = AmiiboDir + "/" + MakeFromId(CurrentId);
+                        cur_amiibo_idx++;
+                        dir = AmiiboDir + "/" + MakeFromId(current_appid);
                     }
                 }
                 else
                 {
-                    Index = 0;
+                    cur_amiibo_idx = 0;
                     dir = AmiiboDir;
                 }
             }
             else
             {
-                Index++;
+                cur_amiibo_idx++;
                 dir = AmiiboDir;
             }
 
-            int idx = Index;
-            if(idx >= LastCount) idx -= LastCount;
+            int idx = cur_amiibo_idx;
+            if(idx >= last_global_count) idx -= last_global_count;
 
-            auto amiibo = GetAmiiboPathForIndex(idx, dir);
-            CurrentAmiibo = ProcessAmiibo(amiibo);
+            auto amiibo = GetAmiiboPathForcur_amiibo_idx(idx, dir);
+            cur_amiibo = ProcessAmiibo(amiibo);
         })
         
         return true;
@@ -163,19 +163,19 @@ namespace emu
     bool CanMoveNext()
     {
         if(HasCustomAmiibo()) return false;
-        return ((Index + 1) < LastCount);
+        return ((cur_amiibo_idx + 1) < last_global_count);
     }
 
-    void SetCustomAmiibo(std::string Path) LOCK_SCOPED(AmiiboLock,
+    void SetCustomAmiibo(std::string Path) LOCK_SCOPED(emulation_lock,
     {
-        CustomPath = Path;
-        CurrentAmiibo = ProcessAmiibo(CustomPath);
+        custom_amiibo_path = Path;
+        cur_amiibo = ProcessAmiibo(custom_amiibo_path);
     })
 
-    bool HasCustomAmiibo()
+    bool HasCustomAmiibo() LOCK_SCOPED(emulation_lock,
     {
-        return !CustomPath.empty();
-    }
+        return !custom_amiibo_path.empty();
+    })
 
     void ResetCustomAmiibo()
     {
@@ -184,16 +184,18 @@ namespace emu
 
     void SetCurrentAppId(u64 Id)
     {
-        if(CurrentId != Id)
+        bool has_custom = HasCustomAmiibo();
+        LOCK_SCOPED(emulation_lock,
         {
-            CurrentId = Id;
-            Index = -1;
-            Refresh();
-        }
+            if(current_appid == Id) return;
+            current_appid = Id;
+            if(!has_custom) cur_amiibo_idx = -1;
+        })
+        if(!has_custom) Refresh();
     }
 
-    u64 GetCurrentAppId() LOCK_SCOPED(AmiiboLock,
+    u64 GetCurrentAppId() LOCK_SCOPED(emulation_lock,
     {
-        return CurrentId;
+        return current_appid;
     })
 }

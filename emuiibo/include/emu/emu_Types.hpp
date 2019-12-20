@@ -85,6 +85,13 @@ namespace emu
     void DumpConsoleMiis();
     Amiibo ProcessAmiibo(std::string Path);
 
+    struct Settings
+    {
+        bool combo_enabled;
+    };
+
+    Settings LoadSettings();
+
     // IPC-related types
 
     constexpr ams::sm::ServiceName EmuServiceName = ams::sm::ServiceName::Encode("nfp:emu");

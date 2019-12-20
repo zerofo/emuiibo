@@ -207,7 +207,6 @@ namespace nfp
 
     ams::Result ICommonManager::CreateForwardInterface(Service *manager, Service *out)
     {
-        if(emu::IsStatusOff()) LOG_FMT("Status isn't on - skipping MitM...")
         R_UNLESS(emu::IsStatusOn(), ams::sm::mitm::ResultShouldForwardToSession());
         R_TRY(_fwd_CreateInterface(out, manager));
         LOG_FMT("Created MitM'd interface for emuiibo!")

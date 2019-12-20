@@ -512,4 +512,33 @@ namespace emu
         }
         return amiibo;
     }
+
+    static Settings CreateSettings()
+    {
+        Settings set = {};
+        set.combo_enabled = false;
+
+        auto json = JSON::object();
+        json["comboEnabled"] = set.combo_enabled;
+        std::ofstream ofs(SettingsPath);
+        ofs << std::setw(4) << json << std::endl;
+        ofs.close();
+
+        return set;
+    }
+
+    Settings LoadSettings()
+    {
+        std::ifstream ifs(SettingsPath);
+        if(ifs.good())
+        {
+            auto json = JSON::parse(ifs);
+            Settings set = {};
+            set.combo_enabled = json.value("comboEnabled", false);
+
+            return set;
+        }
+
+        return CreateSettings();
+    }
 }

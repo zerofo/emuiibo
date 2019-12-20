@@ -262,11 +262,16 @@ namespace
 int main(int argc, char **argv)
 {
     LOG_FMT("Booting up...")
+
     emu::Refresh();
+    auto settings = emu::LoadSettings();
    
-    ams::os::Thread thread_Input;
-    R_ASSERT(thread_Input.Initialize(&InputHandleThread, nullptr, 0x4000, 0x15));
-    R_ASSERT(thread_Input.Start());
+    if(settings.combo_enabled)
+    {
+        ams::os::Thread thread_Input;
+        R_ASSERT(thread_Input.Initialize(&InputHandleThread, nullptr, 0x4000, 0x15));
+        R_ASSERT(thread_Input.Start());
+    }
  
     // Register nfp:user MitM
     R_ASSERT(emuiibo_manager.RegisterMitmServer<nfp::user::IUserManager>(nfp::UserServiceName));
