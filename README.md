@@ -1,4 +1,4 @@
-![Logo](emuGUIibo/PcIcon.png)
+![Logo](emutool/PcIcon.png)
 
 # emuiibo
 
@@ -42,9 +42,9 @@ All the input combos are performed with R-Stick pressing and pressing the D-pad 
 
 ## Amiibo emulation
 
-Emuiibo no longer requires dumps to emulate amiibos. Instead, you can use `emuGUIibo` PC tool in order to generate virtual amiibos.
+Emuiibo no longer requires dumps to emulate amiibos. Instead, you can use `emutool` PC tool in order to generate virtual amiibos.
 
-![Screenshot](emuGUIibo/Screenshot.png)
+![Screenshot](emutool/Screenshot.png)
 
 ### How do virtual amiibos work?
 
@@ -74,4 +74,4 @@ You have an implementation for C/C++ and libnx in [here](nfpemu-libnx).
 
 - **libstratosphere** project and libraries
 
-- **AmiiboAPI** (JSON API), which is used by `emuGUIibo` to get a proper, full amiibo list, in order to generate virtual amiibos without the need of raw dumps.
+- **AmiiboAPI** (JSON API), which is used by `emutool` to get a proper, full amiibo list, in order to generate virtual amiibos without the need of raw dumps.

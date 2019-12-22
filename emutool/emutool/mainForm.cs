@@ -4,11 +4,11 @@ using System.IO;
 using System.Linq;
 using System.Windows.Forms;
 
-namespace emuGUIibo
+namespace emutool
 {
-    public partial class mainForm : Form
+    public partial class MainForm : Form
     {
-        public mainForm()
+        public MainForm()
         {
             InitializeComponent();
 
@@ -58,7 +58,7 @@ namespace emuGUIibo
         private void comboBox2_SelectedIndexChanged(object sender, EventArgs e)
         {
             pictureBox1.ImageLocation = AmiiboAPI.AllAmiibo.Where(amiibo => amiibo.SeriesName == comboBox1.Text && amiibo.AmiiboName == comboBox2.Text).SingleOrDefault().ImageURL;
-            textBox1.Text             = AmiiboAPI.AllAmiibo.Where(amiibo => amiibo.SeriesName == comboBox1.Text && amiibo.AmiiboName == comboBox2.Text).SingleOrDefault().AmiiboName;
+            textBox1.Text = AmiiboAPI.AllAmiibo.Where(amiibo => amiibo.SeriesName == comboBox1.Text && amiibo.AmiiboName == comboBox2.Text).SingleOrDefault().AmiiboName;
         }
 
         private void Button1_Click(object sender, EventArgs e)
@@ -99,9 +99,9 @@ namespace emuGUIibo
 
             FolderBrowserDialog folderBrowserDialog = new FolderBrowserDialog
             {
-                Description         = "Select root directory to generate the virtual amiibo on",
+                Description = "Select root directory to generate the virtual amiibo on",
                 ShowNewFolderButton = false,
-                SelectedPath        = emuiiboDir
+                SelectedPath = emuiiboDir
             };
 
             if (folderBrowserDialog.ShowDialog() == DialogResult.OK)
@@ -146,9 +146,9 @@ namespace emuGUIibo
 
                     JObject register = new JObject()
                     {
-                        ["name"]           = textBox1.Text,
+                        ["name"] = textBox1.Text,
                         ["firstWriteDate"] = dateTime,
-                        ["miiCharInfo"]    = "mii-charinfo.bin"
+                        ["miiCharInfo"] = "mii-charinfo.bin"
                     };
 
                     File.WriteAllText(Path.Combine(amiiboDir, "register.json"), register.ToString());
@@ -156,8 +156,8 @@ namespace emuGUIibo
                     JObject common = new JObject()
                     {
                         ["lastWriteDate"] = dateTime,
-                        ["writeCounter"]  = 0,
-                        ["version"]       = 0
+                        ["writeCounter"] = 0,
+                        ["version"] = 0
                     };
 
                     File.WriteAllText(Path.Combine(amiiboDir, "common.json"), common.ToString());
@@ -175,7 +175,7 @@ namespace emuGUIibo
         {
             if(checkBox1.Checked)
             {
-                if(MessageBox.Show("Please, keep in mind that the random UUID feature might cause in some cases (Smash Bros., for example) the amiibo not to be recognized.\n(for example, when saving data to the amiibo, it could not be recognized as the original one)\n\nWould you really like to enable this feature?", "emuGUIibo - Randomize UUID", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) != DialogResult.Yes)
+                if(MessageBox.Show("Please, keep in mind that the random UUID feature might cause in some cases (Smash Bros., for example) the amiibo not to be recognized.\n(for example, when saving data to the amiibo, it could not be recognized as the original one)\n\nWould you really like to enable this feature?", "emutool - Randomize UUID", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) != DialogResult.Yes)
                 {
                     checkBox1.Checked = false;
                 }

@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace emuGUIibo.Properties
+namespace emutool.Properties
 {
 
 

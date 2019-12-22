@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Windows.Forms;
 
-namespace emuGUIibo
+namespace emutool
 {
     static class Program
     {
@@ -10,7 +10,7 @@ namespace emuGUIibo
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new mainForm());
+            Application.Run(new MainForm());
         }
     }
 }
