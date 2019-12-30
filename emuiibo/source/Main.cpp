@@ -17,7 +17,7 @@
 #include "nfp/sys/sys_ISystemManager.hpp"
 #include "emu/emu_IEmulationService.hpp"
 
-#define INNER_HEAP_SIZE 0x40000
+#define INNER_HEAP_SIZE 0x5000
 
 extern "C"
 {
@@ -36,7 +36,7 @@ extern "C"
 
 namespace ams
 {
-    ncm::ProgramId CurrentProgramId = { 0x0100000000000352 };
+    ncm::ProgramId CurrentProgramId = { 0x0100000000000352ul };
     namespace result
     {
         bool CallFatalOnResultAssertion = true;
