@@ -4,6 +4,8 @@ build/
 *.npdm
 *.nsp
 *.elf
+*.nacp
+*.ovl
 bin/
 obj/
 .vs/
