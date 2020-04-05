@@ -2,71 +2,58 @@
 
 # emuiibo
 
-> Virtual amiibo (amiibo emulation) system for Nintendo Switch, no longer requiring dumps :)
+> Virtual amiibo (amiibo emulation) system for Nintendo Switch
 
 # Table of contents
 
 1. [Usage](#usage)
-2. [Amiibo emulation](#amiibo-emulation)
-3. [Important notes](#important-notes)
-4. [For developers](#for-developers)
-5. [Credits](#credits)
+2. [Controlling emuiibo](#controlling-emuiibo)
+3. [Virtual amiibo creation](#virtual-amiibo-creation)
+4. [Important notes](#important-notes)
+5. [For developers](#for-developers)
+6. [Credits](#credits)
 
 ## Usage
 
-Download the latest release and place it on your CFW's `titles` folder (so it would be like `<cfw>/titles/0100000000000352`).
+Build or download the latest release of emuiibo and extract the contents of 'SdOut' in the root of your SD card.
 
-According to tests, should work on any CFW which allows NSP sysmodules (Atmosphere, ReiNX).
-
-You also have to set the boot2 flag in the CFW's `/titles` directory: `<cfw>/titles/0100000000000352/flags/boot2.flag`.
-
-### Combos
-
-All the input combos are performed with R-Stick pressing and pressing the D-pad in an specific direction (at the same time). Combos must (should) be done before or after the game starts looking for amiibos.
-
-- **Activate amiibo emulation**: Press R-Stick (like it was a button) and also pressing the D-pad up. Toggles/untoggles emulation.
-
-- **Activate amiibo emulation once**: Same as above, but pressing the D-pad right. Toggles emulation once, after emulating an amiibo then it will untoggle automatically.
-
-- **Deactivate amiibo emulation**: Same as above, but pressing the D-pad down. Untoggles amiibo emulation, and should be used as a way to fully ensure it is untoggled, in case you don't know whether it's toggled or not.
-
-- **Move to next amiibo**: Same as above, but pressing the D-pad left. Moves to the next amiibo in the amiibo directory, if last one starts again with the first one. Only has effect if amiibo emulation is toggled.
+emuiibo comes bundled with a Tesla overlay to control it quite easily, but tools such as Goldleaf, Amiigo... can be used as a controller too.
 
 ### SD layout
 
 - Emuiibo's directory is `sd:/emuiibo`.
 
-- Amiibos go inside `sd:/emuiibo/amiibo`. For instance, an amiibo named `MyMario` would be `sd:/emuiibo/amiibo/MyMario/<json files>`.
+- Virtual amiibos go inside `sd:/emuiibo/amiibo`. For instance, an amiibo named `MyMario` would be `sd:/emuiibo/amiibo/MyMario/<amiibo content>`.
+
+- A virtual amiibo is detected by emuiibo based on two aspects: a `amiibo.json` and a `amiibo.flag` fioe must exist inside the virtual amiibo's folder mentioned above. If you would like to disable a virtual amiibo from being recognised by emuiibo, just remove the flag file, and create it again to enable it.
 
 - Every time the console is booted, emuiibo saves all the miis inside the console to the SD card. Format is `sd:/emuiibo/miis/<index> - <name>/mii-charinfo.bin`.
 
-## Amiibo emulation
+## Controlling emuiibo
 
-Emuiibo no longer requires dumps to emulate amiibos. Instead, you can use `emutool` PC tool in order to generate virtual amiibos.
+- **Emulation status (on/off)**: when emuiibo's emulation status is on, it means that any game trying to access/read amiibos will be intercepted by emuiibo. When it's off, it means that amiibo services will work normally, and nothing will be intercepted. This is basically a toggle to globally disable or enable amiibo emulation.
+
+- **Active virtual amiibo**: it's the amiibo which will be sent to the games which try to scan amiibos, if emulation is on. Via tools such as the overlay or Goldleaf, one can change the active virtual amiibo.
+
+- **Virtual amiibo status (connected/disconnected)**: when the active virtual amiibo is connected, it means that the amiibo is always "placed", as if you were holding a real amiibo on the NFC point and never moving it - the game always detects it. When it is disconnected, it means that you "removed" it, as if you just removed the amiibo from the NFC point. Some games might ask you to remove the amiibo after saving data, so you must disconnect the virtual amiibo to "simulate" that removal. This is a new feature in v0.5, which fixed errors, since emuiibo tried to handle this automatically in previous versions, causing some games to fail.
+
+All this aspects can be seen/controlled via the overlay.
+
+## Virtual amiibo creation
+
+Emuiibo no longer requires raw BIN dumps (but allows them) to emulate amiibos. Instead, you can use `emutool` PC tool in order to generate virtual amiibos.
 
 ![Screenshot](emutool/Screenshot.png)
-
-### How do virtual amiibos work?
-
-Virtual amiibos consist on a folder containing several JSON files.
-
-A virtual amiibo, in order to be recognised as valid, must contain valid `tag.json`, `register.json`, `common.json` and `model.json` files. This file names were chosen according to the way the console processes amiibos, which are splitted into 4 processed data blocks (TagInfo, ModelInfo, CommonInfo and RegisterInfo).
-
-The only relevant part of an amiibo, which identifies the type of amiibo, is the amiibo ID. Every other parameter can be emulated or isn't that relevant. The NFC UUID, present on amiibo NFC dumps, is randomly generated with virtual amiibos, since it isn't something important whatsoever.
-
-### Miis
-
-Miis can be an issue when attempting to make emuiibo user-friendly. Since mii format is a 88-byte data block named "CharInfo" and we have no way to see char-infos rendered but in the console itself, there is no simple way to change the mii.
-
-## Important notes
-
-If (**with emuiibo activated!**) the title responds with an error similar to "No controller which supports NFC was found" probably means that emuiibo failed to supply the amiibo (wrong amiibo, internal error...). That error is displayed due to limitations with real NFC error codes.
 
 ## For developers
 
 emuiibo also hosts a custom service, `nfp:emu`, which can be used to control amiibo emulation by IPC commands.
 
-You have an implementation for C/C++ and libnx in [here](nfpemu-libnx).
+NOTE: this service has completely changed for v0.5, so any kind of tool made to control emuiibo for lower versions should be updated, since it will definitely not work fine.
+
+There are two examples for the usage of this services: `emuiibo-example`, which is a quick but useful CLI emuiibo manager, and the overlay we provide.
+
+> TODO: extend this documentation a little bit more (random UUID, amiibo structure...)
 
 ## Credits
 
@@ -74,4 +61,6 @@ You have an implementation for C/C++ and libnx in [here](nfpemu-libnx).
 
 - **libstratosphere** project and libraries
 
-- **AmiiboAPI** (JSON API), which is used by `emutool` to get a proper, full amiibo list, in order to generate virtual amiibos without the need of raw dumps.
+- **AmiiboAPI** (JSON API), which is used by `emutool` to get a proper, full amiibo list, in order to generate virtual amiibos.
+
+- [**3DBrew**](https://www.3dbrew.org/wiki/Amiibo) for their detailed documentation of amiibos, even though some aspects are different on the Switch.

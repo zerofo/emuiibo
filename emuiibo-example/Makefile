@@ -37,13 +37,11 @@ include $(DEVKITPRO)/libnx/switch_rules
 #   of a homebrew executable (.nro). This is intended to be used for sysmodules.
 #   NACP building is skipped as well.
 #---------------------------------------------------------------------------------
-APP_TITLE	:= 	emuiibo
-APP_VERSION :=	$(EMUIIBO_MAJOR).$(EMUIIBO_MINOR).$(EMUIIBO_MICRO)
-TARGET		:=	emuiibo
+TARGET		:=	$(notdir $(CURDIR))
 BUILD		:=	build
 SOURCES		:=	source
 DATA		:=	data
-INCLUDES	:=	include ../libtesla/include
+INCLUDES	:=	include
 #ROMFS	:=	romfs
 
 #---------------------------------------------------------------------------------
@@ -56,7 +54,7 @@ CFLAGS	:=	-g -Wall -O2 -ffunction-sections \
 
 CFLAGS	+=	$(INCLUDE) -D__SWITCH__
 
-CXXFLAGS	:= $(CFLAGS) -fno-exceptions -std=c++17
+CXXFLAGS	:= $(CFLAGS) -fno-rtti -fno-exceptions
 
 ASFLAGS	:=	-g $(ARCH)
 LDFLAGS	=	-specs=$(DEVKITPRO)/libnx/switch.specs -g $(ARCH) -Wl,-Map,$(notdir $*.map)
@@ -170,7 +168,7 @@ $(BUILD):
 clean:
 	@echo clean ...
 ifeq ($(strip $(APP_JSON)),)
-	@rm -fr $(BUILD) $(TARGET).ovl $(TARGET).nro $(TARGET).nacp $(TARGET).elf
+	@rm -fr $(BUILD) $(TARGET).nro $(TARGET).nacp $(TARGET).elf
 else
 	@rm -fr $(BUILD) $(TARGET).nsp $(TARGET).nso $(TARGET).npdm $(TARGET).elf
 endif
@@ -185,14 +183,25 @@ DEPENDS	:=	$(OFILES:.o=.d)
 #---------------------------------------------------------------------------------
 # main targets
 #---------------------------------------------------------------------------------
-all	:	$(OUTPUT).ovl
+ifeq ($(strip $(APP_JSON)),)
 
-$(OUTPUT).ovl	:	$(OUTPUT).nro
-	@cp $(OUTPUT).nro $(OUTPUT).ovl
-	@rm -fr $(OUTPUT).nro
-	@echo built ... $(TARGET).ovl
+all	:	$(OUTPUT).nro
 
+ifeq ($(strip $(NO_NACP)),)
 $(OUTPUT).nro	:	$(OUTPUT).elf $(OUTPUT).nacp
+else
+$(OUTPUT).nro	:	$(OUTPUT).elf
+endif
+
+else
+
+all	:	$(OUTPUT).nsp
+
+$(OUTPUT).nsp	:	$(OUTPUT).nso $(OUTPUT).npdm
+
+$(OUTPUT).nso	:	$(OUTPUT).elf
+
+endif
 
 $(OUTPUT).elf	:	$(OFILES)
 

@@ -6,6 +6,8 @@ build/
 *.elf
 *.nacp
 *.ovl
+*.nro
+*.nacp
 bin/
 obj/
 .vs/
