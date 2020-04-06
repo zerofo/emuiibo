@@ -87,7 +87,7 @@ int main() {
     EMU_R_ASSERT(emuiibo_manager.RegisterMitmServer<ipc::nfp::user::IUserManager>(ipc::nfp::user::ServiceName));
 
     // Register nfp:sys - why is this still broken?
-    EMU_R_ASSERT(emuiibo_manager.RegisterMitmServer<ipc::nfp::sys::ISystemManager>(ipc::nfp::sys::ServiceName));
+    // EMU_R_ASSERT(emuiibo_manager.RegisterMitmServer<ipc::nfp::sys::ISystemManager>(ipc::nfp::sys::ServiceName));
     
     // Register custom nfp:emu service
     EMU_R_ASSERT(emuiibo_manager.RegisterServer<ipc::emu::IEmulationService>(ipc::emu::ServiceName, MaxSessions));
