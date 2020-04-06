@@ -64,8 +64,20 @@ namespace amiibo {
             }
 
             inline CharInfo ReadMiiCharInfo() {
-                EMU_LOG_FMT("Mii charinfo path: " << this->GetMiiCharInfoPath())
-                return fs::Read<CharInfo>(this->GetMiiCharInfoPath());
+                CharInfo charinfo = {};
+                auto charinfo_path = this->GetMiiCharInfoPath();
+                if(fs::IsFile(charinfo_path)) {
+                    charinfo = fs::Read<CharInfo>(charinfo_path);
+                }
+                else {
+                    // The amiibo has no mii charinfo data
+                    // This might be a new emutool amiibo which needs a mii
+                    // Let's generate a random mii then
+                    charinfo = ipc::mii::GenerateRandomMii();
+                    // Save it too, for the next time
+                    fs::Save(charinfo_path, charinfo);
+                }
+                return charinfo;
             }
 
             inline bool IsValid() {

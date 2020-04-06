@@ -139,6 +139,7 @@ namespace amiibo {
         else {
             memcpy(info.info.uuid, uuid_info.uuid, 10);
         }
+        
         info.info.tag_type = VirtualAmiibo::DefaultTagType;
         info.info.protocol = VirtualAmiibo::DefaultProtocol;
 
@@ -179,8 +180,6 @@ namespace amiibo {
         auto ver = this->GetVersion();
         info.info.version = ver;
         info.info.application_area_size = AreaManager::DefaultSize;
-
-        // fs::Save("sdmc:/emu-common.bin", info.info);
 
         return info;
     }
