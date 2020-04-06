@@ -1,6 +1,7 @@
  
 #pragma once
 #include <sys/sys_Emulation.hpp>
+#include <ipc/ipc_Utils.hpp>
 #include <emu_Results.hpp>
 
 namespace ipc::emu {
@@ -14,6 +15,7 @@ namespace ipc::emu {
             enum class CommandId {
                 SetAsActiveAmiibo = 0,
                 GetName = 1,
+                GetPath = 2,
             };
 
             void SetAsActiveAmiibo() {
@@ -21,11 +23,11 @@ namespace ipc::emu {
             }
 
             void GetName(const ams::sf::OutBuffer &out_name) {
-                EMU_LOG_FMT("Out name buffer size: " << out_name.GetSize())
-                auto name = this->virtual_amiibo.GetName();
-                EMU_LOG_FMT("Name: " << name)
-                const size_t buf_len = std::min(name.length(), out_name.GetSize());
-                strncpy(reinterpret_cast<char*>(out_name.GetPointer()), name.c_str(), buf_len);
+                CopyStringToOutBuffer(this->virtual_amiibo.GetName(), out_name);
+            }
+
+            void GetPath(const ams::sf::OutBuffer &out_path) {
+                CopyStringToOutBuffer(this->virtual_amiibo.GetPath(), out_path);
             }
 
         public:
@@ -35,6 +37,7 @@ namespace ipc::emu {
             DEFINE_SERVICE_DISPATCH_TABLE {
                 MAKE_SERVICE_COMMAND_META(SetAsActiveAmiibo),
                 MAKE_SERVICE_COMMAND_META(GetName),
+                MAKE_SERVICE_COMMAND_META(GetPath),
             };
     };
 

@@ -94,3 +94,10 @@ void emuiiboVirtualAmiiboGetName(EmuiiboVirtualAmiibo *amiibo, char *out_name, s
         .buffers = { { out_name, out_name_size } },
     );
 }
+
+void emuiiboVirtualAmiiboGetPath(EmuiiboVirtualAmiibo *amiibo, char *out_path, size_t out_path_size) {
+    serviceDispatch(&amiibo->s, 2,
+        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
+        .buffers = { { out_path, out_path_size } },
+    );
+}

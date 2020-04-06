@@ -13,6 +13,10 @@ namespace emu {
             return serviceIsActive(&this->srv);
         }
 
+        inline void SetAsActiveVirtualAmiibo() {
+            serviceDispatch(&this->srv, 0);
+        }
+
         inline std::string GetName() {
             char name[FS_MAX_PATH] = {0};
             serviceDispatch(&this->srv, 1,
@@ -20,10 +24,6 @@ namespace emu {
                 .buffers = { { name, FS_MAX_PATH } },
             );
             return name;
-        }
-
-        inline void SetAsActiveVirtualAmiibo() {
-            serviceDispatch(&this->srv, 0);
         }
 
         inline void Close() {

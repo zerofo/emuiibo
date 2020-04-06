@@ -76,6 +76,7 @@ EmuiiboVersion emuiiboGetVersion();
 
 void emuiiboVirtualAmiiboSetAsActiveVirtualAmiibo(EmuiiboVirtualAmiibo *amiibo);
 void emuiiboVirtualAmiiboGetName(EmuiiboVirtualAmiibo *amiibo, char *out_name, size_t out_name_size);
+void emuiiboVirtualAmiiboGetPath(EmuiiboVirtualAmiibo *amiibo, char *out_path, size_t out_path_size);
 
 #ifdef __cplusplus
 }
