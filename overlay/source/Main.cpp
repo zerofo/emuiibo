@@ -2,11 +2,11 @@
 #define TESLA_INIT_IMPL
 #include <emuiibo.hpp>
 #include <libtesla_ext.hpp>
-#include <sstream>
 
 namespace {
 
     bool g_emuiibo_init_ok = false;
+    bool g_in_second_menu = false;
     emu::VirtualAmiibo g_active_amiibo;
     std::vector<emu::VirtualAmiibo> g_amiibo_list;
 
@@ -187,22 +187,30 @@ class EmuiiboGui : public tsl::Gui {
                 select_item->setClickListener([](u64 keys) { 
                     if(keys & KEY_A) {
                         tsl::changeTo<AmiibosList>();
+                        g_in_second_menu = true;
                         return true;
                     }
                     return false;
                 });
 
-                list->addItem(new tsl::elm::BigCategoryHeader("Manage emuiibo", true));
+                list->addItem(new tsl::elm::BigCategoryHeader("Manage emulation (on / off)", true));
                 list->addItem(toggle_item);
                 list->addItem(amiibo_header);
                 list->addItem(select_item);
             }
             else {
-                list->addItem(new tsl::elm::BigCategoryHeader(MakeStatusText(), true));
+                list->addItem(new tsl::elm::BigCategoryHeader("...", true));
             }
 
             root_frame->setContent(list);
             return root_frame;
+        }
+
+        virtual void update() override {
+            if(g_in_second_menu) {
+                root_frame->setSubtitle(MakeStatusText());
+                g_in_second_menu = false;
+            }
         }
 
 };
