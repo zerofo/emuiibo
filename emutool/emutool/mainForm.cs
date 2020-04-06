@@ -1,36 +1,50 @@
-﻿using Newtonsoft.Json.Linq;
-using System;
+﻿using System;
 using System.IO;
 using System.Linq;
 using System.Windows.Forms;
+using System.Collections.Generic;
 
 namespace emutool
 {
     public partial class MainForm : Form
     {
+        public static AmiiboAPI.AmiiboList Amiibos = null;
+
+        public static List<string> AmiiboSeries = null;
+        public static List<AmiiboAPI.Amiibo> CurrentSeriesAmiibos = null;
+
+        public static bool HasAmiibos()
+        {
+            if(Amiibos != null)
+            {
+                return Amiibos.GetAmiiboCount() > 0;
+            }
+            return false;
+        }
+
         public MainForm()
         {
             InitializeComponent();
+            Amiibos = AmiiboAPI.GetAllAmiibos();
 
-            if (AmiiboAPI.GetAllAmiibos())
+            if(HasAmiibos())
             {
-                toolStripStatusLabel1.Text = "Amiibo API was accessed. Amiibo list was loaded.";
+                toolStripStatusLabel1.Text = "AmiiboAPI was accessed - amiibo list was loaded.";
+                AmiiboSeries = Amiibos.GetAmiiboSeries();
 
-                if (AmiiboAPI.AmiiboSeries.Any())
+                if(AmiiboSeries.Any())
                 {
-                    foreach (string amiiboSerie in AmiiboAPI.AmiiboSeries)
+                    foreach(var series in AmiiboSeries)
                     {
-                        comboBox1.Items.Add(amiiboSerie);
+                        comboBox1.Items.Add(series);
                     }
-
                     comboBox1.SelectedIndex = 0;
                 }
             }
             else
             {
-                toolStripStatusLabel1.Text  = "Unable to download amiibo list from amiibo API.";
-                toolStripStatusLabel1.Image = Properties.Resources.cancel;
-
+                toolStripStatusLabel1.Text = "Unable to download amiibo list from AmiiboAPI.";
+                toolStripStatusLabel1.Image = Properties.Resources.ErrorIcon;
                 groupBox1.Enabled = false;
                 groupBox2.Enabled = false;
                 groupBox3.Enabled = false;
@@ -41,133 +55,105 @@ namespace emutool
         {
             comboBox2.Items.Clear();
 
-            if (AmiiboAPI.AllAmiibo.Any())
+            if(HasAmiibos())
             {
-                foreach (Amiibo amiibo in AmiiboAPI.AllAmiibo)
+                var series = comboBox1.Text;
+                CurrentSeriesAmiibos = Amiibos.GetAmiibosBySeries(series);
+                if(CurrentSeriesAmiibos.Any())
                 {
-                    if (amiibo.SeriesName == comboBox1.Text)
+                    foreach(var amiibo in CurrentSeriesAmiibos)
                     {
                         comboBox2.Items.Add(amiibo.AmiiboName);
                     }
                 }
-
                 comboBox2.SelectedIndex = 0;
             }
         }
 
         private void comboBox2_SelectedIndexChanged(object sender, EventArgs e)
         {
-            pictureBox1.ImageLocation = AmiiboAPI.AllAmiibo.Where(amiibo => amiibo.SeriesName == comboBox1.Text && amiibo.AmiiboName == comboBox2.Text).SingleOrDefault().ImageURL;
-            textBox1.Text = AmiiboAPI.AllAmiibo.Where(amiibo => amiibo.SeriesName == comboBox1.Text && amiibo.AmiiboName == comboBox2.Text).SingleOrDefault().AmiiboName;
+            try
+            {
+                var cur_amiibo = CurrentSeriesAmiibos[comboBox2.SelectedIndex];
+                pictureBox1.ImageLocation = cur_amiibo.ImageURL;
+                textBox1.Text = cur_amiibo.AmiiboName;
+            }
+            catch(Exception ex)
+            {
+                ExceptionUtils.LogExceptionMessage(ex);
+            }
         }
 
         private void Button1_Click(object sender, EventArgs e)
         {
-            if (string.IsNullOrEmpty(textBox1.Text))
+            try
             {
-                MessageBox.Show("No amiibo name was specified.", Text, MessageBoxButtons.OK, MessageBoxIcon.Error);
-
-                return;
-            }
-
-            string emuiiboDir = "";
-
-            if (DriveInfo.GetDrives().Any())
-            {
-                foreach (DriveInfo driveInfo in DriveInfo.GetDrives())
+                var cur_amiibo = CurrentSeriesAmiibos[comboBox2.SelectedIndex];
+                if(string.IsNullOrEmpty(textBox1.Text))
                 {
-                    if (driveInfo.IsReady)
-                    {
-                        if (Directory.Exists(Path.Combine(driveInfo.Name, Path.Combine("emuiibo", "amiibo"))))
-                        {
-                            emuiiboDir = Path.Combine(driveInfo.Name, Path.Combine("emuiibo", "amiibo"));
-                        }
-                        else if (Directory.Exists(Path.Combine(driveInfo.Name, "emuiibo")))
-                        {
-                            Directory.CreateDirectory(Path.Combine(driveInfo.Name, Path.Combine("emuiibo", "amiibo")));
-
-                            emuiiboDir = Path.Combine(driveInfo.Name, Path.Combine("emuiibo", "amiibo"));
-                        }
-
-                        if (!string.IsNullOrEmpty(emuiiboDir))
-                        {
-                            MessageBox.Show($"Emuiibo directory was found in drive '{driveInfo.VolumeLabel}', so defaulting to that directory.", Text, MessageBoxButtons.OK, MessageBoxIcon.Information);
-                        }
-                    }
-                }
-            }
-
-            FolderBrowserDialog folderBrowserDialog = new FolderBrowserDialog
-            {
-                Description = "Select root directory to generate the virtual amiibo on",
-                ShowNewFolderButton = false,
-                SelectedPath = emuiiboDir
-            };
-
-            if (folderBrowserDialog.ShowDialog() == DialogResult.OK)
-            {
-                string amiiboDir = Path.Combine(folderBrowserDialog.SelectedPath, textBox1.Text);
-
-                if (MessageBox.Show($"Virtual amiibo will be created in '{amiiboDir}'.{Environment.NewLine + Environment.NewLine}The directory will be deleted if it already exists.{Environment.NewLine + Environment.NewLine}Proceed with amiibo creation?", Text, MessageBoxButtons.OKCancel, MessageBoxIcon.Question) != DialogResult.OK)
-                {
+                    MessageBox.Show("No amiibo name was specified.", Text, MessageBoxButtons.OK, MessageBoxIcon.Error);
                     return;
                 }
-
-                if (Directory.Exists(amiiboDir))
+                bool use_name_as_dir = checkBox3.Checked;
+                if(!use_name_as_dir && string.IsNullOrEmpty(textBox2.Text))
                 {
-                    Directory.Delete(amiiboDir, true);
+                    MessageBox.Show("No amiibo directory name was specified.", Text, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+                string name = textBox1.Text;
+                string dir_name = name;
+                if(!use_name_as_dir)
+                {
+                    dir_name = textBox2.Text;
                 }
 
-                try
+                string emuiibo_dir = "";
+                if(DriveInfo.GetDrives().Any())
                 {
-                    Directory.CreateDirectory(amiiboDir);
-
-                    JObject tag = new JObject();
-
-                    if (checkBox1.Checked)
+                    foreach(var drive in DriveInfo.GetDrives())
                     {
-                        tag["randomUuid"] = true;
+                        if(drive.IsReady)
+                        {
+                            if(Directory.Exists(Path.Combine(drive.Name, Path.Combine("emuiibo", "amiibo"))))
+                            {
+                                emuiibo_dir = Path.Combine(drive.Name, Path.Combine("emuiibo", "amiibo"));
+                            }
+                            else if(Directory.Exists(Path.Combine(drive.Name, "emuiibo")))
+                            {
+                                Directory.CreateDirectory(Path.Combine(drive.Name, Path.Combine("emuiibo", "amiibo")));
+                                emuiibo_dir = Path.Combine(drive.Name, Path.Combine("emuiibo", "amiibo"));
+                            }
+                            if(!string.IsNullOrEmpty(emuiibo_dir))
+                            {
+                                MessageBox.Show($"Emuiibo directory was found in drive '{drive.VolumeLabel}', so defaulting to that directory.", Text, MessageBoxButtons.OK, MessageBoxIcon.Information);
+                            }
+                        }
                     }
-                    else
+                }
+                FolderBrowserDialog folderBrowserDialog = new FolderBrowserDialog
+                {
+                    Description = "Select root directory to generate the virtual amiibo on",
+                    ShowNewFolderButton = false,
+                    SelectedPath = emuiibo_dir
+                };
+                if(folderBrowserDialog.ShowDialog() == DialogResult.OK)
+                {
+                    string dir = Path.Combine(folderBrowserDialog.SelectedPath, dir_name);
+
+                    if(MessageBox.Show($"Virtual amiibo will be created in '{dir}'.\n\nThe directory will be deleted if it already exists.\n\nProceed with amiibo creation?", Text, MessageBoxButtons.OKCancel, MessageBoxIcon.Question) != DialogResult.OK)
                     {
-                        tag["uuid"] = AmiiboAPI.MakeRandomHexString(18);
+                        return;
                     }
 
-                    File.WriteAllText(Path.Combine(amiiboDir, "tag.json"), tag.ToString());
-
-                    JObject model = new JObject()
-                    {
-                        ["amiiboId"] = AmiiboAPI.AllAmiibo.Where(amiibo => amiibo.SeriesName == comboBox1.Text && amiibo.AmiiboName == comboBox2.Text).SingleOrDefault().AmiiboId
-                    };
-
-                    File.WriteAllText(Path.Combine(amiiboDir, "model.json"), model.ToString());
-
-                    string dateTime = DateTime.Now.ToString("yyyy-MM-dd");
-
-                    JObject register = new JObject()
-                    {
-                        ["name"] = textBox1.Text,
-                        ["firstWriteDate"] = dateTime,
-                        ["miiCharInfo"] = "mii-charinfo.bin"
-                    };
-
-                    File.WriteAllText(Path.Combine(amiiboDir, "register.json"), register.ToString());
-
-                    JObject common = new JObject()
-                    {
-                        ["lastWriteDate"] = dateTime,
-                        ["writeCounter"] = 0,
-                        ["version"] = 0
-                    };
-
-                    File.WriteAllText(Path.Combine(amiiboDir, "common.json"), common.ToString());
+                    var amiibo = AmiiboUtils.BuildAmiibo(cur_amiibo, name);
+                    amiibo.Save(dir, checkBox1.Checked, checkBox2.Checked);
 
                     MessageBox.Show("Virtual amiibo was successfully created.", Text, MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
-                catch
-                {
-                    MessageBox.Show("An error ocurred attempting to create the virtual amiibo.", Text, MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }
+            }
+            catch(Exception ex)
+            {
+                ExceptionUtils.LogExceptionMessage(ex);
             }
         }
 
@@ -180,6 +166,11 @@ namespace emutool
                     checkBox1.Checked = false;
                 }
             }
+        }
+
+        private void CheckBox3_CheckedChanged(object sender, EventArgs e)
+        {
+            textBox2.Enabled = !checkBox3.Checked;
         }
     }
 }
