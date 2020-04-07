@@ -163,9 +163,9 @@ namespace emutool
                     // save to FTP location
                     try
                     {
-                        string tmpPath = Environment.CurrentDirectory + "\\tmp";
-                        string dir = Path.Combine(tmpPath, dir_name);
-                        string SDFolder = $"/emuiibo/amiibo/{dir_name}/";
+                        var tmp_path = Environment.CurrentDirectory + "\\tmp";
+                        var dir = Path.Combine(tmp_path, dir_name);
+                        var sd_folder = $"/emuiibo/amiibo/{dir_name}/";
 
                         // first let's validate the FTP address
                         IPAddress ip;
@@ -182,24 +182,21 @@ namespace emutool
                             return;
                         }
 
-
-                        if (MessageBox.Show($"Virtual amiibo will be created in 'ftp://{ip.ToString()}:{port}{SDFolder}'.\n\nThe directory will be deleted if it already exists.\n\nProceed with amiibo creation?", Text, MessageBoxButtons.OKCancel, MessageBoxIcon.Question) != DialogResult.OK)
+                        if (MessageBox.Show($"Virtual amiibo will be created in 'ftp://{ip.ToString()}:{port}{sd_folder}'.\n\nThe directory will be deleted if it already exists.\n\nProceed with amiibo creation?", Text, MessageBoxButtons.OKCancel, MessageBoxIcon.Question) != DialogResult.OK)
                         {
                             return;
                         }
 
-
                         // create a tmp directory to output the resulting files from amiibo.Save() before transfer
-
-                        if (!Directory.Exists(tmpPath))
+                        if (!Directory.Exists(tmp_path))
                         {
-                            Directory.CreateDirectory(tmpPath);
+                            Directory.CreateDirectory(tmp_path);
                         }
 
                         var amiibo = AmiiboUtils.BuildAmiibo(cur_amiibo, name);
                         amiibo.Save(dir, checkBox1.Checked, checkBox2.Checked);
 
-                        bool success = true;
+                        var success = true;
                         using (FtpClient client = new FtpClient(ip.ToString(), port, new NetworkCredential("", "")))
                         {
                             client.ConnectTimeout = 1000;
@@ -208,9 +205,9 @@ namespace emutool
 
                             foreach (var file in Directory.GetFiles(dir))
                             {
-                                string fileName = Path.GetFileName(file);
+                                string file_name = Path.GetFileName(file);
                                 // upload each file created, creating directories along the way
-                                var status = client.UploadFile(file, SDFolder + fileName, createRemoteDir: true);
+                                var status = client.UploadFile(file, sd_folder + file_name, createRemoteDir: true);
                                 success &= status == FtpStatus.Success;
                             }
                             client.Disconnect();
@@ -218,7 +215,8 @@ namespace emutool
 
                         if (success)
                         {
-                            Directory.Delete(tmpPath, true);
+                            // recursively delete the tmp directory to clean up
+                            Directory.Delete(tmp_path, true);
                             MessageBox.Show("Virtual amiibo was successfully created.", Text, MessageBoxButtons.OK, MessageBoxIcon.Information);
                         }
                         else
@@ -226,9 +224,9 @@ namespace emutool
                             throw new Exception("Error during FTP upload, please try again");
                         }
                     }
-                    catch (Exception ftpEX)
+                    catch (Exception ftp_ex)
                     {
-                        ExceptionUtils.LogExceptionMessage(ftpEX);
+                        ExceptionUtils.LogExceptionMessage(ftp_ex);
                     }
                 }
             }
@@ -237,7 +235,6 @@ namespace emutool
                 ExceptionUtils.LogExceptionMessage(ex);
             }
         }
-
 
         private void CheckBox1_CheckedChanged(object sender, EventArgs e)
         {
@@ -253,11 +250,6 @@ namespace emutool
         private void CheckBox3_CheckedChanged(object sender, EventArgs e)
         {
             textBox2.Enabled = !checkBox3.Checked;
-        }
-
-        private void label6_Click(object sender, EventArgs e)
-        {
-
         }
 
         private void chkFTP_CheckedChanged(object sender, EventArgs e)

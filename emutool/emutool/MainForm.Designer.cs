@@ -42,6 +42,14 @@
             this.button1 = new System.Windows.Forms.Button();
             this.label3 = new System.Windows.Forms.Label();
             this.groupBox3 = new System.Windows.Forms.GroupBox();
+            this.label10 = new System.Windows.Forms.Label();
+            this.label9 = new System.Windows.Forms.Label();
+            this.label8 = new System.Windows.Forms.Label();
+            this.txtFTPPort = new System.Windows.Forms.TextBox();
+            this.label7 = new System.Windows.Forms.Label();
+            this.label6 = new System.Windows.Forms.Label();
+            this.chkFTP = new System.Windows.Forms.CheckBox();
+            this.txtFTPAddress = new System.Windows.Forms.TextBox();
             this.statusStrip1 = new System.Windows.Forms.StatusStrip();
             this.toolStripStatusLabel2 = new System.Windows.Forms.ToolStripStatusLabel();
             this.toolStripStatusLabel1 = new System.Windows.Forms.ToolStripStatusLabel();
@@ -49,14 +57,6 @@
             this.comboBox1 = new System.Windows.Forms.ComboBox();
             this.comboBox2 = new System.Windows.Forms.ComboBox();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
-            this.chkFTP = new System.Windows.Forms.CheckBox();
-            this.txtFTPAddress = new System.Windows.Forms.TextBox();
-            this.label6 = new System.Windows.Forms.Label();
-            this.label7 = new System.Windows.Forms.Label();
-            this.label8 = new System.Windows.Forms.Label();
-            this.txtFTPPort = new System.Windows.Forms.TextBox();
-            this.label9 = new System.Windows.Forms.Label();
-            this.label10 = new System.Windows.Forms.Label();
             this.groupBox2.SuspendLayout();
             this.groupBox3.SuspendLayout();
             this.statusStrip1.SuspendLayout();
@@ -211,6 +211,79 @@
             this.groupBox3.TabStop = false;
             this.groupBox3.Text = "3 - Create virtual amiibo";
             // 
+            // label10
+            // 
+            this.label10.AutoSize = true;
+            this.label10.Location = new System.Drawing.Point(276, 72);
+            this.label10.Name = "label10";
+            this.label10.Size = new System.Drawing.Size(10, 13);
+            this.label10.TabIndex = 15;
+            this.label10.Text = ":";
+            // 
+            // label9
+            // 
+            this.label9.AutoSize = true;
+            this.label9.Location = new System.Drawing.Point(15, 72);
+            this.label9.Name = "label9";
+            this.label9.Size = new System.Drawing.Size(32, 13);
+            this.label9.TabIndex = 11;
+            this.label9.Text = "ftp://";
+            // 
+            // label8
+            // 
+            this.label8.AutoSize = true;
+            this.label8.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label8.Location = new System.Drawing.Point(290, 53);
+            this.label8.Name = "label8";
+            this.label8.Size = new System.Drawing.Size(34, 13);
+            this.label8.TabIndex = 13;
+            this.label8.Text = "Port:";
+            // 
+            // txtFTPPort
+            // 
+            this.txtFTPPort.Enabled = false;
+            this.txtFTPPort.Location = new System.Drawing.Point(293, 69);
+            this.txtFTPPort.Name = "txtFTPPort";
+            this.txtFTPPort.Size = new System.Drawing.Size(83, 20);
+            this.txtFTPPort.TabIndex = 14;
+            // 
+            // label7
+            // 
+            this.label7.AutoSize = true;
+            this.label7.Location = new System.Drawing.Point(12, 92);
+            this.label7.Name = "label7";
+            this.label7.Size = new System.Drawing.Size(0, 13);
+            this.label7.TabIndex = 11;
+            // 
+            // label6
+            // 
+            this.label6.AutoSize = true;
+            this.label6.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label6.Location = new System.Drawing.Point(46, 53);
+            this.label6.Name = "label6";
+            this.label6.Size = new System.Drawing.Size(56, 13);
+            this.label6.TabIndex = 11;
+            this.label6.Text = "Address:";
+            // 
+            // chkFTP
+            // 
+            this.chkFTP.AutoSize = true;
+            this.chkFTP.Location = new System.Drawing.Point(18, 28);
+            this.chkFTP.Name = "chkFTP";
+            this.chkFTP.Size = new System.Drawing.Size(86, 17);
+            this.chkFTP.TabIndex = 11;
+            this.chkFTP.Text = "Save to FTP";
+            this.chkFTP.UseVisualStyleBackColor = true;
+            this.chkFTP.CheckedChanged += new System.EventHandler(this.chkFTP_CheckedChanged);
+            // 
+            // txtFTPAddress
+            // 
+            this.txtFTPAddress.Enabled = false;
+            this.txtFTPAddress.Location = new System.Drawing.Point(49, 69);
+            this.txtFTPAddress.Name = "txtFTPAddress";
+            this.txtFTPAddress.Size = new System.Drawing.Size(221, 20);
+            this.txtFTPAddress.TabIndex = 12;
+            // 
             // statusStrip1
             // 
             this.statusStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
@@ -277,80 +350,6 @@
             this.groupBox1.TabIndex = 3;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "1 - Choose virtual amiibo";
-            // 
-            // chkFTP
-            // 
-            this.chkFTP.AutoSize = true;
-            this.chkFTP.Location = new System.Drawing.Point(18, 28);
-            this.chkFTP.Name = "chkFTP";
-            this.chkFTP.Size = new System.Drawing.Size(86, 17);
-            this.chkFTP.TabIndex = 11;
-            this.chkFTP.Text = "Save to FTP";
-            this.chkFTP.UseVisualStyleBackColor = true;
-            this.chkFTP.CheckedChanged += new System.EventHandler(this.chkFTP_CheckedChanged);
-            // 
-            // txtFTPAddress
-            // 
-            this.txtFTPAddress.Enabled = false;
-            this.txtFTPAddress.Location = new System.Drawing.Point(49, 69);
-            this.txtFTPAddress.Name = "txtFTPAddress";
-            this.txtFTPAddress.Size = new System.Drawing.Size(221, 20);
-            this.txtFTPAddress.TabIndex = 12;
-            // 
-            // label6
-            // 
-            this.label6.AutoSize = true;
-            this.label6.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label6.Location = new System.Drawing.Point(46, 53);
-            this.label6.Name = "label6";
-            this.label6.Size = new System.Drawing.Size(56, 13);
-            this.label6.TabIndex = 11;
-            this.label6.Text = "Address:";
-            this.label6.Click += new System.EventHandler(this.label6_Click);
-            // 
-            // label7
-            // 
-            this.label7.AutoSize = true;
-            this.label7.Location = new System.Drawing.Point(12, 92);
-            this.label7.Name = "label7";
-            this.label7.Size = new System.Drawing.Size(0, 13);
-            this.label7.TabIndex = 11;
-            // 
-            // label8
-            // 
-            this.label8.AutoSize = true;
-            this.label8.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label8.Location = new System.Drawing.Point(290, 53);
-            this.label8.Name = "label8";
-            this.label8.Size = new System.Drawing.Size(34, 13);
-            this.label8.TabIndex = 13;
-            this.label8.Text = "Port:";
-            // 
-            // txtFTPPort
-            // 
-            this.txtFTPPort.Enabled = false;
-            this.txtFTPPort.Location = new System.Drawing.Point(293, 69);
-            this.txtFTPPort.Name = "txtFTPPort";
-            this.txtFTPPort.Size = new System.Drawing.Size(83, 20);
-            this.txtFTPPort.TabIndex = 14;
-            // 
-            // label9
-            // 
-            this.label9.AutoSize = true;
-            this.label9.Location = new System.Drawing.Point(15, 72);
-            this.label9.Name = "label9";
-            this.label9.Size = new System.Drawing.Size(32, 13);
-            this.label9.TabIndex = 11;
-            this.label9.Text = "ftp://";
-            // 
-            // label10
-            // 
-            this.label10.AutoSize = true;
-            this.label10.Location = new System.Drawing.Point(276, 72);
-            this.label10.Name = "label10";
-            this.label10.Size = new System.Drawing.Size(10, 13);
-            this.label10.TabIndex = 15;
-            this.label10.Text = ":";
             // 
             // MainForm
             // 
