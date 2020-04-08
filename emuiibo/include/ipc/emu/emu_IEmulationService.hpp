@@ -45,8 +45,6 @@ namespace ipc::emu {
                 sys::SetEmulationStatus(status);
             }
 
-            // TODO: proper results
-
             ams::Result GetActiveVirtualAmiibo(ams::sf::Out<amiibo::VirtualAmiiboId> out_id, ams::sf::Out<amiibo::VirtualAmiiboData> out_data) {
                 auto &amiibo = sys::GetActiveVirtualAmiibo();
                 R_UNLESS(amiibo.IsValid(), result::emu::ResultNoActiveVirtualAmiibo);

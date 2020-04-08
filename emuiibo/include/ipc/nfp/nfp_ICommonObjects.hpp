@@ -97,8 +97,6 @@ namespace ipc::nfp {
                 }
             }
 
-            // TODO: check for proper states in commands
-
             template<typename T, typename ...Ss>
             inline constexpr bool IsStateAny(Ss &&...states) {
                 static_assert(std::is_same_v<T, NfpState> || std::is_same_v<T, NfpDeviceState>, "Invalid type");
