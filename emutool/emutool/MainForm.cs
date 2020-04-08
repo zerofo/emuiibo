@@ -140,8 +140,11 @@ namespace emutool
                     }
 
                     string dir = "";
+
+                    // check to see if the user has already selected a path
                     if (string.IsNullOrEmpty(last_used_path))
                     {
+                        // no path set, present the browser dialog and allow them to pick
                         FolderBrowserDialog folderBrowserDialog = new FolderBrowserDialog
                         {
                             Description = "Select root directory to generate the virtual amiibo on",
@@ -155,6 +158,7 @@ namespace emutool
                             last_used_path = folderBrowserDialog.SelectedPath;
                             if (MessageBox.Show($"Virtual amiibo will be created in '{dir}'.\n\nThe directory will be deleted if it already exists.\n\nProceed with amiibo creation?", Text, MessageBoxButtons.OKCancel, MessageBoxIcon.Question) != DialogResult.OK)
                             {
+                                // cancelling out of creation, unset the last_used_path
                                 last_used_path = null;
                                 return;
                             }
@@ -162,10 +166,12 @@ namespace emutool
                     }
                     else
                     {
+                        // the user has already selected a path, use that one
                         dir = Path.Combine(last_used_path, dir_name);
 
                         if (MessageBox.Show($"Virtual amiibo will be created in '{dir}'.\n\nThe directory will be deleted if it already exists.\n\nProceed with amiibo creation?", Text, MessageBoxButtons.OKCancel, MessageBoxIcon.Question) != DialogResult.OK)
                         {
+                            // cancelling out of creation, unset the last_used_path
                             last_used_path = null;
                             return;
                         }
