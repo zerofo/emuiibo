@@ -42,7 +42,7 @@ namespace ipc::emu {
 
             ams::Result GetActiveVirtualAmiibo(ams::sf::Out<amiibo::VirtualAmiiboId> out_id, ams::sf::Out<amiibo::VirtualAmiiboData> out_data) {
                 auto &amiibo = sys::GetActiveVirtualAmiibo();
-                R_UNLESS(amiibo.IsValid(), 0xdead);
+                R_UNLESS(amiibo.IsValid(), result::emu::ResultNoActiveVirtualAmiibo);
 
                 out_id.SetValue(amiibo.ProduceId());
                 out_data.SetValue(amiibo.ProduceData());
@@ -65,7 +65,7 @@ namespace ipc::emu {
                     }
                 }
                 iterator.Finalize();
-                return static_cast<ams::Result>(0xdead2);
+                return result::emu::ResultInvalidVirtualAmiiboId;
             }
 
             void ResetActiveVirtualAmiibo() {
@@ -88,7 +88,7 @@ namespace ipc::emu {
             ams::Result ReadNextAvailableVirtualAmiibo(ams::sf::Out<amiibo::VirtualAmiiboId> out_id, ams::sf::Out<amiibo::VirtualAmiiboData> out_data) {
                 amiibo::VirtualAmiibo amiibo;
                 bool ok = this->amiibo_iterator.NextEntry(amiibo);
-                R_UNLESS(ok, 0xdead4);
+                R_UNLESS(ok, result::emu::ResultIteratorEndReached);
 
                 out_id.SetValue(amiibo.ProduceId());
                 out_data.SetValue(amiibo.ProduceData());

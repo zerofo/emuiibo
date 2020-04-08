@@ -59,7 +59,7 @@ namespace ipc::mii {
         auto rc = GetCount(&mii_count);
         if(R_SUCCEEDED(rc)) {
             if(mii_count < 1) {
-                return result::emu::ResultNoMiisFound;
+                return result::emu::ResultUnableToReadMii;
             }
 
             auto buf = new CharInfo[mii_count]();
@@ -73,7 +73,7 @@ namespace ipc::mii {
                     memcpy(out_info, &buf[idx], sizeof(CharInfo));
                 }
                 else {
-                    return result::emu::ResultMiiIndexOOB;
+                    return result::emu::ResultUnableToReadMii;
                 }
             }
 

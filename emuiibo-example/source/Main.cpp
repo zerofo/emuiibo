@@ -24,6 +24,7 @@ void DoListAmiibos() {
     console("[B] Exit to main menu")
     console("[A] Set the last printed/current amiibo as active")
     console("")
+    emuiiboResetAvailableVirtualAmiiboIterator();
     while(true) {
         EmuiiboVirtualAmiiboId id = {};
         EmuiiboVirtualAmiiboData data = {};

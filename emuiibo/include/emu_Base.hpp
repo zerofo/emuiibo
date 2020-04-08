@@ -27,7 +27,7 @@ static_assert(sizeof(Version) == sizeof(u32), "Invalid Version struct!");
 
 static inline constexpr Version CurrentVersion = { EMUIIBO_MAJOR, EMUIIBO_MINOR, EMUIIBO_MICRO, EMUIIBO_DEV };
 
-#define EMU_DEFINE_RESULT(name, mod, desc) static constexpr Result Result##name = MAKERESULT(mod, desc);
+#define EMU_DEFINE_RESULT(name, desc) static constexpr Result Result##name = MAKERESULT(Module, desc);
 
 using Lock = ams::os::RecursiveMutex;
 

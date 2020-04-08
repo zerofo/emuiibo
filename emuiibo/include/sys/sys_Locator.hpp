@@ -64,13 +64,13 @@ namespace sys {
             bool Next(amiibo::VirtualAmiibo &out_amiibo);
 
         public:
-            void Initialize(const std::string &path) {
+            inline void Initialize(const std::string &path) {
                 if(!this->dir_handle.IsValid()) {
                     this->dir_handle = OpenDirectoryHandle(path);
                 }
             }
 
-            void Finalize() {
+            inline void Finalize() {
                 for(auto dir: this->inner_dir_handles) {
                     dir.Close();
                 }

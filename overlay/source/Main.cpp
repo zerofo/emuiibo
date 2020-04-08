@@ -89,6 +89,8 @@ class AmiibosList : public tsl::Gui {
             header_list = new tsl::elm::List();
 
             u32 count = 0;
+            // Reset the internal iterator, to start from the beginning
+            emu::ResetAvailableVirtualAmiiboIterator();
             while(true) {
                 emu::VirtualAmiiboId id = {};
                 emu::VirtualAmiiboData data = {};
