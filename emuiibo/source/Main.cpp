@@ -77,11 +77,13 @@ namespace {
 }
 
 int main() {
+    // Clear previous logs, to avoid extremely big log files
+    logger::ClearLogs();
+    
     EMU_LOG_FMT("Starting emuiibo...")
 
     ipc::mii::DumpSystemMiis();
     sys::ScanAmiiboDirectory();
-    sys::UpdateVirtualAmiiboCache();
  
     // Register nfp:user
     EMU_R_ASSERT(emuiibo_manager.RegisterMitmServer<ipc::nfp::user::IUserManager>(ipc::nfp::user::ServiceName));

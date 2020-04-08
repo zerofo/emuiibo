@@ -28,7 +28,8 @@ namespace sys {
                     auto ret = amiibo::VirtualAmiibo::ConvertVirtualAmiibo<amiibo::VirtualAmiiboV3>(path);
                     EMU_LOG_FMT("Conversion succeeded? " << std::boolalpha << ret << "...")
                 }
-                else {
+                // Check that it isn't a valid amiibo (it would attempt to convert mii charinfo or area bins otherwise)
+                else if(!amiibo::VirtualAmiibo::IsValidVirtualAmiibo<amiibo::VirtualAmiibo>(path)) {
                     // If it's a directory, scan amiibos there too
                     if(fs::IsDirectory(path)) {
                         ScanAmiiboDirectoryImpl(path);
