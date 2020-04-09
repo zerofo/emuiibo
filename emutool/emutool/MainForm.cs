@@ -16,7 +16,6 @@ namespace emutool
         public static List<string> AmiiboSeries = null;
         public static List<AmiiboAPI.Amiibo> CurrentSeriesAmiibos = null;
 
-
         public static bool HasAmiibos()
         {
             if (Amiibos != null)
@@ -25,6 +24,8 @@ namespace emutool
             }
             return false;
         }
+
+        private string last_used_path = null;
 
         public MainForm()
         {
@@ -137,26 +138,49 @@ namespace emutool
                             }
                         }
                     }
-                    FolderBrowserDialog folderBrowserDialog = new FolderBrowserDialog
+
+                    string dir = "";
+
+                    // check to see if the user has already selected a path
+                    if (string.IsNullOrEmpty(last_used_path))
                     {
-                        Description = "Select root directory to generate the virtual amiibo on",
-                        ShowNewFolderButton = false,
-                        SelectedPath = emuiibo_dir
-                    };
-                    if (folderBrowserDialog.ShowDialog() == DialogResult.OK)
+                        // no path set, present the browser dialog and allow them to pick
+                        FolderBrowserDialog folderBrowserDialog = new FolderBrowserDialog
+                        {
+                            Description = "Select root directory to generate the virtual amiibo on",
+                            ShowNewFolderButton = false,
+                            SelectedPath = emuiibo_dir
+                        };
+
+                        if (folderBrowserDialog.ShowDialog() == DialogResult.OK)
+                        {
+                            dir = Path.Combine(folderBrowserDialog.SelectedPath, dir_name);
+                            last_used_path = folderBrowserDialog.SelectedPath;
+                            if (MessageBox.Show($"Virtual amiibo will be created in '{dir}'.\n\nThe directory will be deleted if it already exists.\n\nProceed with amiibo creation?", Text, MessageBoxButtons.OKCancel, MessageBoxIcon.Question) != DialogResult.OK)
+                            {
+                                // cancelling out of creation, unset the last_used_path
+                                last_used_path = null;
+                                return;
+                            }
+                        }
+                    }
+                    else
                     {
-                        string dir = Path.Combine(folderBrowserDialog.SelectedPath, dir_name);
+                        // the user has already selected a path, use that one
+                        dir = Path.Combine(last_used_path, dir_name);
 
                         if (MessageBox.Show($"Virtual amiibo will be created in '{dir}'.\n\nThe directory will be deleted if it already exists.\n\nProceed with amiibo creation?", Text, MessageBoxButtons.OKCancel, MessageBoxIcon.Question) != DialogResult.OK)
                         {
+                            // cancelling out of creation, unset the last_used_path
+                            last_used_path = null;
                             return;
                         }
-
-                        var amiibo = AmiiboUtils.BuildAmiibo(cur_amiibo, name);
-                        amiibo.Save(dir, checkBox1.Checked, checkBox2.Checked);
-
-                        MessageBox.Show("Virtual amiibo was successfully created.", Text, MessageBoxButtons.OK, MessageBoxIcon.Information);
                     }
+
+                    var amiibo = AmiiboUtils.BuildAmiibo(cur_amiibo, name);
+                    amiibo.Save(dir, checkBox1.Checked, checkBox2.Checked);
+
+                    MessageBox.Show("Virtual amiibo was successfully created.", Text, MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
                 else
                 {
@@ -201,7 +225,6 @@ namespace emutool
                         {
                             client.ConnectTimeout = 1000;
                             client.Connect();
-
 
                             foreach (var file in Directory.GetFiles(dir))
                             {
