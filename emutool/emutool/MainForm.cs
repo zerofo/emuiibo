@@ -106,7 +106,6 @@ namespace emutool
             MessageBox.Show(msg, DialogCaption, MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
 
-
         private string SelectDirectory()
         {
             string emuiibo_dir = "";
@@ -222,7 +221,7 @@ namespace emutool
                             // User cancelled
                             return;
                         }
-                        out_path = LastUsedPath;
+                        out_path = Path.Combine(LastUsedPath, dir_name);
                     }
                     else
                     {
