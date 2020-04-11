@@ -5,6 +5,7 @@ using System.Windows.Forms;
 using System.Collections.Generic;
 using System.Net;
 using System.Reflection;
+using System.Diagnostics;
 using FluentFTP;
 
 namespace emutool
@@ -281,7 +282,7 @@ namespace emutool
                     }
                 }
 
-                MessageBox.Show("The virtual amiibo was successfully created.", Text, MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show("The virtual amiibo was successfully created.", DialogCaption, MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             catch(Exception ex)
             {
@@ -314,6 +315,14 @@ namespace emutool
         {
             FtpAddressBox.Enabled = FtpSaveCheck.Checked;
             FtpPortBox.Enabled = FtpSaveCheck.Checked;
+        }
+
+        private void AboutButton_Click(object sender, EventArgs e)
+        {
+            if(MessageBox.Show("For more information about emuiibo, check it's GitHub repository's README.", DialogCaption, MessageBoxButtons.OK, MessageBoxIcon.Information) == DialogResult.OK)
+            {
+                Process.Start("https://github.com/XorTroll/emuiibo");
+            }
         }
     }
 }

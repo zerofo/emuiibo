@@ -42,6 +42,8 @@
             this.CreateButton = new System.Windows.Forms.Button();
             this.label3 = new System.Windows.Forms.Label();
             this.groupBox3 = new System.Windows.Forms.GroupBox();
+            this.LastPathCheck = new System.Windows.Forms.CheckBox();
+            this.LastPathLabel = new System.Windows.Forms.Label();
             this.label10 = new System.Windows.Forms.Label();
             this.label9 = new System.Windows.Forms.Label();
             this.label8 = new System.Windows.Forms.Label();
@@ -57,10 +59,7 @@
             this.SeriesComboBox = new System.Windows.Forms.ComboBox();
             this.AmiiboComboBox = new System.Windows.Forms.ComboBox();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
-            this.HelpButton = new System.Windows.Forms.Button();
             this.AboutButton = new System.Windows.Forms.Button();
-            this.LastPathLabel = new System.Windows.Forms.Label();
-            this.LastPathCheck = new System.Windows.Forms.CheckBox();
             this.groupBox2.SuspendLayout();
             this.groupBox3.SuspendLayout();
             this.statusStrip1.SuspendLayout();
@@ -191,7 +190,7 @@
             this.label3.AutoSize = true;
             this.label3.BackColor = System.Drawing.SystemColors.Control;
             this.label3.ForeColor = System.Drawing.Color.DimGray;
-            this.label3.Location = new System.Drawing.Point(26, 570);
+            this.label3.Location = new System.Drawing.Point(60, 570);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(291, 13);
             this.label3.TabIndex = 8;
@@ -216,6 +215,31 @@
             this.groupBox3.TabIndex = 9;
             this.groupBox3.TabStop = false;
             this.groupBox3.Text = "3 - Generate the virtual amiibo";
+            // 
+            // LastPathCheck
+            // 
+            this.LastPathCheck.AutoSize = true;
+            this.LastPathCheck.Checked = true;
+            this.LastPathCheck.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.LastPathCheck.Location = new System.Drawing.Point(31, 136);
+            this.LastPathCheck.Name = "LastPathCheck";
+            this.LastPathCheck.Size = new System.Drawing.Size(155, 17);
+            this.LastPathCheck.TabIndex = 17;
+            this.LastPathCheck.Text = "Create in the last used path\n";
+            this.LastPathCheck.UseVisualStyleBackColor = true;
+            this.LastPathCheck.Visible = false;
+            // 
+            // LastPathLabel
+            // 
+            this.LastPathLabel.AutoSize = true;
+            this.LastPathLabel.BackColor = System.Drawing.SystemColors.Control;
+            this.LastPathLabel.ForeColor = System.Drawing.Color.DimGray;
+            this.LastPathLabel.Location = new System.Drawing.Point(28, 110);
+            this.LastPathLabel.Name = "LastPathLabel";
+            this.LastPathLabel.Size = new System.Drawing.Size(42, 13);
+            this.LastPathLabel.TabIndex = 16;
+            this.LastPathLabel.Text = "Dummy";
+            this.LastPathLabel.Visible = false;
             // 
             // label10
             // 
@@ -357,48 +381,15 @@
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "1 - Choose a virtual amiibo";
             // 
-            // HelpButton
-            // 
-            this.HelpButton.Location = new System.Drawing.Point(29, 538);
-            this.HelpButton.Name = "HelpButton";
-            this.HelpButton.Size = new System.Drawing.Size(120, 22);
-            this.HelpButton.TabIndex = 11;
-            this.HelpButton.Text = "Help / FAQ";
-            this.HelpButton.UseVisualStyleBackColor = true;
-            // 
             // AboutButton
             // 
-            this.AboutButton.Location = new System.Drawing.Point(164, 538);
+            this.AboutButton.Location = new System.Drawing.Point(29, 532);
             this.AboutButton.Name = "AboutButton";
-            this.AboutButton.Size = new System.Drawing.Size(227, 22);
+            this.AboutButton.Size = new System.Drawing.Size(362, 28);
             this.AboutButton.TabIndex = 12;
             this.AboutButton.Text = "About emuiibo and emutool";
             this.AboutButton.UseVisualStyleBackColor = true;
-            // 
-            // LastPathLabel
-            // 
-            this.LastPathLabel.AutoSize = true;
-            this.LastPathLabel.BackColor = System.Drawing.SystemColors.Control;
-            this.LastPathLabel.ForeColor = System.Drawing.Color.DimGray;
-            this.LastPathLabel.Location = new System.Drawing.Point(28, 110);
-            this.LastPathLabel.Name = "LastPathLabel";
-            this.LastPathLabel.Size = new System.Drawing.Size(42, 13);
-            this.LastPathLabel.TabIndex = 16;
-            this.LastPathLabel.Text = "Dummy";
-            this.LastPathLabel.Visible = false;
-            // 
-            // LastPathCheck
-            // 
-            this.LastPathCheck.AutoSize = true;
-            this.LastPathCheck.Checked = true;
-            this.LastPathCheck.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.LastPathCheck.Location = new System.Drawing.Point(31, 136);
-            this.LastPathCheck.Name = "LastPathCheck";
-            this.LastPathCheck.Size = new System.Drawing.Size(155, 17);
-            this.LastPathCheck.TabIndex = 17;
-            this.LastPathCheck.Text = "Create in the last used path\n";
-            this.LastPathCheck.UseVisualStyleBackColor = true;
-            this.LastPathCheck.Visible = false;
+            this.AboutButton.Click += new System.EventHandler(this.AboutButton_Click);
             // 
             // MainForm
             // 
@@ -406,7 +397,6 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(826, 615);
             this.Controls.Add(this.AboutButton);
-            this.Controls.Add(this.HelpButton);
             this.Controls.Add(this.statusStrip1);
             this.Controls.Add(this.groupBox3);
             this.Controls.Add(this.groupBox2);
@@ -460,7 +450,6 @@
         private System.Windows.Forms.TextBox FtpPortBox;
         private System.Windows.Forms.Label label9;
         private System.Windows.Forms.Label label10;
-        private System.Windows.Forms.Button HelpButton;
         private System.Windows.Forms.Button AboutButton;
         private System.Windows.Forms.Label LastPathLabel;
         private System.Windows.Forms.CheckBox LastPathCheck;
