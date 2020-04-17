@@ -12,10 +12,10 @@ namespace tsl {
 
             virtual void draw(gfx::Renderer *renderer) override {
                 renderer->drawRect(this->getX() - 2, this->getY() + 12 , 5, this->getHeight() - 12, a(tsl::style::color::ColorHeaderBar));
-                renderer->drawString(this->m_text.c_str(), false, this->getX() + 13, ELEMENT_BOTTOM_BOUND(this) - 12, 20, a(tsl::style::color::ColorText));
+                renderer->drawString(this->m_text.c_str(), false, this->getX() + 13, this->getBottomBound() - 12, 20, a(tsl::style::color::ColorText));
 
                 if (this->m_hasSeparator)
-                    renderer->drawRect(this->getX(), ELEMENT_BOTTOM_BOUND(this), this->getWidth(), 1, a(tsl::style::color::ColorFrame));
+                    renderer->drawRect(this->getX(), this->getBottomBound(), this->getWidth(), 1, a(tsl::style::color::ColorFrame));
             }
 
             virtual void layout(u16 parentX, u16 parentY, u16 parentWidth, u16 parentHeight) override {
@@ -59,6 +59,7 @@ namespace tsl {
                         this->m_maxWidth = this->getWidth() - 40;
                     }
 
+                    /*
                     size_t written = 0;
                     renderer->drawString(this->m_text.c_str(), false, 0, 0, 15, tsl::style::color::ColorTransparent, this->m_maxWidth, &written);
                     this->m_trunctuated = written < this->m_text.length();
@@ -68,10 +69,12 @@ namespace tsl {
                         this->m_scrollText = this->m_text + "        " + this->m_text;
                         this->m_ellipsisText = hlp::limitStringLength(this->m_text, written);
                     }
+                    */
+                    renderer->drawString(this->m_text.c_str(), false, 0, 0, 15, tsl::style::color::ColorTransparent, this->m_maxWidth);
                 }
 
                 renderer->drawRect(this->getX(), this->getY(), this->getWidth(), 1, a(tsl::style::color::ColorFrame));
-                renderer->drawRect(this->getX(), ELEMENT_BOTTOM_BOUND(this), this->getWidth(), 1, a(tsl::style::color::ColorFrame));
+                renderer->drawRect(this->getX(), this->getBottomBound(), this->getWidth(), 1, a(tsl::style::color::ColorFrame));
 
                 const char *text = m_text.c_str();
                 if (this->m_trunctuated) {
@@ -119,7 +122,7 @@ namespace tsl {
 
             virtual bool onTouch(TouchEvent event, s32 currX, s32 currY, s32 prevX, s32 prevY, s32 initialX, s32 initialY) override {
                 if (event == TouchEvent::Touch)
-                    this->m_touched = currX > ELEMENT_LEFT_BOUND(this) && currX < (ELEMENT_RIGHT_BOUND(this)) && currY > ELEMENT_TOP_BOUND(this) && currY < (ELEMENT_BOTTOM_BOUND(this));
+                    this->m_touched = currX > this->getLeftBound() && currX < this->getRightBound() && currY > this->getTopBound() && currY < this->getBottomBound();
                 
                 if (event == TouchEvent::Release && this->m_touched) {
                     this->m_touched = false;
@@ -246,9 +249,9 @@ namespace tsl {
 
             virtual bool onTouch(TouchEvent event, s32 currX, s32 currY, s32 prevX, s32 prevY, s32 initialX, s32 initialY) {
                 // Discard touches outside bounds
-                if (currX < ELEMENT_LEFT_BOUND(this->m_contentElement) || currX > ELEMENT_RIGHT_BOUND(this->m_contentElement))
+                if (currX < this->m_contentElement->getLeftBound() || currX > this->m_contentElement->getRightBound())
                     return false;
-                if (currY < ELEMENT_TOP_BOUND(this->m_contentElement) || currY > ELEMENT_BOTTOM_BOUND(this->m_contentElement))
+                if (currY < this->m_contentElement->getTopBound() || currY > this->m_contentElement->getBottomBound())
                     return false;
 
                 if (this->m_contentElement != nullptr)
