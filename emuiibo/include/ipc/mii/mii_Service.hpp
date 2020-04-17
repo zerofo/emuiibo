@@ -41,7 +41,7 @@ namespace ipc::mii {
     Result Initialize();
     void Finalize();
 
-    // For full randomness, age, gender and race values must be ::All!
+    // For full randomness, age, gender and face color values must be ::All!
     Result BuildRandom(CharInfo *out, Age age, Gender gender, FaceColor face_dolor);
     Result GetCount(u32 *out_count);
     Result GetCharInfo(u32 idx, CharInfo *out_info);
