@@ -31,12 +31,12 @@ namespace ipc::mii {
         }
     }
 
-    Result BuildRandom(CharInfo *out, Age age, Gender gender, Race race) {
+    Result BuildRandom(CharInfo *out, Age age, Gender gender, FaceColor face_color) {
         const struct {
-            Age age;
-            Gender gender;
-            Race race;
-        } in = { age, gender, race };
+            u32 age;
+            u32 gender;
+            u32 face_color;
+        } in = { static_cast<u32>(age), static_cast<u32>(gender), static_cast<u32>(face_color) };
         return serviceDispatchInOut(&g_mii_database_srv, 6, in, *out);
     }
 

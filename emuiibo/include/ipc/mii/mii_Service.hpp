@@ -20,7 +20,7 @@ namespace ipc::mii {
         All,
     };
 
-    enum class Race : u32 {
+    enum class FaceColor : u32 {
         Black,
         White,
         Asian,
@@ -42,7 +42,7 @@ namespace ipc::mii {
     void Finalize();
 
     // For full randomness, age, gender and race values must be ::All!
-    Result BuildRandom(CharInfo *out, Age age, Gender gender, Race race);
+    Result BuildRandom(CharInfo *out, Age age, Gender gender, FaceColor face_dolor);
     Result GetCount(u32 *out_count);
     Result GetCharInfo(u32 idx, CharInfo *out_info);
 }
