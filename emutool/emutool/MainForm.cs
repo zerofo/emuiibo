@@ -86,6 +86,7 @@ namespace emutool
                 var cur_amiibo = CurrentSeriesAmiibos[AmiiboComboBox.SelectedIndex];
                 AmiiboPictureBox.ImageLocation = cur_amiibo.ImageURL;
                 AmiiboNameBox.Text = cur_amiibo.AmiiboName;
+                generateAllAmibosCheck.Checked = false;
             }
             catch(Exception ex)
             {
@@ -149,12 +150,14 @@ namespace emutool
         {
             try
             {
-                var cur_amiibo = CurrentSeriesAmiibos[AmiiboComboBox.SelectedIndex];
-                if(string.IsNullOrEmpty(AmiiboNameBox.Text))
-                {
-                    ShowErrorBox("No amiibo name was specified.");
-                    return;
-                }
+
+                    var cur_amiibo = CurrentSeriesAmiibos[AmiiboComboBox.SelectedIndex];
+                    if (string.IsNullOrEmpty(AmiiboNameBox.Text))
+                    {
+                        ShowErrorBox("No amiibo name was specified.");
+                        return;
+                    }
+                
 
                 bool use_name_as_dir = UseNameCheck.Checked;
                 if(!use_name_as_dir && string.IsNullOrEmpty(DirectoryNameBox.Text))
@@ -243,8 +246,33 @@ namespace emutool
                 }
 
                 // Actually save the amiibo
-                var amiibo = AmiiboUtils.BuildAmiibo(cur_amiibo, name);
-                amiibo.Save(out_path, RandomizeUuidCheck.Checked, SaveImageCheck.Checked);
+                if (generateAllAmibosCheck.Checked)
+                {
+                    AmiiboSeries = Amiibos.GetAmiiboSeries();
+                    if (AmiiboSeries.Any())
+                    {
+                        foreach (var series in AmiiboSeries)
+                        {
+                            CurrentSeriesAmiibos = Amiibos.GetAmiibosBySeries(series);
+                            if (CurrentSeriesAmiibos.Any())
+                            {
+                                var index = 0;
+                                foreach (var amiibo in CurrentSeriesAmiibos)
+                                {
+
+                                    var amiibo_build = AmiiboUtils.BuildAmiibo(CurrentSeriesAmiibos[index], amiibo.AmiiboName);
+                                    amiibo_build.Save(out_path + "\\" + series + "\\" + amiibo.AmiiboName, RandomizeUuidCheck.Checked, SaveImageCheck.Checked);
+                                    index++;
+                                }
+                            }
+                        }
+                    }
+                } else
+                {
+                    var amiibo = AmiiboUtils.BuildAmiibo(cur_amiibo, name);
+                    amiibo.Save(out_path, RandomizeUuidCheck.Checked, SaveImageCheck.Checked);
+                }
+
 
                 // Special handling for FTP
                 if(save_to_ftp)
@@ -309,6 +337,10 @@ namespace emutool
         private void CheckBox3_CheckedChanged(object sender, EventArgs e)
         {
             DirectoryNameBox.Enabled = !UseNameCheck.Checked;
+            if (!UseNameCheck.Checked)
+            {
+                generateAllAmibosCheck.Checked = false;
+            }
         }
 
         private void chkFTP_CheckedChanged(object sender, EventArgs e)
@@ -322,6 +354,20 @@ namespace emutool
             if(MessageBox.Show("For more information about emuiibo, check it's GitHub repository's README.", DialogCaption, MessageBoxButtons.OK, MessageBoxIcon.Information) == DialogResult.OK)
             {
                 Process.Start("https://github.com/XorTroll/emuiibo");
+            }
+        }
+
+        private void generateAllAmibosCheck_CheckedChanged(object sender, EventArgs e)
+        {
+            if (generateAllAmibosCheck.Checked)
+            {
+                UseNameCheck.Checked = true;
+                AmiiboNameBox.Text = "AllAmiibos";
+                DirectoryNameBox.Text = "";
+            }
+            else
+            {
+                AmiiboNameBox.Text = AmiiboComboBox.Text;
             }
         }
     }
