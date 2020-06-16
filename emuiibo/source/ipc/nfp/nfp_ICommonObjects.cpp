@@ -20,7 +20,7 @@ namespace ipc::nfp {
         EMU_R_ASSERT(ams::os::CreateSystemEvent(&this->event_activate, ams::os::EventClearMode_AutoClear, true));
         EMU_R_ASSERT(ams::os::CreateSystemEvent(&this->event_deactivate, ams::os::EventClearMode_AutoClear, true));
         EMU_R_ASSERT(ams::os::CreateSystemEvent(&this->event_availability_change, ams::os::EventClearMode_AutoClear, true));
-        EMU_R_ASSERT(threadCreate(&this->amiibo_update_thread, &VirtualAmiiboStatusUpdateThread, reinterpret_cast<void*>(this), nullptr, 0x2000, 0x2B, -2));
+        EMU_R_ASSERT(threadCreate(&this->amiibo_update_thread, &VirtualAmiiboStatusUpdateThread, reinterpret_cast<void*>(this), nullptr, 0x1000, 0x2B, -2));
         EMU_R_ASSERT(threadStart(&this->amiibo_update_thread));
     }
 
@@ -33,22 +33,14 @@ namespace ipc::nfp {
 
     void ICommonInterface::HandleVirtualAmiiboStatus(sys::VirtualAmiiboStatus status) {
         EMU_LOCK_SCOPE_WITH(this->amiibo_update_lock);
-        this->last_notified_status = status;
         auto state = this->GetDeviceStateValue();
-        // In this context, Invalid status = the previously sent status was consumed, waiting for another change
-        switch(this->last_notified_status) {
+        switch(status) {
             case sys::VirtualAmiiboStatus::Connected: {
                 switch(state) {
                     case NfpDeviceState_SearchingForTag: {
                         // The client was waiting for an amiibo, tell it that it's connected now
                         this->SetDeviceStateValue(NfpDeviceState_TagFound);
                         ams::os::SignalSystemEvent(&this->event_activate);
-                        this->last_notified_status = sys::VirtualAmiiboStatus::Invalid;
-                        break;
-                    }
-                    case NfpDeviceState_TagFound: {
-                        // We already know it's connected
-                        this->last_notified_status = sys::VirtualAmiiboStatus::Invalid;
                         break;
                     }
                     default:
@@ -63,12 +55,6 @@ namespace ipc::nfp {
                         // The client thinks that the amiibo is connected, tell it that it was disconnected
                         this->SetDeviceStateValue(NfpDeviceState_SearchingForTag);
                         ams::os::SignalSystemEvent(&this->event_deactivate);
-                        this->last_notified_status = sys::VirtualAmiiboStatus::Invalid;
-                        break;
-                    }
-                    case NfpDeviceState_SearchingForTag: {
-                        // We already know it's not connected
-                        this->last_notified_status = sys::VirtualAmiiboStatus::Invalid;
                         break;
                     }
                     default:

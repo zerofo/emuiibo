@@ -70,7 +70,6 @@ namespace ipc::nfp {
             u64 client_app_id;
 
             Lock amiibo_update_lock;
-            sys::VirtualAmiiboStatus last_notified_status;
             Thread amiibo_update_thread;
             bool should_exit_thread;
 

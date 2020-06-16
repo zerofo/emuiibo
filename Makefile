@@ -1,12 +1,12 @@
 
 export EMUIIBO_MAJOR := 0
-export EMUIIBO_MINOR := 5
+export EMUIIBO_MINOR := 6
 export EMUIIBO_MICRO := 0
 
 .PHONY: all dev clean
 
 base:
-	@$(MAKE) -C libstratosphere/
+	@$(MAKE) -C Atmosphere-libs/libstratosphere/
 	@$(MAKE) -C emuiibo/
 	@$(MAKE) -C overlay/
 	@rm -rf $(CURDIR)/SdOut

@@ -1,14 +1,18 @@
 #include <sys/sys_System.hpp>
-
 #include <ipc/nfp/sys/sys_ISystemManager.hpp>
 #include <ipc/nfp/user/user_IUserManager.hpp>
 #include <ipc/emu/emu_IEmulationService.hpp>
 
-#define INNER_HEAP_SIZE 0x20000
+#define INNER_HEAP_SIZE 0x40000
+
+namespace ams::os {
+
+    void InitializeForStratosphereInternal();
+
+}
 
 extern "C" {
 
-    extern u32 __start__;
     u32 __nx_applet_type = AppletType_None;
     u32 __nx_fs_num_sessions = 1;
     u32 __nx_fsdev_direntry_cache_size = 1;
@@ -27,20 +31,27 @@ extern "C" {
     }
 
     void __appInit(void) {
-        EMU_R_ASSERT(smInitialize());
-        EMU_R_ASSERT(fsInitialize());
-        EMU_R_ASSERT(fsdevMountSdmc());
-        EMU_R_ASSERT(timeInitialize());
-        __libnx_init_time();
-        EMU_R_ASSERT(setsysInitialize());
-        SetSysFirmwareVersion ver = {};
-        EMU_R_ASSERT(setsysGetFirmwareVersion(&ver));
-        hosversionSet(MAKEHOSVERSION(ver.major, ver.minor, ver.micro));
-        setsysExit();
-        EMU_R_ASSERT(hidInitialize());
-        EMU_R_ASSERT(miiInitialize(MiiServiceType_System));
-        EMU_R_ASSERT(pmdmntInitialize());
-        EMU_R_ASSERT(pminfoInitialize());
+        ams::os::InitializeForStratosphereInternal();
+
+        ams::sm::DoWithSession([&] {
+            EMU_R_ASSERT(fsInitialize());
+            EMU_R_ASSERT(fsdevMountSdmc());
+
+            EMU_R_ASSERT(timeInitialize());
+            __libnx_init_time();
+
+            EMU_R_ASSERT(setsysInitialize());
+            SetSysFirmwareVersion ver = {};
+            EMU_R_ASSERT(setsysGetFirmwareVersion(&ver));
+            hosversionSet(MAKEHOSVERSION(ver.major, ver.minor, ver.micro));
+            setsysExit();
+
+            EMU_R_ASSERT(hidInitialize());
+            EMU_R_ASSERT(miiInitialize(MiiServiceType_System));
+
+            EMU_R_ASSERT(pmdmntInitialize());
+            EMU_R_ASSERT(pminfoInitialize());
+        });
     }
 
     void __appExit(void) {
@@ -51,7 +62,6 @@ extern "C" {
         hidExit();
         fsdevUnmountAll();
         fsExit();
-        smExit();
     }
 
 }
