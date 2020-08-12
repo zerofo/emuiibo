@@ -1,15 +1,9 @@
-#include <sys/sys_System.hpp>
-#include <ipc/nfp/sys/sys_ISystemManager.hpp>
-#include <ipc/nfp/user/user_IUserManager.hpp>
-#include <ipc/emu/emu_IEmulationService.hpp>
+#include <sys/sys_Common.hpp>
+#include <ipc/nfp/sys/sys_SystemManager.hpp>
+#include <ipc/nfp/user/user_UserManager.hpp>
+#include <ipc/emu/emu_EmulationService.hpp>
 
 #define INNER_HEAP_SIZE 0x40000
-
-namespace ams::os {
-
-    void InitializeForStratosphereInternal();
-
-}
 
 extern "C" {
 
@@ -19,6 +13,7 @@ extern "C" {
 
     size_t nx_inner_heap_size = INNER_HEAP_SIZE;
     char   nx_inner_heap[INNER_HEAP_SIZE];
+
     void __libnx_init_time(void);
 
     void __libnx_initheap(void) {
@@ -31,7 +26,7 @@ extern "C" {
     }
 
     void __appInit(void) {
-        ams::os::InitializeForStratosphereInternal();
+        ams::hos::InitializeForStratosphere();
 
         ams::sm::DoWithSession([&] {
             EMU_R_ASSERT(fsInitialize());
@@ -39,12 +34,6 @@ extern "C" {
 
             EMU_R_ASSERT(timeInitialize());
             __libnx_init_time();
-
-            EMU_R_ASSERT(setsysInitialize());
-            SetSysFirmwareVersion ver = {};
-            EMU_R_ASSERT(setsysGetFirmwareVersion(&ver));
-            hosversionSet(MAKEHOSVERSION(ver.major, ver.minor, ver.micro));
-            setsysExit();
 
             EMU_R_ASSERT(hidInitialize());
             EMU_R_ASSERT(miiInitialize(MiiServiceType_System));
@@ -58,8 +47,8 @@ extern "C" {
         pminfoExit();
         pmdmntExit();
         miiExit();
-        timeExit();
         hidExit();
+        timeExit();
         fsdevUnmountAll();
         fsExit();
     }
@@ -103,13 +92,13 @@ int main() {
     sys::ScanAmiiboDirectory();
  
     // Register nfp:user
-    EMU_R_ASSERT(emuiibo_manager.RegisterMitmServer<ipc::nfp::user::IUserManager>(ipc::nfp::user::ServiceName));
+    EMU_R_ASSERT((emuiibo_manager.RegisterMitmServer<ipc::nfp::user::impl::IUserManager, ipc::nfp::user::UserManager>(ipc::nfp::user::ServiceName)));
 
     // Register nfp:sys - why is this still broken?
     // EMU_R_ASSERT(emuiibo_manager.RegisterMitmServer<ipc::nfp::sys::ISystemManager>(ipc::nfp::sys::ServiceName));
     
     // Register custom nfp:emu service
-    EMU_R_ASSERT(emuiibo_manager.RegisterServer<ipc::emu::IEmulationService>(ipc::emu::ServiceName, MaxSessions));
+    EMU_R_ASSERT((emuiibo_manager.RegisterServer<ipc::emu::impl::IEmulationService, ipc::emu::EmulationService>(ipc::emu::ServiceName, MaxSessions)));
  
     emuiibo_manager.LoopProcess();
  

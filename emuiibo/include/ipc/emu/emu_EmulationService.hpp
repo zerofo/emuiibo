@@ -5,27 +5,33 @@
 
 namespace ipc::emu {
 
+    namespace impl {
+
+        using namespace ams;
+
+        #define I_EMULATION_SERVICE_INTERFACE_INFO(C, H)                                                        \
+            AMS_SF_METHOD_INFO(C, H,  0, void, GetVersion,             (ams::sf::Out<Version> out_version))                                             \
+            AMS_SF_METHOD_INFO(C, H,  1, void, GetVirtualAmiiboDirectory,             (const ams::sf::OutBuffer &out_path_buf))                                             \
+            AMS_SF_METHOD_INFO(C, H,  2, void, GetEmulationStatus,             (ams::sf::Out<sys::EmulationStatus> out_status))                                             \
+            AMS_SF_METHOD_INFO(C, H,  3, void, SetEmulationStatus,             (sys::EmulationStatus status))                                             \
+            AMS_SF_METHOD_INFO(C, H,  4, ams::Result, GetActiveVirtualAmiibo,             (ams::sf::Out<amiibo::VirtualAmiiboData> out_data, const ams::sf::OutBuffer &out_path_buf))                                             \
+            AMS_SF_METHOD_INFO(C, H,  5, ams::Result, SetActiveVirtualAmiibo,             (const ams::sf::InBuffer &path_buf))                                             \
+            AMS_SF_METHOD_INFO(C, H,  6, void, ResetActiveVirtualAmiibo,             ())                                             \
+            AMS_SF_METHOD_INFO(C, H,  7, void, GetActiveVirtualAmiiboStatus,             (ams::sf::Out<sys::VirtualAmiiboStatus> out_status))                                             \
+            AMS_SF_METHOD_INFO(C, H,  8, void, SetActiveVirtualAmiiboStatus,             (sys::VirtualAmiiboStatus status))                                             \
+            AMS_SF_METHOD_INFO(C, H,  9, void, IsApplicationIdIntercepted,             (ams::sf::Out<bool> out_intercepted, u64 app_id))                                             \
+            AMS_SF_METHOD_INFO(C, H,  10, void, IsCurrentApplicationIdIntercepted,             (ams::sf::Out<bool> out_intercepted))                                             \
+            AMS_SF_METHOD_INFO(C, H,  11, ams::Result, TryParseVirtualAmiibo,             (const ams::sf::InBuffer &path_buf, ams::sf::Out<amiibo::VirtualAmiiboData> out_data))
+
+        AMS_SF_DEFINE_INTERFACE(IEmulationService, I_EMULATION_SERVICE_INTERFACE_INFO)
+
+    }
+
     constexpr ams::sm::ServiceName ServiceName = ams::sm::ServiceName::Encode("emuiibo");
 
-    class IEmulationService final : public ams::sf::IServiceObject {
+    class EmulationService final {
 
-        private:
-            enum class CommandId {
-                GetVersion = 0,
-                GetVirtualAmiiboDirectory = 1,
-                GetEmulationStatus = 2,
-                SetEmulationStatus = 3,
-                GetActiveVirtualAmiibo = 4,
-                SetActiveVirtualAmiibo = 5,
-                ResetActiveVirtualAmiibo = 6,
-                GetActiveVirtualAmiiboStatus = 7,
-                SetActiveVirtualAmiiboStatus = 8,
-                IsApplicationIdIntercepted = 9,
-                IsCurrentApplicationIdIntercepted = 10,
-                TryParseVirtualAmiibo = 11,
-            };
-
-        private:
+        public:
             void GetVersion(ams::sf::Out<Version> out_version) {
                 out_version.SetValue(CurrentVersion);
             }
@@ -94,21 +100,7 @@ namespace ipc::emu {
                 return ams::ResultSuccess();
             }
 
-        public:
-            DEFINE_SERVICE_DISPATCH_TABLE {
-                MAKE_SERVICE_COMMAND_META(GetVersion),
-                MAKE_SERVICE_COMMAND_META(GetVirtualAmiiboDirectory),
-                MAKE_SERVICE_COMMAND_META(GetEmulationStatus),
-                MAKE_SERVICE_COMMAND_META(SetEmulationStatus),
-                MAKE_SERVICE_COMMAND_META(GetActiveVirtualAmiibo),
-                MAKE_SERVICE_COMMAND_META(SetActiveVirtualAmiibo),
-                MAKE_SERVICE_COMMAND_META(ResetActiveVirtualAmiibo),
-                MAKE_SERVICE_COMMAND_META(GetActiveVirtualAmiiboStatus),
-                MAKE_SERVICE_COMMAND_META(SetActiveVirtualAmiiboStatus),
-                MAKE_SERVICE_COMMAND_META(IsApplicationIdIntercepted),
-                MAKE_SERVICE_COMMAND_META(IsCurrentApplicationIdIntercepted),
-                MAKE_SERVICE_COMMAND_META(TryParseVirtualAmiibo),
-            };
     };
+    static_assert(impl::IsIEmulationService<EmulationService>);
 
 }

@@ -1,8 +1,8 @@
-#include <ipc/nfp/user/user_IUser.hpp>
+#include <ipc/nfp/user/user_User.hpp>
 
 namespace ipc::nfp::user {
 
-    ams::Result IUser::OpenApplicationArea(DeviceHandle handle, amiibo::AreaId id, ams::sf::Out<u32> out_npad_id) {
+    ams::Result User::OpenApplicationArea(DeviceHandle handle, amiibo::AreaId id, ams::sf::Out<u32> out_npad_id) {
         auto &amiibo = sys::GetActiveVirtualAmiibo();
         EMU_LOG_FMT("Open area - area ID: 0x" << std::hex << id << std::dec << ", is amiibo valid? " << std::boolalpha << amiibo.IsValid())
         R_UNLESS(this->IsStateAny<NfpState>(NfpState_Initialized), result::nfp::ResultDeviceNotFound);
@@ -21,7 +21,7 @@ namespace ipc::nfp::user {
         return ams::ResultSuccess();
     }
 
-    ams::Result IUser::GetApplicationArea(const ams::sf::OutBuffer &data, ams::sf::Out<u32> data_size, DeviceHandle handle) {
+    ams::Result User::GetApplicationArea(const ams::sf::OutBuffer &data, ams::sf::Out<u32> data_size, DeviceHandle handle) {
         EMU_LOG_FMT("Get area - current area ID: " << std::hex << this->current_opened_area_id)
         R_UNLESS(this->area_opened, result::nfp::ResultDeviceNotFound);
         
@@ -43,7 +43,7 @@ namespace ipc::nfp::user {
         return ams::ResultSuccess();
     }
 
-    ams::Result IUser::SetApplicationArea(const ams::sf::InBuffer &data, DeviceHandle handle) {
+    ams::Result User::SetApplicationArea(const ams::sf::InBuffer &data, DeviceHandle handle) {
         EMU_LOG_FMT("Set area - current area ID: " << std::hex << this->current_opened_area_id)
         R_UNLESS(this->area_opened, result::nfp::ResultDeviceNotFound);
         
@@ -66,7 +66,7 @@ namespace ipc::nfp::user {
         return ams::ResultSuccess();
     }
 
-    ams::Result IUser::CreateApplicationArea(const ams::sf::InBuffer &data, DeviceHandle handle, amiibo::AreaId id) {
+    ams::Result User::CreateApplicationArea(const ams::sf::InBuffer &data, DeviceHandle handle, amiibo::AreaId id) {
         EMU_LOG_FMT("Create area - area ID: " << std::hex << id)
         
         auto &amiibo = sys::GetActiveVirtualAmiibo();
@@ -82,7 +82,7 @@ namespace ipc::nfp::user {
         return ams::ResultSuccess();
     }
 
-    ams::Result IUser::GetApplicationAreaSize(DeviceHandle handle, ams::sf::Out<u32> size) {
+    ams::Result User::GetApplicationAreaSize(DeviceHandle handle, ams::sf::Out<u32> size) {
         EMU_LOG_FMT("Get area - current area ID: " << std::hex << this->current_opened_area_id)
         R_UNLESS(this->area_opened, result::nfp::ResultDeviceNotFound);
         
@@ -99,7 +99,7 @@ namespace ipc::nfp::user {
         return ams::ResultSuccess();
     }
 
-    ams::Result IUser::RecreateApplicationArea(const ams::sf::InBuffer &data, DeviceHandle handle, amiibo::AreaId id) {
+    ams::Result User::RecreateApplicationArea(const ams::sf::InBuffer &data, DeviceHandle handle, amiibo::AreaId id) {
         EMU_LOG_FMT("Recreate area - current area ID: " << std::hex << id)
         R_UNLESS(this->area_opened, result::nfp::ResultDeviceNotFound);
         

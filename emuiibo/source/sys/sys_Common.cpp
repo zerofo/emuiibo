@@ -1,4 +1,4 @@
-#include <sys/sys_System.hpp>
+#include <sys/sys_Common.hpp>
 #include <fs/fs_FileSystem.hpp>
 #include <amiibo/amiibo_Formats.hpp>
 #include <dirent.h>

@@ -1,10 +1,10 @@
 
 #pragma once
-#include <switch.h>
 #include <sstream>
 #include <fstream>
 #include <mutex>
 #include <stratosphere.hpp>
+#include <stratosphere/sf.hpp>
 #include <json.hpp>
 
 #include <emu_Consts.hpp>
