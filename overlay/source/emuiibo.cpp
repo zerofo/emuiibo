@@ -53,14 +53,12 @@ namespace emu {
     }
 
     Result GetActiveVirtualAmiibo(VirtualAmiiboData *out_amiibo_data, char *out_path, size_t out_path_size) {
-        return serviceDispatch(&g_emuiibo_srv, 4,
+        return serviceDispatchOut(&g_emuiibo_srv, 4, *out_amiibo_data,
             .buffer_attrs = {
-                SfBufferAttr_FixedSize | SfBufferAttr_HipcPointer | SfBufferAttr_Out,
-                SfBufferAttr_HipcMapAlias | SfBufferAttr_Out,
+                SfBufferAttr_HipcMapAlias | SfBufferAttr_Out
             },
             .buffers = {
-                { out_amiibo_data, sizeof(VirtualAmiiboData) },
-                { out_path, out_path_size },
+                { out_path, out_path_size }
             },
         );
     }
@@ -96,14 +94,12 @@ namespace emu {
     }
 
     Result TryParseVirtualAmiibo(char *path, size_t path_size, VirtualAmiiboData *out_amiibo_data) {
-        return serviceDispatch(&g_emuiibo_srv, 11,
+        return serviceDispatchOut(&g_emuiibo_srv, 11, *out_amiibo_data,
             .buffer_attrs = {
-                SfBufferAttr_HipcMapAlias | SfBufferAttr_In,
-                SfBufferAttr_FixedSize | SfBufferAttr_HipcPointer | SfBufferAttr_Out,
+                SfBufferAttr_HipcMapAlias | SfBufferAttr_In
             },
             .buffers = {
-                { path, path_size },
-                { out_amiibo_data, sizeof(VirtualAmiiboData) },
+                { path, path_size }
             },
         );
     }
