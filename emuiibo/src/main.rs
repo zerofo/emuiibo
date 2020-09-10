@@ -31,7 +31,7 @@ mod emu;
 mod fsext;
 mod amiibo;
 
-static mut STACK_HEAP: [u8; 0x60000] = [0; 0x60000];
+static mut STACK_HEAP: [u8; 0x80000] = [0; 0x80000];
 
 #[no_mangle]
 pub fn initialize_heap(_hbl_heap: util::PointerAndSize) -> util::PointerAndSize {
@@ -42,7 +42,7 @@ pub fn initialize_heap(_hbl_heap: util::PointerAndSize) -> util::PointerAndSize 
 
 #[no_mangle]
 pub fn main() -> Result<()> {
-    thread::get_current_thread().name.set_str("ruiibo.Main")?;
+    thread::get_current_thread().name.set_str("emuiibo.Main")?;
     fs::initialize()?;
     fs::mount_sd_card("sdmc")?;
     fsext::ensure_directories();

@@ -136,7 +136,7 @@ impl IUser for User {
         self.deactivate_event = wait::SystemEvent::new()?;
         self.availability_change_event = wait::SystemEvent::new()?;
 
-        self.emu_handler_thread = thread::Thread::new(Self::emu_handler_impl, self as *mut Self as *mut u8, core::ptr::null_mut(), 0x1000, "ruiibo.AmiiboHandler")?;
+        self.emu_handler_thread = thread::Thread::new(Self::emu_handler_impl, self as *mut Self as *mut u8, core::ptr::null_mut(), 0x1000, "emuiibo.AmiiboEmulationHandler")?;
         self.emu_handler_thread.create_and_start(0x2B, -2)?;
         
         diag_log!(log::LmLogger { log::LogSeverity::Error, true } => "Everything initialized!");
