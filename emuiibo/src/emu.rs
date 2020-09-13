@@ -27,6 +27,7 @@ pub enum EmulationStatus {
 
 #[derive(Copy, Clone, PartialEq, Eq, Debug)]
 #[repr(u32)]
+#[allow(dead_code)]
 pub enum VirtualAmiiboStatus {
     Invalid,
     Connected,
@@ -82,7 +83,7 @@ pub fn is_application_id_intercepted(application_id: u64) -> bool {
     }
 }
 
-pub fn get_active_virtual_amiibo() -> &'static amiibo::VirtualAmiibo {
+pub fn get_active_virtual_amiibo() -> &'static mut amiibo::VirtualAmiibo {
     unsafe {
         G_ACTIVE_VIRTUAL_AMIIBO.get()
     }

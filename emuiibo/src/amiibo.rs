@@ -2,10 +2,6 @@ use nx::result::*;
 use serde::{Serialize, Deserialize};
 use alloc::string::String;
 use alloc::vec::Vec;
-use nx::service::fspsrv;
-use nx::service::fspsrv::IFileSystem;
-use nx::mem;
-use nx::sync;
 use nx::fs;
 use nx::util;
 use nx::ipc::sf::mii;
@@ -180,6 +176,24 @@ impl VirtualAmiibo {
         model_info.model_number = self.info.id.model_number;
         model_info.series = self.info.id.series;
         model_info
+    }
+
+    pub fn save(&self) -> Result<()> {
+        if let Ok(data) = serde_json::to_vec_pretty(&self.info) {
+            let amiibo_json_file = format!("{}/amiibo.json", self.path);
+            let _ = fs::delete_file(amiibo_json_file.clone());
+            let mut amiibo_json = fs::open_file(amiibo_json_file.clone(), fs::FileOpenOption::Create() | fs::FileOpenOption::Write() | fs::FileOpenOption::Append())?;
+            amiibo_json.write(data.as_ptr(), data.len())?;
+            return Ok(());
+        }
+        Err(ResultCode::new(0xBEBE))
+    }
+
+    pub fn notify_written(&mut self) -> Result<()> {
+        if self.info.write_counter < 0xFFFF {
+            self.info.write_counter += 1;
+        }
+        self.save()
     }
 }
 

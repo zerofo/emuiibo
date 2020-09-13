@@ -89,12 +89,8 @@ namespace emu {
         serviceDispatchInOut(&g_emuiibo_srv, 9, app_id, *out_intercepted);
     }
 
-    void IsCurrentApplicationIdIntercepted(bool *out_intercepted) {
-        serviceDispatchOut(&g_emuiibo_srv, 10, *out_intercepted);
-    }
-
     Result TryParseVirtualAmiibo(char *path, size_t path_size, VirtualAmiiboData *out_amiibo_data) {
-        return serviceDispatchOut(&g_emuiibo_srv, 11, *out_amiibo_data,
+        return serviceDispatchOut(&g_emuiibo_srv, 10, *out_amiibo_data,
             .buffer_attrs = {
                 SfBufferAttr_HipcMapAlias | SfBufferAttr_In
             },

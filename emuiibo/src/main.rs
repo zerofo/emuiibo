@@ -14,22 +14,18 @@ extern crate paste;
 use nx::result::*;
 use nx::results;
 use nx::util;
-use nx::wait;
 use nx::thread;
 use nx::diag::assert;
-use nx::ipc::sf;
 use nx::ipc::server;
-use nx::service;
 use nx::fs;
-use nx::service::psc;
-use nx::service::psc::IPmModule;
-use nx::service::psc::IPmService;
 use core::panic;
 
+mod resultsext;
 mod ipc;
 mod emu;
 mod fsext;
 mod amiibo;
+mod area;
 
 static mut STACK_HEAP: [u8; 0x80000] = [0; 0x80000];
 
