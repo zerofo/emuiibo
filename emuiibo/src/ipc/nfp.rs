@@ -37,23 +37,23 @@ impl User {
     }
 
     pub fn is_state(&mut self, state: nfp::State) -> bool {
-        *self.state.get() == state
+        self.state.get_val() == state
     }
 
     pub fn is_device_state(&mut self, device_state: nfp::DeviceState) -> bool {
-        *self.device_state.get() == device_state
+        self.device_state.get_val() == device_state
     }
 
     pub fn handle_virtual_amiibo_status(&mut self, status: emu::VirtualAmiiboStatus) {
         match status {
-            emu::VirtualAmiiboStatus::Connected => match *self.device_state.get() {
+            emu::VirtualAmiiboStatus::Connected => match self.device_state.get_val() {
                 nfp::DeviceState::SearchingForTag => {
                     self.device_state.set(nfp::DeviceState::TagFound);
                     self.activate_event.signal().unwrap();
                 },
                 _ => {}
             },
-            emu::VirtualAmiiboStatus::Disconnected => match *self.device_state.get() {
+            emu::VirtualAmiiboStatus::Disconnected => match self.device_state.get_val() {
                 nfp::DeviceState::TagFound | nfp::DeviceState::TagMounted => {
                     self.device_state.set(nfp::DeviceState::SearchingForTag);
                     self.deactivate_event.signal().unwrap();
@@ -69,7 +69,7 @@ impl User {
         let user = user_v as *mut User;
         unsafe {
             loop {
-                if *(*user).should_end_thread.get() {
+                if (*user).should_end_thread.get_val() {
                     break;
                 }
                 
@@ -97,33 +97,33 @@ impl sf::IObject for User {
     }
 
     fn get_command_table(&self) -> sf::CommandMetadataTable {
-        ipc_server_make_command_table! {
-            initialize: 0,
-            finalize: 1,
-            list_devices: 2,
-            start_detection: 3,
-            stop_detection: 4,
-            mount: 5,
-            unmount: 6,
-            open_application_area: 7,
-            get_application_area: 8,
-            set_application_area: 9,
-            flush: 10,
-            restore: 11,
-            create_application_area: 12,
-            get_tag_info: 13,
-            get_register_info: 14,
-            get_common_info: 15,
-            get_model_info: 16,
-            attach_activate_event: 17,
-            attach_deactivate_event: 18,
-            get_state: 19,
-            get_device_state: 20,
-            get_npad_id: 21,
-            get_application_area_size: 22,
-            attach_availability_change_event: 23,
-            recreate_application_area: 24
-        }
+        vec! [
+            ipc_interface_make_command_meta!(initialize: 0),
+            ipc_interface_make_command_meta!(finalize: 1),
+            ipc_interface_make_command_meta!(list_devices: 2),
+            ipc_interface_make_command_meta!(start_detection: 3),
+            ipc_interface_make_command_meta!(stop_detection: 4),
+            ipc_interface_make_command_meta!(mount: 5),
+            ipc_interface_make_command_meta!(unmount: 6),
+            ipc_interface_make_command_meta!(open_application_area: 7),
+            ipc_interface_make_command_meta!(get_application_area: 8),
+            ipc_interface_make_command_meta!(set_application_area: 9),
+            ipc_interface_make_command_meta!(flush: 10),
+            ipc_interface_make_command_meta!(restore: 11),
+            ipc_interface_make_command_meta!(create_application_area: 12),
+            ipc_interface_make_command_meta!(get_tag_info: 13),
+            ipc_interface_make_command_meta!(get_register_info: 14),
+            ipc_interface_make_command_meta!(get_common_info: 15),
+            ipc_interface_make_command_meta!(get_model_info: 16),
+            ipc_interface_make_command_meta!(attach_activate_event: 17),
+            ipc_interface_make_command_meta!(attach_deactivate_event: 18),
+            ipc_interface_make_command_meta!(get_state: 19),
+            ipc_interface_make_command_meta!(get_device_state: 20),
+            ipc_interface_make_command_meta!(get_npad_id: 21),
+            ipc_interface_make_command_meta!(get_application_area_size: 22),
+            ipc_interface_make_command_meta!(attach_availability_change_event: 23, [(3, 0, 0) =>]),
+            ipc_interface_make_command_meta!(recreate_application_area: 24, [(3, 0, 0) =>])
+        ]
     }
 }
 
@@ -331,13 +331,11 @@ impl IUser for User {
     }
 
     fn get_state(&mut self) -> Result<nfp::State> {
-        let state = *self.state.get();
-        Ok(state)
+        Ok(self.state.get_val())
     }
 
     fn get_device_state(&mut self, _device_handle: nfp::DeviceHandle) -> Result<nfp::DeviceState> {
-        let device_state = *self.device_state.get();
-        Ok(device_state)
+        Ok(self.device_state.get_val())
     }
 
     fn get_npad_id(&mut self, device_handle: nfp::DeviceHandle) -> Result<u32> {
@@ -390,9 +388,9 @@ impl sf::IObject for UserManager {
     }
 
     fn get_command_table(&self) -> sf::CommandMetadataTable {
-        ipc_server_make_command_table! {
-            create_user_interface: 0
-        }
+        vec! [
+            ipc_interface_make_command_meta!(create_user_interface: 0)
+        ]
     }
 }
 

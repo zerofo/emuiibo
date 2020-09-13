@@ -32,19 +32,19 @@ impl sf::IObject for EmulationService {
     }
 
     fn get_command_table(&self) -> sf::CommandMetadataTable {
-        ipc_server_make_command_table! {
-            get_version: 0,
-            get_virtual_amiibo_directory: 1,
-            get_emulation_status: 2,
-            set_emulation_status: 3,
-            get_active_virtual_amiibo: 4,
-            set_active_virtual_amiibo: 5,
-            reset_active_virtual_amiibo: 6,
-            get_active_virtual_amiibo_status: 7,
-            set_active_virtual_amiibo_status: 8,
-            is_application_id_intercepted: 9,
-            try_parse_virtual_amiibo: 10
-        }
+        vec! [
+            ipc_interface_make_command_meta!(get_version: 0),
+            ipc_interface_make_command_meta!(get_virtual_amiibo_directory: 1),
+            ipc_interface_make_command_meta!(get_emulation_status: 2),
+            ipc_interface_make_command_meta!(set_emulation_status: 3),
+            ipc_interface_make_command_meta!(get_active_virtual_amiibo: 4),
+            ipc_interface_make_command_meta!(set_active_virtual_amiibo: 5),
+            ipc_interface_make_command_meta!(reset_active_virtual_amiibo: 6),
+            ipc_interface_make_command_meta!(get_active_virtual_amiibo_status: 7),
+            ipc_interface_make_command_meta!(set_active_virtual_amiibo_status: 8),
+            ipc_interface_make_command_meta!(is_application_id_intercepted: 9),
+            ipc_interface_make_command_meta!(try_parse_virtual_amiibo: 10)
+        ]
     }
 }
 

@@ -43,7 +43,7 @@ static mut G_ACTIVE_VIRTUAL_AMIIBO: sync::Locked<amiibo::VirtualAmiibo> = sync::
 
 pub fn get_emulation_status() -> EmulationStatus {
     unsafe {
-        *G_EMULATION_STATUS.get()
+        G_EMULATION_STATUS.get_val()
     }
 }
 
@@ -55,7 +55,7 @@ pub fn set_emulation_status(status: EmulationStatus) {
 
 pub fn get_active_virtual_amiibo_status() -> VirtualAmiiboStatus {
     unsafe {
-        *G_ACTIVE_VIRTUAL_AMIIBO_STATUS.get()
+        G_ACTIVE_VIRTUAL_AMIIBO_STATUS.get_val()
     }
 }
 
