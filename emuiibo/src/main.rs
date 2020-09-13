@@ -36,6 +36,9 @@ pub fn initialize_heap(_hbl_heap: util::PointerAndSize) -> util::PointerAndSize 
     }
 }
 
+const POINTER_BUF_SIZE: usize = 0x1000;
+type Manager = server::ServerManager<POINTER_BUF_SIZE>;
+
 #[no_mangle]
 pub fn main() -> Result<()> {
     thread::get_current_thread().name.set_str("emuiibo.Main")?;
@@ -43,9 +46,7 @@ pub fn main() -> Result<()> {
     fs::mount_sd_card("sdmc")?;
     fsext::ensure_directories();
 
-    const POINTER_BUF_SIZE: usize = 0x400;
-    let mut manager: server::ServerManager<POINTER_BUF_SIZE> = server::ServerManager::new();
-    
+    let mut manager = Manager::new();
     manager.register_mitm_service_server::<ipc::nfp::UserManager>()?;
     manager.register_service_server::<ipc::emu::EmulationService>()?;
     manager.loop_process()?;
