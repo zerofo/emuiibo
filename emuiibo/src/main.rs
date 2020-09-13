@@ -27,7 +27,7 @@ mod fsext;
 mod amiibo;
 mod area;
 
-static mut STACK_HEAP: [u8; 0x80000] = [0; 0x80000];
+static mut STACK_HEAP: [u8; 0x20000] = [0; 0x20000];
 
 #[no_mangle]
 pub fn initialize_heap(_hbl_heap: util::PointerAndSize) -> util::PointerAndSize {
