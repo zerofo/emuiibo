@@ -1,10 +1,6 @@
 use nx::result::*;
 use nx::ipc::sf;
 use nx::ipc::server;
-use nx::service;
-use nx::service::pm;
-use nx::service::pm::IInformationInterface;
-use nx::service::pm::IDebugMonitorInterface;
 use alloc::string::String;
 
 use crate::resultsext;
