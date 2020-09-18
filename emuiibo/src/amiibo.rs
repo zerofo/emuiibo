@@ -4,19 +4,22 @@ use alloc::string::String;
 use alloc::vec::Vec;
 use nx::fs;
 use nx::util;
+use nx::rand;
+use nx::rand::RandomGenerator;
 use nx::ipc::sf::mii;
 use nx::ipc::sf::nfp;
 
 use crate::fsext;
+use crate::miiext;
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq, Eq, Debug, Default)]
 #[repr(C)]
 pub struct VirtualAmiiboUuidInfo {
     use_random_uuid: bool,
     uuid: [u8; 10]
 }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq, Eq, Debug, Default)]
 #[repr(C)]
 pub struct VirtualAmiiboData {
     uuid_info: VirtualAmiiboUuidInfo,
@@ -85,6 +88,66 @@ impl VirtualAmiiboInfo {
     }
 }
 
+// No easier way of having a constant way of creating the struct below :P
+
+const EMPTY_MII_CHARINFO: mii::CharInfo = mii::CharInfo {
+    id: util::Uuid {
+        uuid: [0; 0x10]
+    },
+    name: util::CString16::new(),
+    unk_1: 0,
+    mii_color: 0,
+    mii_sex: 0,
+    mii_height: 0,
+    mii_width: 0,
+    unk_2: [0; 2],
+    mii_face_shape: 0,
+    mii_face_color: 0,
+    mii_wrinkles_style: 0,
+    mii_makeup_style: 0,
+    mii_hair_style: 0,
+    mii_hair_color: 0,
+    mii_has_hair_flipped: 0,
+    mii_eye_style: 0,
+    mii_eye_color: 0,
+    mii_eye_size: 0,
+    mii_eye_thickness: 0,
+    mii_eye_angle: 0,
+    mii_eye_pos_x: 0,
+    mii_eye_pos_y: 0,
+    mii_eyebrow_style: 0,
+    mii_eyebrow_color: 0,
+    mii_eyebrow_size: 0,
+    mii_eyebrow_thickness: 0,
+    mii_eyebrow_angle: 0,
+    mii_eyebrow_pos_x: 0,
+    mii_eyebrow_pos_y: 0,
+    mii_nose_style: 0,
+    mii_nose_size: 0,
+    mii_nose_pos: 0,
+    mii_mouth_style: 0,
+    mii_mouth_color: 0,
+    mii_mouth_size: 0,
+    mii_mouth_thickness: 0,
+    mii_mouth_pos: 0,
+    mii_facial_hair_color: 0,
+    mii_beard_style: 0,
+    mii_mustache_style: 0,
+    mii_mustache_size: 0,
+    mii_mustache_pos: 0,
+    mii_glasses_style: 0,
+    mii_glasses_color: 0,
+    mii_glasses_size: 0,
+    mii_glasses_pos: 0,
+    mii_has_mole: 0,
+    mii_mole_size: 0,
+    mii_mole_pos_x: 0,
+    mii_mole_pos_y: 0,
+    unk_3: 0
+};
+
+const DEFAULT_MII_NAME: &'static str = "emuiibo";
+
 pub struct VirtualAmiibo {
     pub info: VirtualAmiiboInfo,
     pub mii_charinfo: mii::CharInfo,
@@ -93,11 +156,12 @@ pub struct VirtualAmiibo {
 
 impl VirtualAmiibo {
     pub const fn empty() -> Self {
-        Self { info: VirtualAmiiboInfo::empty(), mii_charinfo: mii::CharInfo { data: [0; 0x58] }, path: String::new() }
+        // Can't use Default with charinfo here as the function MUST be const - waiting for const traits...
+        Self { info: VirtualAmiiboInfo::empty(), mii_charinfo: EMPTY_MII_CHARINFO, path: String::new() }
     }
 
     pub fn new(info: VirtualAmiiboInfo, path: String) -> Result<Self> {
-        let mut amiibo = Self { info: info, mii_charinfo: mii::CharInfo { data: [0; 0x58] }, path: path };
+        let mut amiibo = Self { info: info, mii_charinfo: Default::default(), path: path };
         amiibo.mii_charinfo = amiibo.load_mii_charinfo()?;
         Ok(amiibo)
     }
@@ -107,75 +171,81 @@ impl VirtualAmiibo {
     }
 
     pub fn load_mii_charinfo(&self) -> Result<mii::CharInfo> {
-        let mut mii_charinfo: mii::CharInfo = unsafe { core::mem::zeroed() };
-        let mut mii_charinfo_file = fs::open_file(format!("{}/{}", self.path, self.info.mii_charinfo_file), fs::FileOpenOption::Read())?;
-        let mii_charinfo_size = mii_charinfo_file.get_size()?;
-        result_return_unless!(mii_charinfo_size == core::mem::size_of::<mii::CharInfo>(), 0xBADD);
-        mii_charinfo_file.read(&mut mii_charinfo, mii_charinfo_size)?;
-        Ok(mii_charinfo)
+        let mii_charinfo_path = format!("{}/{}", self.path, self.info.mii_charinfo_file);
+        if fsext::exists_file(mii_charinfo_path.clone()) {
+            let mut mii_charinfo_file = fs::open_file(mii_charinfo_path, fs::FileOpenOption::Read())?;
+            Ok(mii_charinfo_file.read_val()?)
+        }
+        else {
+            let mut random_mii = miiext::generate_random_mii()?;
+            random_mii.name.set_str(DEFAULT_MII_NAME)?;
+            
+            let mut mii_charinfo_file = fs::open_file(mii_charinfo_path, fs::FileOpenOption::Create() | fs::FileOpenOption::Write() | fs::FileOpenOption::Append())?;
+            mii_charinfo_file.write_val(random_mii)?;
+            Ok(random_mii)
+        }
     }
 
     pub fn produce_data(&self) -> Result<VirtualAmiiboData> {
-        let mut data: VirtualAmiiboData = unsafe { core::mem::zeroed() };
-        
+        let mut data: VirtualAmiiboData = Default::default();
         match self.info.uuid.as_ref() {
             Some(uuid) => {
-                for i in 0..10 {
+                for i in 0..data.uuid_info.uuid.len() {
                     data.uuid_info.uuid[i] = uuid[i];
                 }
             },
             None => data.uuid_info.use_random_uuid = true
         };
+
         data.name.set_string(self.info.name.clone())?;
         data.first_write_date = self.info.first_write_date.to_date();
         data.last_write_date = self.info.last_write_date.to_date();
         data.mii_charinfo = self.mii_charinfo;
-
         Ok(data)
     }
 
-    pub fn produce_tag_info(&self) -> nfp::TagInfo {
+    pub fn produce_tag_info(&self) -> Result<nfp::TagInfo> {
         let mut tag_info: nfp::TagInfo = unsafe { core::mem::zeroed() };
         tag_info.uuid_length = tag_info.uuid.len() as u8;
         unsafe {
             match self.info.uuid.as_ref() {
                 Some(uuid) => core::ptr::copy(uuid.as_ptr(), tag_info.uuid.as_mut_ptr(), tag_info.uuid.len()),
                 None => {
-                    // TODO: random
-                    core::ptr::write_bytes(tag_info.uuid.as_mut_ptr(), 0xBE, tag_info.uuid.len());
+                    let mut rng = rand::SplCsrngGenerator::new()?;
+                    rng.random_bytes(tag_info.uuid.as_mut_ptr(), tag_info.uuid.len())?;
                 }
             };
         }
         tag_info.tag_type = u32::max_value();
         tag_info.protocol = u32::max_value();
-        tag_info
+        Ok(tag_info)
     }
 
-    pub fn produce_register_info(&self) -> nfp::RegisterInfo {
+    pub fn produce_register_info(&self) -> Result<nfp::RegisterInfo> {
         let mut register_info: nfp::RegisterInfo = unsafe { core::mem::zeroed() };
         register_info.mii_charinfo = self.mii_charinfo;
-        let _ = register_info.name.set_string(self.info.name.clone());
+        register_info.name.set_string(self.info.name.clone())?;
         register_info.first_write_date = self.info.first_write_date.to_date();
-        register_info
+        Ok(register_info)
     }
 
-    pub fn produce_common_info(&self) -> nfp::CommonInfo {
+    pub fn produce_common_info(&self) -> Result<nfp::CommonInfo> {
         let mut common_info: nfp::CommonInfo = unsafe { core::mem::zeroed() };
         common_info.last_write_date = self.info.first_write_date.to_date();
         common_info.application_area_size = 0xD8;
         common_info.version = self.info.version;
         common_info.write_counter = self.info.write_counter;
-        common_info
+        Ok(common_info)
     }
 
-    pub fn produce_model_info(&self) -> nfp::ModelInfo {
+    pub fn produce_model_info(&self) -> Result<nfp::ModelInfo> {
         let mut model_info: nfp::ModelInfo = unsafe { core::mem::zeroed() };
         model_info.game_character_id = self.info.id.game_character_id;
         model_info.character_variant = self.info.id.character_variant;
         model_info.figure_type = self.info.id.figure_type;
         model_info.model_number = self.info.id.model_number;
         model_info.series = self.info.id.series;
-        model_info
+        Ok(model_info)
     }
 
     pub fn save(&self) -> Result<()> {
