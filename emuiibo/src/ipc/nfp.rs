@@ -8,7 +8,6 @@ use nx::ipc::sf::nfp;
 use nx::ipc::sf::nfp::IUser;
 use nx::ipc::sf::nfp::IUserManager;
 use nx::ipc::sf::sm;
-use nx::diag::log;
 use nx::wait;
 use nx::sync;
 use nx::thread;
@@ -31,7 +30,6 @@ pub struct User {
 
 impl User {
     pub fn new(application_id: u64) -> Self {
-        // diag_log!(log::LmLogger { log::LogSeverity::Trace, true } => "Registered intercepted: 0x{:016X}\n", application_id);
         emu::register_intercepted_application_id(application_id);
         Self { session: sf::Session::new(), application_id: application_id, activate_event: wait::SystemEvent::empty(), deactivate_event: wait::SystemEvent::empty(), availability_change_event: wait::SystemEvent::empty(), state: sync::Locked::new(false, nfp::State::NonInitialized), device_state: sync::Locked::new(false, nfp::DeviceState::Unavailable), should_end_thread: sync::Locked::new(false, false), emu_handler_thread: thread::Thread::empty(), current_opened_area: area::ApplicationArea::new() }
     }
@@ -64,8 +62,7 @@ impl User {
         };
     }
 
-    fn emu_handler_impl(user_v: *mut u8) {
-        // diag_log!(log::LmLogger { log::LogSeverity::Error, true } => "Starting emu_handler thread...\n");
+    fn emu_handler_thread_fn(user_v: *mut u8) {
         let user = user_v as *mut User;
         unsafe {
             loop {
@@ -78,14 +75,12 @@ impl User {
                 let _ = thread::sleep(100_000_000);
             }
         }
-        // diag_log!(log::LmLogger { log::LogSeverity::Error, true } => "Exiting emu_handler thread...\n");
     }
 }
 
 impl Drop for User {
     fn drop(&mut self) {
         emu::unregister_intercepted_application_id(self.application_id);
-        // diag_log!(log::LmLogger { log::LogSeverity::Trace, true } => "Unregistered intercepted: 0x{:016X}\n", self.application_id);
         self.should_end_thread.set(true);
         self.emu_handler_thread.join().unwrap();
     }
@@ -128,9 +123,8 @@ impl sf::IObject for User {
 }
 
 impl IUser for User {
-    fn initialize(&mut self, aruid: applet::AppletResourceUserId, process_id: sf::ProcessId, mcu_data: sf::InMapAliasBuffer) -> Result<()> {
+    fn initialize(&mut self, _aruid: applet::AppletResourceUserId, _process_id: sf::ProcessId, _mcu_data: sf::InMapAliasBuffer) -> Result<()> {
         // TODO: make use of mcu data?
-        // diag_log!(log::LmLogger { log::LogSeverity::Error, true } => "aruid: 0x{:X}, process_id: 0x{:X}, mcu data: {:p} - {}\n", aruid, process_id.process_id, mcu_data.buf, mcu_data.size);
         result_return_unless!(self.is_state(nfp::State::NonInitialized), results::nfp::ResultDeviceNotFound);
 
         self.state.set(nfp::State::Initialized);
@@ -140,7 +134,7 @@ impl IUser for User {
         self.deactivate_event = wait::SystemEvent::new()?;
         self.availability_change_event = wait::SystemEvent::new()?;
 
-        self.emu_handler_thread = thread::Thread::new(Self::emu_handler_impl, self as *mut Self as *mut u8, core::ptr::null_mut(), 0x1000, "emuiibo.AmiiboEmulationHandler")?;
+        self.emu_handler_thread = thread::Thread::new(Self::emu_handler_thread_fn, self as *mut Self as *mut u8, core::ptr::null_mut(), 0x1000, "emuiibo.AmiiboEmulationHandler")?;
         self.emu_handler_thread.create_and_start(0x2B, -2)?;
         Ok(())
     }
@@ -179,8 +173,7 @@ impl IUser for User {
         Ok(())
     }
 
-    fn mount(&mut self, _device_handle: nfp::DeviceHandle, device_type: nfp::DeviceType, mount_target: nfp::MountTarget) -> Result<()> {
-        // diag_log!(log::LmLogger { log::LogSeverity::Error, true } => "mount... device type: {:?}, mount target: {:?}\n", device_type, mount_target);
+    fn mount(&mut self, _device_handle: nfp::DeviceHandle, _device_type: nfp::DeviceType, _mount_target: nfp::MountTarget) -> Result<()> {
         result_return_unless!(self.is_state(nfp::State::Initialized), results::nfp::ResultDeviceNotFound);
         
         self.device_state.set(nfp::DeviceState::TagMounted);
@@ -188,7 +181,6 @@ impl IUser for User {
     }
 
     fn unmount(&mut self, _device_handle: nfp::DeviceHandle) -> Result<()> {
-        // diag_log!(log::LmLogger { log::LogSeverity::Error, true } => "unmount...\n");
         result_return_unless!(self.is_state(nfp::State::Initialized), results::nfp::ResultDeviceNotFound);
         
         self.device_state.set(nfp::DeviceState::TagFound);
@@ -196,7 +188,6 @@ impl IUser for User {
     }
 
     fn open_application_area(&mut self, _device_handle: nfp::DeviceHandle, access_id: nfp::AccessId) -> Result<()> {
-        // diag_log!(log::LmLogger { log::LogSeverity::Error, true } => "open_application_area...\n");
         result_return_unless!(self.is_state(nfp::State::Initialized), results::nfp::ResultDeviceNotFound);
         result_return_unless!(self.is_device_state(nfp::DeviceState::TagMounted), results::nfp::ResultDeviceNotFound);
 
@@ -211,7 +202,6 @@ impl IUser for User {
     }
 
     fn get_application_area(&mut self, _device_handle: nfp::DeviceHandle, out_data: sf::OutMapAliasBuffer) -> Result<u32> {
-        // diag_log!(log::LmLogger { log::LogSeverity::Error, true } => "get_application_area...\n");
         result_return_unless!(self.is_state(nfp::State::Initialized), results::nfp::ResultDeviceNotFound);
         result_return_unless!(self.is_device_state(nfp::DeviceState::TagMounted), results::nfp::ResultDeviceNotFound);
         result_return_unless!(self.current_opened_area.exists(), results::nfp::ResultAreaNeedsToBeCreated);
@@ -224,7 +214,6 @@ impl IUser for User {
     }
 
     fn set_application_area(&mut self, _device_handle: nfp::DeviceHandle, data: sf::InMapAliasBuffer) -> Result<()> {
-        // diag_log!(log::LmLogger { log::LogSeverity::Error, true } => "set_application_area...\n");
         result_return_unless!(self.is_state(nfp::State::Initialized), results::nfp::ResultDeviceNotFound);
         result_return_unless!(self.is_device_state(nfp::DeviceState::TagMounted), results::nfp::ResultDeviceNotFound);
         result_return_unless!(self.current_opened_area.exists(), results::nfp::ResultAreaNeedsToBeCreated);
@@ -239,21 +228,18 @@ impl IUser for User {
     }
 
     fn flush(&mut self, _device_handle: nfp::DeviceHandle) -> Result<()> {
-        // diag_log!(log::LmLogger { log::LogSeverity::Error, true } => "flush...\n");
         result_return_unless!(self.is_state(nfp::State::Initialized), results::nfp::ResultDeviceNotFound);
 
         Ok(())
     }
 
     fn restore(&mut self, _device_handle: nfp::DeviceHandle) -> Result<()> {
-        // diag_log!(log::LmLogger { log::LogSeverity::Error, true } => "restore...\n");
         result_return_unless!(self.is_state(nfp::State::Initialized), results::nfp::ResultDeviceNotFound);
 
         Ok(())
     }
 
     fn create_application_area(&mut self, _device_handle: nfp::DeviceHandle, access_id: nfp::AccessId, data: sf::InMapAliasBuffer) -> Result<()> {
-        // diag_log!(log::LmLogger { log::LogSeverity::Error, true } => "create_application_area...\n");
         result_return_unless!(self.is_state(nfp::State::Initialized), results::nfp::ResultDeviceNotFound);
         result_return_unless!(self.is_device_state(nfp::DeviceState::TagMounted), results::nfp::ResultDeviceNotFound);
 
@@ -269,7 +255,6 @@ impl IUser for User {
     }
 
     fn get_tag_info(&mut self, _device_handle: nfp::DeviceHandle, mut out_tag_info: sf::OutFixedPointerBuffer<nfp::TagInfo>) -> Result<()> {
-        // diag_log!(log::LmLogger { log::LogSeverity::Error, true } => "Tag info...\n");
         result_return_unless!(self.is_state(nfp::State::Initialized), results::nfp::ResultDeviceNotFound);
         result_return_unless!(self.is_device_state(nfp::DeviceState::TagFound) || self.is_device_state(nfp::DeviceState::TagMounted), results::nfp::ResultDeviceNotFound);
         
@@ -282,7 +267,6 @@ impl IUser for User {
     }
 
     fn get_register_info(&mut self, _device_handle: nfp::DeviceHandle, mut out_register_info: sf::OutFixedPointerBuffer<nfp::RegisterInfo>) -> Result<()> {
-        // diag_log!(log::LmLogger { log::LogSeverity::Error, true } => "Register info...\n");
         result_return_unless!(self.is_state(nfp::State::Initialized), results::nfp::ResultDeviceNotFound);
         result_return_unless!(self.is_device_state(nfp::DeviceState::TagMounted), results::nfp::ResultDeviceNotFound);
         
@@ -295,7 +279,6 @@ impl IUser for User {
     }
 
     fn get_common_info(&mut self, _device_handle: nfp::DeviceHandle, mut out_common_info: sf::OutFixedPointerBuffer<nfp::CommonInfo>) -> Result<()> {
-        // diag_log!(log::LmLogger { log::LogSeverity::Error, true } => "Common info...\n");
         result_return_unless!(self.is_state(nfp::State::Initialized), results::nfp::ResultDeviceNotFound);
         result_return_unless!(self.is_device_state(nfp::DeviceState::TagMounted), results::nfp::ResultDeviceNotFound);
         
@@ -308,7 +291,6 @@ impl IUser for User {
     }
 
     fn get_model_info(&mut self, _device_handle: nfp::DeviceHandle, mut out_model_info: sf::OutFixedPointerBuffer<nfp::ModelInfo>) -> Result<()> {
-        // diag_log!(log::LmLogger { log::LogSeverity::Error, true } => "Model info...\n");
         result_return_unless!(self.is_state(nfp::State::Initialized), results::nfp::ResultDeviceNotFound);
         result_return_unless!(self.is_device_state(nfp::DeviceState::TagMounted), results::nfp::ResultDeviceNotFound);
         
@@ -321,14 +303,12 @@ impl IUser for User {
     }
 
     fn attach_activate_event(&mut self, _device_handle: nfp::DeviceHandle) -> Result<sf::CopyHandle> {
-        // diag_log!(log::LmLogger { log::LogSeverity::Error, true } => "attach_activate_event...\n");
         result_return_unless!(self.is_state(nfp::State::Initialized), results::nfp::ResultDeviceNotFound);
         
         Ok(sf::Handle::from(self.activate_event.client_handle))
     }
 
     fn attach_deactivate_event(&mut self, _device_handle: nfp::DeviceHandle) -> Result<sf::CopyHandle> {
-        // diag_log!(log::LmLogger { log::LogSeverity::Error, true } => "attach_deactivate_event...\n");
         result_return_unless!(self.is_state(nfp::State::Initialized), results::nfp::ResultDeviceNotFound);
         
         Ok(sf::Handle::from(self.deactivate_event.client_handle))
@@ -343,14 +323,12 @@ impl IUser for User {
     }
 
     fn get_npad_id(&mut self, device_handle: nfp::DeviceHandle) -> Result<u32> {
-        // diag_log!(log::LmLogger { log::LogSeverity::Error, true } => "get_npad_id...\n");
         result_return_unless!(self.is_state(nfp::State::Initialized), results::nfp::ResultDeviceNotFound);
         
         Ok(device_handle.npad_id)
     }
 
     fn get_application_area_size(&mut self, _device_handle: nfp::DeviceHandle) -> Result<u32> {
-        // diag_log!(log::LmLogger { log::LogSeverity::Error, true } => "get_application_area_size...\n");
         result_return_unless!(self.is_state(nfp::State::Initialized), results::nfp::ResultDeviceNotFound);
         result_return_unless!(self.is_device_state(nfp::DeviceState::TagMounted), results::nfp::ResultDeviceNotFound);
         result_return_unless!(self.current_opened_area.exists(), results::nfp::ResultAreaNeedsToBeCreated);
@@ -360,14 +338,12 @@ impl IUser for User {
     }
 
     fn attach_availability_change_event(&mut self) -> Result<sf::CopyHandle> {
-        // diag_log!(log::LmLogger { log::LogSeverity::Error, true } => "attach_availability_change_event...\n");
         result_return_unless!(self.is_state(nfp::State::Initialized), results::nfp::ResultDeviceNotFound);
         
         Ok(sf::Handle::from(self.availability_change_event.client_handle))
     }
 
     fn recreate_application_area(&mut self, _device_handle: nfp::DeviceHandle, access_id: nfp::AccessId, data: sf::InMapAliasBuffer) -> Result<()> {
-        // diag_log!(log::LmLogger { log::LogSeverity::Error, true } => "recreate_application_area...\n");
         result_return_unless!(self.is_state(nfp::State::Initialized), results::nfp::ResultDeviceNotFound);
         result_return_unless!(self.is_device_state(nfp::DeviceState::TagMounted), results::nfp::ResultDeviceNotFound);
 
@@ -406,7 +382,6 @@ impl server::IMitmServerObject for UserManager {
 
 impl IUserManager for UserManager {
     fn create_user_interface(&mut self) -> Result<mem::Shared<dyn sf::IObject>> {
-        // diag_log!(log::LmLogger { log::LogSeverity::Error, true } => "create_user_interface...\n");
         Ok(mem::Shared::new(User::new(self.info.program_id)))
     }
 }

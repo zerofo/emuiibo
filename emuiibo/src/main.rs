@@ -28,7 +28,7 @@ mod emu;
 mod amiibo;
 mod area;
 
-const STACK_HEAP_SIZE: usize = 0x8000;
+const STACK_HEAP_SIZE: usize = 0x4000;
 static mut STACK_HEAP: [u8; STACK_HEAP_SIZE] = [0; STACK_HEAP_SIZE];
 
 #[no_mangle]
