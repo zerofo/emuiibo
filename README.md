@@ -45,7 +45,7 @@ All this aspects can be seen/controlled via the overlay.
 
 ## Virtual amiibo creation
 
-Emuiibo no longer requires raw BIN dumps (but allows them) to emulate amiibos. Instead, you can use `emutool` PC tool in order to generate virtual amiibos.
+Emuiibo no longer accepts raw BIN dumps to emulate amiibos. Instead, you can use `emutool` PC tool in order to generate virtual amiibos.
 
 ![Screenshot](emutool/Screenshot.png)
 
