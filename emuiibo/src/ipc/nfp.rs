@@ -10,6 +10,8 @@ use nx::ipc::sf::nfp::IUserManager;
 use nx::ipc::sf::sm;
 use nx::wait;
 use nx::sync;
+use nx::service::hid;
+use nx::input;
 use nx::thread;
 
 use crate::area;
@@ -25,13 +27,17 @@ pub struct User {
     device_state: sync::Locked<nfp::DeviceState>,
     should_end_thread: sync::Locked<bool>,
     current_opened_area: area::ApplicationArea,
-    emu_handler_thread: thread::Thread
+    emu_handler_thread: thread::Thread,
+    input_ctx: input::InputContext
 }
 
 impl User {
-    pub fn new(application_id: u64) -> Self {
+    pub fn new(application_id: u64) -> Result<Self> {
         emu::register_intercepted_application_id(application_id);
-        Self { session: sf::Session::new(), application_id: application_id, activate_event: wait::SystemEvent::empty(), deactivate_event: wait::SystemEvent::empty(), availability_change_event: wait::SystemEvent::empty(), state: sync::Locked::new(false, nfp::State::NonInitialized), device_state: sync::Locked::new(false, nfp::DeviceState::Unavailable), should_end_thread: sync::Locked::new(false, false), emu_handler_thread: thread::Thread::empty(), current_opened_area: area::ApplicationArea::new() }
+        let supported_tags = hid::NpadStyleTag::ProController() | hid::NpadStyleTag::Handheld() | hid::NpadStyleTag::JoyconPair() | hid::NpadStyleTag::JoyconLeft() | hid::NpadStyleTag::JoyconRight() | hid::NpadStyleTag::SystemExt() | hid::NpadStyleTag::System();
+        let controllers = [hid::ControllerId::Player1, hid::ControllerId::Handheld];
+        let input_ctx = input::InputContext::new(0, supported_tags, &controllers)?;
+        Ok(Self { session: sf::Session::new(), application_id: application_id, activate_event: wait::SystemEvent::empty(), deactivate_event: wait::SystemEvent::empty(), availability_change_event: wait::SystemEvent::empty(), state: sync::Locked::new(false, nfp::State::NonInitialized), device_state: sync::Locked::new(false, nfp::DeviceState::Unavailable), should_end_thread: sync::Locked::new(false, false), emu_handler_thread: thread::Thread::empty(), current_opened_area: area::ApplicationArea::new(), input_ctx: input_ctx })
     }
 
     pub fn is_state(&mut self, state: nfp::State) -> bool {
@@ -152,9 +158,10 @@ impl IUser for User {
         result_return_unless!(self.is_state(nfp::State::Initialized), results::nfp::ResultDeviceNotFound);
         
         // Send a single fake device handle
-        // TODO: use hid to detect if the joycons are attached/detached
-        // Meanwhile, hardcode handheld
-        devices[0].npad_id = 0x20;
+        devices[0].npad_id = match self.input_ctx.is_controller_connected(hid::ControllerId::Player1) {
+            true => hid::ControllerId::Player1,
+            false => hid::ControllerId::Handheld
+        } as u32;
         Ok(1)
     }
 
@@ -382,7 +389,8 @@ impl server::IMitmServerObject for UserManager {
 
 impl IUserManager for UserManager {
     fn create_user_interface(&mut self) -> Result<mem::Shared<dyn sf::IObject>> {
-        Ok(mem::Shared::new(User::new(self.info.program_id)))
+        let user = User::new(self.info.program_id)?;
+        Ok(mem::Shared::new(user))
     }
 }
 

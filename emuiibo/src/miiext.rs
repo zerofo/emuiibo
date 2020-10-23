@@ -52,14 +52,18 @@ pub fn export_miis() -> Result<()> {
             let mii_total = G_DB_SRV.get().get_1(MII_SOURCE_FLAG, sf::Buffer::from_array(&miis))?;
             for i in 0..mii_total {
                 let mii = miis[i as usize];
-                let mii_name = mii.name.get_string()?;
 
-                let mii_dir_path = format!("{}/{} - {}", fsext::EXPORTED_MIIS_DIR, i, mii_name);
+                let mii_dir_path = format!("{}/{}", fsext::EXPORTED_MIIS_DIR, i);
                 fs::create_directory(mii_dir_path.clone())?;
 
                 let mii_path = format!("{}/mii-charinfo.bin", mii_dir_path);
                 let mut mii_file = fs::open_file(mii_path, fs::FileOpenOption::Create() | fs::FileOpenOption::Write() | fs::FileOpenOption::Append())?;
                 mii_file.write_val(mii)?;
+
+                let mii_name = format!("{}/name.txt", mii_dir_path);
+                let mut mii_name_file = fs::open_file(mii_name, fs::FileOpenOption::Create() | fs::FileOpenOption::Write() | fs::FileOpenOption::Append())?;
+                let actual_name = mii.name.get_string()?;
+                mii_name_file.write(actual_name.as_ptr(), actual_name.len())?;
             }
         }
     }
