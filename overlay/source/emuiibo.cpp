@@ -4,17 +4,20 @@
 
 namespace emu {
 
-    static Service g_emuiibo_srv;
+    namespace {
+
+        Service g_emuiibo_srv;
+
+        bool smAtmosphereHasService(SmServiceName name) {
+            bool has = false;
+            serviceDispatchInOut(smGetServiceSession(), 65100, name, has);
+            return has;
+        }
+
+    }
 
     bool IsAvailable() {
-        auto srv_name = smEncodeName(EMU_EMUIIBO_SRV);
-        Handle tmph = 0;
-        auto rc = smRegisterService(&tmph, srv_name, false, 1);
-        if(R_FAILED(rc)) {
-            return true;
-        }
-        smUnregisterService(srv_name);
-        return false;
+        return smAtmosphereHasService(smEncodeName(EMU_EMUIIBO_SRV));
     }
 
     Result Initialize() {

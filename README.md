@@ -97,6 +97,10 @@ An access ID is a unique ID/number each game has for amiibo savedata, used to ch
 
 **NOTE**: if anyone is willing to make savedata editors for this amiibo saves, I'm pretty sure it would be extremely helpful for many users.
 
+## License exemption
+
+- The Ryujinx project/team is exempt from GPLv2 licensing, and may make use of emuiibo's code licensing it under their current license.
+
 ## Credits
 
 - Everyone who contributed to the original **nfp-mitm** project (forks): *Subv, ogniK, averne, spx01, SciresM*
