@@ -69,7 +69,7 @@ Running the following will decrypt the raw dump:
 amiitool -d -k <key-file-bin> -i <amiibo-raw-dump-bin> -o <out-decrypted-bin>
 ```
 
-You'll have the decrypted app-area section at offset 0xD8 on the decrypted dump, of length 0xD8. By saving that as `<game-access-id>.bin` inside the `/areas` folder of a virtual amiibo being used by emuiibo, you can actually import the dump's savedata, which would allow for such things to work. Check below for a list of per-game access IDs.
+You'll have the decrypted app-area section at offset 0xDC on the decrypted dump, of length 0xD8. By saving that as `<game-access-id>.bin` inside the `/areas` folder of a virtual amiibo being used by emuiibo, you can actually import the dump's savedata, which would allow for such things to work. Check below for a list of per-game access IDs.
 
 ## Amiibo format
 
