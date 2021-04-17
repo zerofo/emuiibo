@@ -1,6 +1,6 @@
 use nx::result::*;
 use nx::fs;
-use nx::ipc::sf::nfp;
+use nx::ipc::cmif::sf::nfp;
 use alloc::string::String;
 use crate::amiibo;
 use crate::fsext;

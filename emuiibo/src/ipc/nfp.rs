@@ -1,16 +1,16 @@
 use nx::result::*;
 use nx::results;
 use nx::mem;
-use nx::ipc::sf;
-use nx::ipc::server;
-use nx::ipc::sf::applet;
-use nx::ipc::sf::nfp;
-use nx::ipc::sf::nfp::IUser;
-use nx::ipc::sf::nfp::IUserManager;
-use nx::ipc::sf::sm;
+use nx::ipc::cmif::sf;
+use nx::ipc::cmif::server;
+use nx::ipc::cmif::sf::applet;
+use nx::ipc::cmif::sf::nfp;
+use nx::ipc::cmif::sf::nfp::IUser;
+use nx::ipc::cmif::sf::nfp::IUserManager;
+use nx::ipc::tipc::sf::sm;
 use nx::wait;
 use nx::sync;
-use nx::service::hid;
+use nx::service::cmif::hid;
 use nx::input;
 use nx::thread;
 
@@ -99,31 +99,31 @@ impl sf::IObject for User {
 
     fn get_command_table(&self) -> sf::CommandMetadataTable {
         vec! [
-            ipc_interface_make_command_meta!(initialize: 0),
-            ipc_interface_make_command_meta!(finalize: 1),
-            ipc_interface_make_command_meta!(list_devices: 2),
-            ipc_interface_make_command_meta!(start_detection: 3),
-            ipc_interface_make_command_meta!(stop_detection: 4),
-            ipc_interface_make_command_meta!(mount: 5),
-            ipc_interface_make_command_meta!(unmount: 6),
-            ipc_interface_make_command_meta!(open_application_area: 7),
-            ipc_interface_make_command_meta!(get_application_area: 8),
-            ipc_interface_make_command_meta!(set_application_area: 9),
-            ipc_interface_make_command_meta!(flush: 10),
-            ipc_interface_make_command_meta!(restore: 11),
-            ipc_interface_make_command_meta!(create_application_area: 12),
-            ipc_interface_make_command_meta!(get_tag_info: 13),
-            ipc_interface_make_command_meta!(get_register_info: 14),
-            ipc_interface_make_command_meta!(get_common_info: 15),
-            ipc_interface_make_command_meta!(get_model_info: 16),
-            ipc_interface_make_command_meta!(attach_activate_event: 17),
-            ipc_interface_make_command_meta!(attach_deactivate_event: 18),
-            ipc_interface_make_command_meta!(get_state: 19),
-            ipc_interface_make_command_meta!(get_device_state: 20),
-            ipc_interface_make_command_meta!(get_npad_id: 21),
-            ipc_interface_make_command_meta!(get_application_area_size: 22),
-            ipc_interface_make_command_meta!(attach_availability_change_event: 23, [(3, 0, 0) =>]),
-            ipc_interface_make_command_meta!(recreate_application_area: 24, [(3, 0, 0) =>])
+            ipc_cmif_interface_make_command_meta!(initialize: 0),
+            ipc_cmif_interface_make_command_meta!(finalize: 1),
+            ipc_cmif_interface_make_command_meta!(list_devices: 2),
+            ipc_cmif_interface_make_command_meta!(start_detection: 3),
+            ipc_cmif_interface_make_command_meta!(stop_detection: 4),
+            ipc_cmif_interface_make_command_meta!(mount: 5),
+            ipc_cmif_interface_make_command_meta!(unmount: 6),
+            ipc_cmif_interface_make_command_meta!(open_application_area: 7),
+            ipc_cmif_interface_make_command_meta!(get_application_area: 8),
+            ipc_cmif_interface_make_command_meta!(set_application_area: 9),
+            ipc_cmif_interface_make_command_meta!(flush: 10),
+            ipc_cmif_interface_make_command_meta!(restore: 11),
+            ipc_cmif_interface_make_command_meta!(create_application_area: 12),
+            ipc_cmif_interface_make_command_meta!(get_tag_info: 13),
+            ipc_cmif_interface_make_command_meta!(get_register_info: 14),
+            ipc_cmif_interface_make_command_meta!(get_common_info: 15),
+            ipc_cmif_interface_make_command_meta!(get_model_info: 16),
+            ipc_cmif_interface_make_command_meta!(attach_activate_event: 17),
+            ipc_cmif_interface_make_command_meta!(attach_deactivate_event: 18),
+            ipc_cmif_interface_make_command_meta!(get_state: 19),
+            ipc_cmif_interface_make_command_meta!(get_device_state: 20),
+            ipc_cmif_interface_make_command_meta!(get_npad_id: 21),
+            ipc_cmif_interface_make_command_meta!(get_application_area_size: 22),
+            ipc_cmif_interface_make_command_meta!(attach_availability_change_event: 23, [(3, 0, 0) =>]),
+            ipc_cmif_interface_make_command_meta!(recreate_application_area: 24, [(3, 0, 0) =>])
         ]
     }
 }
@@ -376,7 +376,7 @@ impl sf::IObject for UserManager {
 
     fn get_command_table(&self) -> sf::CommandMetadataTable {
         vec! [
-            ipc_interface_make_command_meta!(create_user_interface: 0)
+            ipc_cmif_interface_make_command_meta!(create_user_interface: 0)
         ]
     }
 }

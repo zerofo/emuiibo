@@ -16,7 +16,7 @@ use nx::util;
 use nx::thread;
 use nx::diag::assert;
 use nx::diag::log;
-use nx::ipc::server;
+use nx::ipc::cmif::server;
 use nx::fs;
 use core::panic;
 

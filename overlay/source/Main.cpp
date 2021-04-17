@@ -6,29 +6,29 @@
 
 namespace {
 
-    bool g_emuiibo_init_ok = false;
-    bool g_category_list_update_flag = false;
-    bool g_main_update_flag = false;
-    bool g_current_app_intercepted = false;
-    char g_emuiibo_amiibo_dir[FS_MAX_PATH];
-    emu::Version g_emuiibo_version;
+    bool g_Initialized = false;
+    bool g_NeedsUpdateCategoryList = false;
+    bool g_NeedsUpdateMainGui = false;
+    bool g_CurrentApplicationIntercepted = false;
+    char g_VirtualAmiiboDirectory[FS_MAX_PATH];
+    emu::Version g_Version;
 
-    char g_active_amiibo_path[FS_MAX_PATH];
-    emu::VirtualAmiiboData g_active_amiibo_data;
+    char g_ActiveVirtualAmiiboPath[FS_MAX_PATH];
+    emu::VirtualAmiiboData g_ActiveVirtualAmiiboData;
 
     inline bool IsActiveAmiiboValid() {
-        return strlen(g_active_amiibo_path) > 0;
+        return strlen(g_ActiveVirtualAmiiboPath) > 0;
     }
 
     inline void UpdateActiveAmiibo() {
-        emu::GetActiveVirtualAmiibo(&g_active_amiibo_data, g_active_amiibo_path, FS_MAX_PATH);
+        emu::GetActiveVirtualAmiibo(&g_ActiveVirtualAmiiboData, g_ActiveVirtualAmiiboPath, sizeof(g_ActiveVirtualAmiiboPath));
     }
 
     // Returns true if the value changed
     inline bool UpdateCurrentApplicationIntercepted() {
         bool ret = emu::IsCurrentApplicationIdIntercepted();
-        if(ret != g_current_app_intercepted) {
-            g_current_app_intercepted = ret;
+        if(ret != g_CurrentApplicationIntercepted) {
+            g_CurrentApplicationIntercepted = ret;
             return true;
         }
         return false;
@@ -36,20 +36,20 @@ namespace {
 
     inline std::string MakeActiveAmiiboText() {
         if(IsActiveAmiiboValid()) {
-            return std::string("Active virtual amiibo: ") + g_active_amiibo_data.name;
+            return std::string("Active virtual amiibo: ") + g_ActiveVirtualAmiiboData.name;
         }
         return "No active virtual amiibo";
     }
 
     inline std::string MakeTitleText() {
-        if(!g_emuiibo_init_ok) {
+        if(!g_Initialized) {
             return "emuiibo";
         }
-        return "emuiibo v" + std::to_string(g_emuiibo_version.major) + "." + std::to_string(g_emuiibo_version.minor) + "." + std::to_string(g_emuiibo_version.micro) + " (" + (g_emuiibo_version.dev_build ? "dev" : "release") + ")";
+        return "emuiibo v" + std::to_string(g_Version.major) + "." + std::to_string(g_Version.minor) + "." + std::to_string(g_Version.micro) + " (" + (g_Version.dev_build ? "dev" : "release") + ")";
     }
 
     inline std::string MakeStatusText() {
-        if(!g_emuiibo_init_ok) {
+        if(!g_Initialized) {
             return "emuiibo was not accessed.";
         }
         std::string msg = "Emulation: ";
@@ -65,19 +65,19 @@ namespace {
                     }
                     case emu::VirtualAmiiboStatus::Connected: {
                         msg += "Virtual amiibo: ";
-                        msg += g_active_amiibo_data.name;
+                        msg += g_ActiveVirtualAmiiboData.name;
                         msg += " (connected - select to disconnect)";
                         break;
                     }
                     case emu::VirtualAmiiboStatus::Disconnected: {
                         msg += "Virtual amiibo: ";
-                        msg += g_active_amiibo_data.name;
+                        msg += g_ActiveVirtualAmiiboData.name;
                         msg += " (disconnected - select to connect)";
                         break;
                     }
                 }
                 msg += "\n";
-                if(g_current_app_intercepted) {
+                if(g_CurrentApplicationIntercepted) {
                     msg += "Current game is being intercepted by emuiibo.";
                 }
                 else {
@@ -113,7 +113,7 @@ class AmiiboList : public tsl::Gui {
                 char amiibo_path[FS_MAX_PATH] = {0};
                 strcpy(amiibo_path, path.c_str());
                 if(IsActiveAmiiboValid()) {
-                    if(strcmp(g_active_amiibo_path, amiibo_path) == 0) {
+                    if(strcmp(g_ActiveVirtualAmiiboPath, amiibo_path) == 0) {
                         // User selected the active amiibo, so let's change connection then
                         auto status = emu::GetActiveVirtualAmiiboStatus();
                         switch(status) {
@@ -134,7 +134,7 @@ class AmiiboList : public tsl::Gui {
                     }
                 }
                 // Set active amiibo and update our active amiibo value
-                emu::SetActiveVirtualAmiibo(amiibo_path, FS_MAX_PATH);
+                emu::SetActiveVirtualAmiibo(amiibo_path, sizeof(amiibo_path));
                 UpdateActiveAmiibo();
                 selected_header->setText(MakeActiveAmiiboText());
                 root_frame->setSubtitle(MakeStatusText());
@@ -161,7 +161,7 @@ class AmiiboList : public tsl::Gui {
                         strcpy(path, str_path.c_str());
                         // Find virtual amiibo
                         emu::VirtualAmiiboData data = {};
-                        if(R_SUCCEEDED(emu::TryParseVirtualAmiibo(path, FS_MAX_PATH, &data))) {
+                        if(R_SUCCEEDED(emu::TryParseVirtualAmiibo(path, sizeof(path), &data))) {
                             auto item = new tsl::elm::SmallListItem(data.name);
                             item->setClickListener(std::bind(&AmiiboList::OnItemClick, this, std::placeholders::_1, str_path));
                             list->addItem(item);
@@ -211,7 +211,7 @@ class CategoryList : public tsl::Gui {
         static bool OnItemClick(u64 keys, const std::string &path) {
             if(keys & KEY_A) {
                 tsl::changeTo<AmiiboList>(path);
-                g_category_list_update_flag = true;
+                g_NeedsUpdateCategoryList = true;
                 return true;
             }
             return false;
@@ -223,12 +223,12 @@ class CategoryList : public tsl::Gui {
 
             // Root
             auto root_item = new tsl::elm::SmallListItem("<root>");
-            root_item->setClickListener(std::bind(&CategoryList::OnItemClick, std::placeholders::_1, g_emuiibo_amiibo_dir));
+            root_item->setClickListener(std::bind(&CategoryList::OnItemClick, std::placeholders::_1, g_VirtualAmiiboDirectory));
             this->list->addItem(root_item);
 
             u32 count = 1; // Root
             tsl::hlp::doWithSDCardHandle([&](){
-                auto dir = opendir(g_emuiibo_amiibo_dir);
+                auto dir = opendir(g_VirtualAmiiboDirectory);
                 if(dir) {
                     while(true) {
                         auto entry = readdir(dir);
@@ -236,11 +236,11 @@ class CategoryList : public tsl::Gui {
                             break;
                         }
                         char path[FS_MAX_PATH] = {0};
-                        auto str_path = std::string(g_emuiibo_amiibo_dir) + "/" + entry->d_name;
+                        auto str_path = std::string(g_VirtualAmiiboDirectory) + "/" + entry->d_name;
                         strcpy(path, str_path.c_str());
                         // If it's a valid amiibo, skip
                         emu::VirtualAmiiboData tmp_data;
-                        if(R_SUCCEEDED(emu::TryParseVirtualAmiibo(path, FS_MAX_PATH, &tmp_data))) {
+                        if(R_SUCCEEDED(emu::TryParseVirtualAmiibo(path, sizeof(path), &tmp_data))) {
                             continue;
                         }
                         if(entry->d_type & DT_DIR) {
@@ -266,9 +266,9 @@ class CategoryList : public tsl::Gui {
 
         virtual void update() override {
             bool upd = false;
-            if(g_category_list_update_flag) {
+            if(g_NeedsUpdateCategoryList) {
                 upd = true;
-                g_category_list_update_flag = false;
+                g_NeedsUpdateCategoryList = false;
             }
             if(UpdateCurrentApplicationIntercepted()) {
                 upd = true;
@@ -297,7 +297,7 @@ class MainGui : public tsl::Gui {
         virtual tsl::elm::Element *createUI() override {
             auto list = new tsl::elm::List();
             
-            if(g_emuiibo_init_ok) {
+            if(g_Initialized) {
                 auto status = emu::GetEmulationStatus();
 
                 auto *toggle_item = new tsl::elm::NamedStepTrackBar("\u22EF", { "Off", "On" });
@@ -331,7 +331,7 @@ class MainGui : public tsl::Gui {
                 select_item->setClickListener([](u64 keys) { 
                     if(keys & KEY_A) {
                         tsl::changeTo<CategoryList>();
-                        g_main_update_flag = true;
+                        g_NeedsUpdateMainGui = true;
                         return true;
                     }
                     return false;
@@ -352,9 +352,9 @@ class MainGui : public tsl::Gui {
 
         virtual void update() override {
             bool upd = false;
-            if(g_main_update_flag) {
+            if(g_NeedsUpdateMainGui) {
                 upd = true;
-                g_main_update_flag = false;
+                g_NeedsUpdateMainGui = false;
             }
             if(UpdateCurrentApplicationIntercepted()) {
                 upd = true;
@@ -372,14 +372,14 @@ class Overlay : public tsl::Overlay {
         virtual void initServices() override {
             tsl::hlp::doWithSmSession([&] {
                 if(emu::IsAvailable()) {
-                    g_emuiibo_init_ok = R_SUCCEEDED(emu::Initialize()) && R_SUCCEEDED(pmdmntInitialize()) && R_SUCCEEDED(pminfoInitialize());
-                    if(g_emuiibo_init_ok) {
-                        g_emuiibo_version = emu::GetVersion();
-                        emu::GetVirtualAmiiboDirectory(g_emuiibo_amiibo_dir, FS_MAX_PATH);
+                    g_Initialized = R_SUCCEEDED(emu::Initialize()) && R_SUCCEEDED(pmdmntInitialize()) && R_SUCCEEDED(pminfoInitialize());
+                    if(g_Initialized) {
+                        g_Version = emu::GetVersion();
+                        emu::GetVirtualAmiiboDirectory(g_VirtualAmiiboDirectory, sizeof(g_VirtualAmiiboDirectory));
                     }
                 }
             });
-            if(g_emuiibo_init_ok) {
+            if(g_Initialized) {
                 UpdateActiveAmiibo();
             }
         }
