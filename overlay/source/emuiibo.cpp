@@ -1,5 +1,4 @@
 #include <emuiibo.hpp>
-#include <tipc.hpp>
 
 #define EMU_EMUIIBO_SERVICE_NAME "emuiibo"
 

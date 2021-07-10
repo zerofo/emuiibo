@@ -109,7 +109,7 @@ class AmiiboList : public tsl::Gui {
         AmiiboList(const std::string &path) : root_frame(new tsl::elm::CustomOverlayFrame(MakeTitleText(), MakeStatusText())), amiibo_path(path) {}
 
         bool OnItemClick(u64 keys, const std::string &path) {
-            if(keys & KEY_A) {
+            if(keys & HidNpadButton_A) {
                 char amiibo_path[FS_MAX_PATH] = {0};
                 strcpy(amiibo_path, path.c_str());
                 if(IsActiveAmiiboValid()) {
@@ -209,7 +209,7 @@ class CategoryList : public tsl::Gui {
         }
 
         static bool OnItemClick(u64 keys, const std::string &path) {
-            if(keys & KEY_A) {
+            if(keys & HidNpadButton_A) {
                 tsl::changeTo<AmiiboList>(path);
                 g_NeedsUpdateCategoryList = true;
                 return true;
@@ -329,7 +329,7 @@ class MainGui : public tsl::Gui {
                 });
                 
                 select_item->setClickListener([](u64 keys) { 
-                    if(keys & KEY_A) {
+                    if(keys & HidNpadButton_A) {
                         tsl::changeTo<CategoryList>();
                         g_NeedsUpdateMainGui = true;
                         return true;

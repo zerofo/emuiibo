@@ -33,16 +33,15 @@ impl ApplicationArea {
         }
     }
 
-    pub fn create(&self, data: *const u8, data_size: usize, recreate: bool) -> Result<()> {
-        if recreate {
-            let _ = fs::delete_file(self.area_file.clone());
-        }
-        // Write already creates the file if it doesn't exist
+    pub fn create(&self, data: *const u8, data_size: usize, _recreate: bool) -> Result<()> {
+        // TODO: difference between create and recreate commands?
+        // write already overwrites the area file
         self.write(data, data_size)
     }
 
     pub fn write(&self, data: *const u8, data_size: usize) -> Result<()> {
-        let mut file = fs::open_file(self.area_file.clone(), fs::FileOpenOption::Create() | fs::FileOpenOption::Write())?;
+        let _ = fs::delete_file(self.area_file.clone());
+        let mut file = fs::open_file(self.area_file.clone(), fs::FileOpenOption::Create() | fs::FileOpenOption::Write() | fs::FileOpenOption::Append())?;
         file.write(data, data_size)?;
         Ok(())
     }

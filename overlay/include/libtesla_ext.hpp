@@ -111,9 +111,9 @@ namespace tsl {
             }
 
             virtual bool onClick(u64 keys) override {
-                if (keys & KEY_A)
+                if (keys & HidNpadButton_A)
                     this->triggerClickAnimation();
-                else if (keys & (KEY_UP | KEY_DOWN | KEY_LEFT | KEY_RIGHT))
+                else if (keys & (HidNpadButton_AnyUp | HidNpadButton_AnyDown | HidNpadButton_AnyLeft | HidNpadButton_AnyRight))
                     this->m_clickAnimationProgress = 0;
 
                 return Element::onClick(keys);
@@ -128,7 +128,7 @@ namespace tsl {
                     this->m_touched = false;
 
                     if (Element::getInputMode() == InputMode::Touch) {
-                        bool handled = this->onClick(KEY_A);
+                        bool handled = this->onClick(HidNpadButton_A);
 
                         this->m_clickAnimationProgress = 0;
                         return handled;
