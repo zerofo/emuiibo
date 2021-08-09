@@ -5,16 +5,16 @@ authors = ["XorTroll"]
 edition = "2018"
 
 [dependencies]
-nx = { git = "https://github.com/aarch64-switch-rs/nx" }
+nx = { path = "../../aarch64-switch-rs/nx" }
 paste = "1.0"
 
 [dependencies.serde]
-version = ""
+version = "1.0"
 default-features = false
 features = ["derive"]
 
 [dependencies.serde_json]
-version = ""
+version = "1.0"
 default-features = false
 features = ["alloc"]
 

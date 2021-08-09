@@ -1,8 +1,6 @@
 #![no_std]
 #![no_main]
 
-#![feature(const_fn)]
-
 #[macro_use]
 extern crate nx;
 
@@ -16,7 +14,7 @@ use nx::util;
 use nx::thread;
 use nx::diag::assert;
 use nx::diag::log;
-use nx::ipc::cmif::server;
+use nx::ipc::server;
 use nx::fs;
 use core::panic;
 

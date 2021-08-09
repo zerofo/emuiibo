@@ -1,16 +1,16 @@
 use nx::result::*;
 use nx::results;
 use nx::mem;
-use nx::ipc::cmif::sf;
-use nx::ipc::cmif::server;
-use nx::ipc::cmif::sf::applet;
-use nx::ipc::cmif::sf::nfp;
-use nx::ipc::cmif::sf::nfp::IUser;
-use nx::ipc::cmif::sf::nfp::IUserManager;
-use nx::ipc::tipc::sf::sm;
+use nx::ipc::sf;
+use nx::ipc::server;
+use nx::ipc::sf::applet;
+use nx::ipc::sf::nfp;
+use nx::ipc::sf::nfp::IUser;
+use nx::ipc::sf::nfp::IUserManager;
+use nx::ipc::sf::sm;
 use nx::wait;
 use nx::sync;
-use nx::service::cmif::hid;
+use nx::service::hid;
 use nx::input;
 use nx::thread;
 

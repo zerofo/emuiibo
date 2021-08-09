@@ -39,7 +39,8 @@ namespace emu {
 
     Version GetVersion() {
         Version ver = {};
-        serviceDispatchOut(&g_EmuiiboService, 0, ver);
+        const auto rc = serviceDispatchOut(&g_EmuiiboService, 0, ver);
+        if(R_FAILED(rc)) fatalThrow(rc);
         return ver;
     }
 

@@ -1,6 +1,6 @@
 use nx::result::*;
-use nx::ipc::cmif::sf;
-use nx::ipc::cmif::server;
+use nx::ipc::sf;
+use nx::ipc::server;
 use alloc::string::String;
 
 use crate::resultsext;
