@@ -18,5 +18,5 @@ version = "1.0"
 default-features = false
 features = ["alloc"]
 
-[package.metadata.sprinkle.nsp]
+[package.metadata.nx.nsp]
 npdm = "npdm.json"

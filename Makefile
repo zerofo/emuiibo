@@ -6,7 +6,7 @@ export EMUIIBO_MICRO := 3
 .PHONY: all clean
 
 all:
-	@cd emuiibo; cargo update; sprinkle nsp --release
+	@cd emuiibo && cargo update && cargo nx release
 	@$(MAKE) -C overlay/
 	@rm -rf $(CURDIR)/SdOut
 	@mkdir -p $(CURDIR)/SdOut/atmosphere/contents/0100000000000352/flags
@@ -18,5 +18,5 @@ all:
 
 clean:
 	@rm -rf $(CURDIR)/SdOut
-	@cd emuiibo; xargo clean
+	@cd emuiibo && cargo clean
 	@$(MAKE) clean -C overlay/
