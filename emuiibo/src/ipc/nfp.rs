@@ -69,16 +69,15 @@ impl User {
         };
     }
 
-    fn emu_handler_thread_fn(user_v: *mut u8) {
-        let user = user_v as *mut User;
+    fn emu_handler_thread_fn(user: &*mut User) {
         unsafe {
             loop {
-                if (*user).should_end_thread.get_val() {
+                if (*(*user)).should_end_thread.get_val() {
                     break;
                 }
                 
                 let status = emu::get_active_virtual_amiibo_status();
-                (*user).handle_virtual_amiibo_status(status);
+                (*(*user)).handle_virtual_amiibo_status(status);
                 let _ = thread::sleep(100_000_000);
             }
         }
@@ -131,7 +130,7 @@ impl sf::IObject for User {
 
 impl IUser for User {
     fn initialize(&mut self, _aruid: applet::AppletResourceUserId, _process_id: sf::ProcessId, _mcu_data: sf::InMapAliasBuffer) -> Result<()> {
-        // TODO: make use of mcu data?
+        // TODO: make use of aruid or mcu data?
         result_return_unless!(self.is_state(nfp::State::NonInitialized), results::nfp::ResultDeviceNotFound);
         logger::log_line_str("Initialize");
 
@@ -142,8 +141,9 @@ impl IUser for User {
         self.deactivate_event = wait::SystemEvent::new()?;
         self.availability_change_event = wait::SystemEvent::new()?;
 
-        self.emu_handler_thread = thread::Thread::new(Self::emu_handler_thread_fn, self as *mut Self as *mut u8, core::ptr::null_mut(), 0x1000, "emuiibo.AmiiboEmulationHandler")?;
-        self.emu_handler_thread.create_and_start(0x2B, -2)?;
+        self.emu_handler_thread = thread::Thread::new(Self::emu_handler_thread_fn, &(self as *mut Self), "emuiibo.AmiiboEmulationHandler", 0x1000)?;
+        self.emu_handler_thread.initialize(0x2B, -2)?;
+        self.emu_handler_thread.start()?;
         Ok(())
     }
 
