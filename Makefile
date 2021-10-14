@@ -23,6 +23,4 @@ clean:
 	@$(MAKE) clean -C overlay/
 
 translation:
-	$(CURDIR)/overlay/tools/translation.py update ru $(ARGS)
-	$(CURDIR)/overlay/tools/translation.py update de $(ARGS)
-	$(CURDIR)/overlay/tools/translation.py update es $(ARGS)
+	$(CURDIR)/overlay/tools/translation.py update "*" $(ARGS)

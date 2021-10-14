@@ -1,0 +1,175 @@
+{
+    "metadata": {
+        "base": "en",
+        "language": "zh-CN",
+        "created": "2021-10-11",
+        "author": "amazingfate"
+    },
+    "strings": [
+        {
+            "context": "UPNG",
+            "source": "Bad file",
+            "translation": "坏文件"
+        },
+        {
+            "context": "UPNG",
+            "source": "Please use RGBA PNG.",
+            "translation": "请使用RGBA PNG."
+        },
+        {
+            "context": "UPNG",
+            "source": "Upscale not allowed.",
+            "translation": "不允许图片缩放."
+        },
+        {
+            "context": "UPNG",
+            "source": "Image is too big.",
+            "translation": "图片过大."
+        },
+        {
+            "context": "UPNG",
+            "source": "Image not found.",
+            "translation": "找不到图片."
+        },
+        {
+            "context": "UPNG",
+            "source": "Image is not a PNG.",
+            "translation": "图片不是PNG格式."
+        },
+        {
+            "context": "UPNG",
+            "source": "PNG malformed.",
+            "translation": "PNG格式错误."
+        },
+        {
+            "context": "UPNG",
+            "source": "This PNG not supported.",
+            "translation": "不支持这个PNG文件."
+        },
+        {
+            "context": "UPNG",
+            "source": "Image interlacing is not supported.",
+            "translation": "不支持图像隔行扫描."
+        },
+        {
+            "context": "UPNG",
+            "source": "Image color format is not supported.",
+            "translation": "图片颜色格式不支持."
+        },
+        {
+            "context": "UPNG",
+            "source": "Invalid parameter.",
+            "translation": "无效的参数."
+        },
+        {
+            "context": "",
+            "source": "emuiibo not found...",
+            "translation": "找不到emuiibo..."
+        },
+        {
+            "context": "",
+            "source": "Help",
+            "translation": "帮助"
+        },
+        {
+            "context": "",
+            "source": "Enable emulation",
+            "translation": "开启amiibo模拟"
+        },
+        {
+            "context": "",
+            "source": "Disable emulation",
+            "translation": "关闭amiibo模拟"
+        },
+        {
+            "context": "",
+            "source": "Connect/disconnect virtual amiibo",
+            "translation": "连接/断开 虚拟amiibo"
+        },
+        {
+            "context": "",
+            "source": "Select folder/virtual amiibo",
+            "translation": "选择目录/虚拟amiibo"
+        },
+        {
+            "context": "",
+            "source": "Add to favorites",
+            "translation": "添加到收藏夹"
+        },
+        {
+            "context": "",
+            "source": "Remove from favorites",
+            "translation": "移出收藏夹"
+        },
+        {
+            "context": "",
+            "source": "Reset active amiibo",
+            "translation": "重置激活的amiibo"
+        },
+        {
+            "context": "",
+            "source": "Emulation status",
+            "translation": "模拟状态"
+        },
+        {
+            "context": "",
+            "source": "on",
+            "translation": "开启"
+        },
+        {
+            "context": "",
+            "source": "off",
+            "translation": "关闭"
+        },
+        {
+            "context": "",
+            "source": "Current game is",
+            "translation": "当前游戏为"
+        },
+        {
+            "context": "",
+            "source": "Available amiibos in",
+            "translation": "可用的amiibo"
+        },
+        {
+            "context": "",
+            "source": "intercepted",
+            "translation": "已生效"
+        },
+        {
+            "context": "",
+            "source": "not intercepted",
+            "translation": "未生效"
+        },
+        {
+            "context": "",
+            "source": "No active virtual amiibo",
+            "translation": "没有激活的虚拟amiibo"
+        },
+        {
+            "context": "",
+            "source": "connected",
+            "translation": "已连接"
+        },
+        {
+            "context": "",
+            "source": "disconnected",
+            "translation": "已断开"
+        },
+        {
+            "context": "",
+            "source": "View amiibos",
+            "translation": "预览amiibo"
+        },
+        {
+            "context": "",
+            "source": "Favorites",
+            "translation": "收藏夹"
+        },
+        {
+            "context": "",
+            "source": "Reset active",
+            "translation": "重置激活状态"
+        }
+    ]
+}
