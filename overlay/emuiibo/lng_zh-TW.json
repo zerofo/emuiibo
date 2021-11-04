@@ -1,130 +1,130 @@
 {
     "metadata": {
         "base": "en",
-        "language": "zh-Hans",
-        "created": "2021-10-11",
-        "author": "amazingfate"
+        "language": "zh-TW",
+        "created": "2021-11-2",
+        "author": "qazrfv1234"
     },
     "strings": [
         {
             "context": "UPNG",
             "source": "Bad file",
-            "translation": "坏文件"
+            "translation": "檔案損壞"
         },
         {
             "context": "UPNG",
             "source": "Please use RGBA PNG.",
-            "translation": "请使用RGBA PNG."
+            "translation": "請使用RGBA PNG."
         },
         {
             "context": "UPNG",
             "source": "Upscale not allowed.",
-            "translation": "不允许图片缩放."
+            "translation": "尚未支援縮放圖片."
         },
         {
             "context": "UPNG",
             "source": "Image is too big.",
-            "translation": "图片过大."
+            "translation": "圖片超出範圍."
         },
         {
             "context": "UPNG",
             "source": "Image not found.",
-            "translation": "找不到图片."
+            "translation": "沒有符合的圖片."
         },
         {
             "context": "UPNG",
             "source": "Image is not a PNG.",
-            "translation": "图片不是PNG格式."
+            "translation": "圖片並非PNG格式."
         },
         {
             "context": "UPNG",
             "source": "PNG malformed.",
-            "translation": "PNG格式错误."
+            "translation": "PNG格式錯誤."
         },
         {
             "context": "UPNG",
             "source": "This PNG not supported.",
-            "translation": "不支持这个PNG文件."
+            "translation": "此PNG檔案格式尚未支援."
         },
         {
             "context": "UPNG",
             "source": "Image interlacing is not supported.",
-            "translation": "不支持图像隔行扫描."
+            "translation": "尚未支援隔行掃描圖片."
         },
         {
             "context": "UPNG",
             "source": "Image color format is not supported.",
-            "translation": "图片颜色格式不支持."
+            "translation": "此圖片顏色格式尚未支援."
         },
         {
             "context": "UPNG",
             "source": "Invalid parameter.",
-            "translation": "无效的参数."
+            "translation": "無效的參數."
         },
         {
             "context": "",
             "source": "emuiibo not found...",
-            "translation": "找不到emuiibo..."
+            "translation": "沒有符合的emuiibo..."
         },
         {
             "context": "",
             "source": "Help",
-            "translation": "帮助"
+            "translation": "協助"
         },
         {
             "context": "",
             "source": "Enable emulation",
-            "translation": "开启amiibo模拟"
+            "translation": "啟用amiibo模擬"
         },
         {
             "context": "",
             "source": "Disable emulation",
-            "translation": "关闭amiibo模拟"
+            "translation": "關閉amiibo模擬"
         },
         {
             "context": "",
             "source": "Connect/disconnect virtual amiibo",
-            "translation": "连接/断开 虚拟amiibo"
+            "translation": "連接/中斷 虛擬amiibo"
         },
         {
             "context": "",
             "source": "Select folder/virtual amiibo",
-            "translation": "选择目录/虚拟amiibo"
+            "translation": "選擇資料夾/虛擬amiibo"
         },
         {
             "context": "",
             "source": "Add to favorites",
-            "translation": "添加到收藏夹"
+            "translation": "加入書籤"
         },
         {
             "context": "",
             "source": "Remove from favorites",
-            "translation": "移出收藏夹"
+            "translation": "刪除書籤"
         },
         {
             "context": "",
             "source": "Reset active amiibo",
-            "translation": "重置激活的amiibo"
+            "translation": "重置啟用的amiibo"
         },
         {
             "context": "",
             "source": "Emulation status",
-            "translation": "模拟状态"
+            "translation": "模擬狀態"
         },
         {
             "context": "",
             "source": "on",
-            "translation": "开启"
+            "translation": "開啟"
         },
         {
             "context": "",
             "source": "off",
-            "translation": "关闭"
+            "translation": "關閉"
         },
         {
             "context": "",
             "source": "Current game is",
-            "translation": "当前游戏为"
+            "translation": "目前遊戲為"
         },
         {
             "context": "",
@@ -144,32 +144,32 @@
         {
             "context": "",
             "source": "No active virtual amiibo",
-            "translation": "没有激活的虚拟amiibo"
+            "translation": "沒有已啟用的虛擬amiibo"
         },
         {
             "context": "",
             "source": "connected",
-            "translation": "已连接"
+            "translation": "已連接"
         },
         {
             "context": "",
             "source": "disconnected",
-            "translation": "已断开"
+            "translation": "已中斷"
         },
         {
             "context": "",
             "source": "View amiibos",
-            "translation": "预览amiibo"
+            "translation": "預覽amiibo"
         },
         {
             "context": "",
             "source": "Favorites",
-            "translation": "收藏夹"
+            "translation": "書籤"
         },
         {
             "context": "",
             "source": "Reset active",
-            "translation": "重置激活状态"
+            "translation": "重置已啟用的"
         }
     ]
 }
