@@ -62,5 +62,5 @@ pub fn main() -> Result<()> {
 
 #[panic_handler]
 fn panic_handler(info: &panic::PanicInfo) -> ! {
-    util::simple_panic_handler::<log::LmLogger>(info, assert::AssertMode::SvcBreak)
+    util::simple_panic_handler::<log::LmLogger>(info, assert::AssertLevel::SvcBreak())
 }
