@@ -38,10 +38,11 @@ include $(DEVKITPRO)/libnx/switch_rules
 #   NACP building is skipped as well.
 #---------------------------------------------------------------------------------
 APP_TITLE	:= 	emuiibo
+
 APP_VERSION :=	$(EMUIIBO_MAJOR).$(EMUIIBO_MINOR).$(EMUIIBO_MICRO)
 TARGET		:=	emuiibo
 BUILD		:=	build
-SOURCES		:=	source
+SOURCES		:=	source source/emu source/tr source/ui
 DATA		:=	data
 INCLUDES	:=	include ../libtesla/include
 #ROMFS	:=	romfs
@@ -56,7 +57,7 @@ CFLAGS	:=	-g -Wall -O2 -ffunction-sections \
 
 CFLAGS	+=	$(INCLUDE) -D__SWITCH__
 
-CXXFLAGS	:= $(CFLAGS) -fno-exceptions -std=c++17
+CXXFLAGS	:= $(CFLAGS) -fexceptions -std=c++17
 
 ASFLAGS	:=	-g $(ARCH)
 LDFLAGS	=	-specs=$(DEVKITPRO)/libnx/switch.specs -g $(ARCH) -Wl,-Map,$(notdir $*.map)

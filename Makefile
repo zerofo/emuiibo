@@ -1,7 +1,7 @@
 
 export EMUIIBO_MAJOR := 0
 export EMUIIBO_MINOR := 6
-export EMUIIBO_MICRO := 3
+export EMUIIBO_MICRO := 4
 
 .PHONY: all clean
 
@@ -15,7 +15,8 @@ all:
 	@cp $(CURDIR)/emuiibo/toolbox.json $(CURDIR)/SdOut/atmosphere/contents/0100000000000352/toolbox.json
 	@mkdir -p $(CURDIR)/SdOut/switch/.overlays
 	@cp $(CURDIR)/overlay/emuiibo.ovl $(CURDIR)/SdOut/switch/.overlays/emuiibo.ovl
-	@cp -r $(CURDIR)/overlay/emuiibo $(CURDIR)/SdOut/switch/.overlays/
+	@mkdir -p $(CURDIR)/SdOut/emuiibo/overlay
+	@cp -r $(CURDIR)/lang $(CURDIR)/SdOut/emuiibo/overlay/
 
 clean:
 	@rm -rf $(CURDIR)/SdOut

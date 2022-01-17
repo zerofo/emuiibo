@@ -1,4 +1,4 @@
-#include <emuiibo.hpp>
+#include <emu/emu_Service.hpp>
 
 #define EMU_EMUIIBO_SERVICE_NAME "emuiibo"
 
@@ -8,15 +8,9 @@ namespace emu {
 
         Service g_EmuiiboService;
 
-        inline TipcService GetSmTipcService() {
-            auto sm_srv_ref = smGetServiceSession();
-            return { sm_srv_ref->session };
-        }
-
-        bool smAtmosphereHasService(SmServiceName name) {
+        bool smAtmosphereHasService(const SmServiceName name) {
             bool has = false;
-            auto sm_tipc_srv = GetSmTipcService();
-            tipcDispatchInOut(&sm_tipc_srv, 65100, name, has);
+            tipcDispatchInOut(smGetServiceSessionTipc(), 65100, name, has);
             return has;
         }
 
@@ -43,7 +37,7 @@ namespace emu {
         return ver;
     }
 
-    void GetVirtualAmiiboDirectory(char *out_path, size_t out_path_size) {
+    void GetVirtualAmiiboDirectory(char *out_path, const size_t out_path_size) {
         serviceDispatch(&g_EmuiiboService, 1,
             .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
             .buffers = { { out_path, out_path_size } },
@@ -51,17 +45,16 @@ namespace emu {
     }
 
     EmulationStatus GetEmulationStatus() {
-        u32 out = 0;
-        serviceDispatchOut(&g_EmuiiboService, 2, out);
-        return static_cast<EmulationStatus>(out);
+        EmulationStatus status = EmulationStatus::Off;
+        serviceDispatchOut(&g_EmuiiboService, 2, status);
+        return status;
     }
 
-    void SetEmulationStatus(EmulationStatus status) {
-        u32 in = static_cast<u32>(status);
-        serviceDispatchIn(&g_EmuiiboService, 3, in);
+    void SetEmulationStatus(const EmulationStatus status) {
+        serviceDispatchIn(&g_EmuiiboService, 3, status);
     }
 
-    Result GetActiveVirtualAmiibo(VirtualAmiiboData *out_amiibo_data, char *out_path, size_t out_path_size) {
+    Result GetActiveVirtualAmiibo(VirtualAmiiboData *out_amiibo_data, char *out_path, const size_t out_path_size) {
         return serviceDispatchOut(&g_EmuiiboService, 4, *out_amiibo_data,
             .buffer_attrs = {
                 SfBufferAttr_HipcMapAlias | SfBufferAttr_Out
@@ -72,7 +65,7 @@ namespace emu {
         );
     }
 
-    Result SetActiveVirtualAmiibo(char *path, size_t path_size) {
+    Result SetActiveVirtualAmiibo(const char *path, const size_t path_size) {
         return serviceDispatch(&g_EmuiiboService, 5,
             .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_In },
             .buffers = { { path, path_size } },
@@ -84,21 +77,20 @@ namespace emu {
     }
 
     VirtualAmiiboStatus GetActiveVirtualAmiiboStatus() {
-        u32 out = 0;
-        serviceDispatchOut(&g_EmuiiboService, 7, out);
-        return static_cast<VirtualAmiiboStatus>(out);
+        VirtualAmiiboStatus status = VirtualAmiiboStatus::Invalid;
+        serviceDispatchOut(&g_EmuiiboService, 7, status);
+        return status;
     }
 
-    void SetActiveVirtualAmiiboStatus(VirtualAmiiboStatus status) {
-        u32 in = static_cast<u32>(status);
-        serviceDispatchIn(&g_EmuiiboService, 8, in);
+    void SetActiveVirtualAmiiboStatus(const VirtualAmiiboStatus status) {
+        serviceDispatchIn(&g_EmuiiboService, 8, status);
     }
 
-    void IsApplicationIdIntercepted(u64 app_id, bool *out_intercepted) {
+    void IsApplicationIdIntercepted(const u64 app_id, bool *out_intercepted) {
         serviceDispatchInOut(&g_EmuiiboService, 9, app_id, *out_intercepted);
     }
 
-    Result TryParseVirtualAmiibo(char *path, size_t path_size, VirtualAmiiboData *out_amiibo_data) {
+    Result TryParseVirtualAmiibo(const char *path, const size_t path_size, VirtualAmiiboData *out_amiibo_data) {
         return serviceDispatchOut(&g_EmuiiboService, 10, *out_amiibo_data,
             .buffer_attrs = {
                 SfBufferAttr_HipcMapAlias | SfBufferAttr_In

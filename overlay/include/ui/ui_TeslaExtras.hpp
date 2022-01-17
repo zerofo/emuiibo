@@ -8,7 +8,7 @@
 using namespace tsl;
 using namespace tsl::elm;
 
-namespace tslext {
+namespace ui {
 
     namespace style {
         namespace color {

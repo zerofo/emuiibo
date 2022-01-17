@@ -1,7 +1,5 @@
 
 #pragma once
-#include <vector>
-#include <string>
 #include <switch.h>
 #include <cstring>
 
@@ -26,9 +24,8 @@ namespace emu {
         MiiCharInfo mii_charinfo;
 
         inline bool IsValid() {
-            return strlen(this->name);
+            return strlen(this->name) > 0;
         }
-
     };
 
     enum class EmulationStatus : u32 {
@@ -56,19 +53,19 @@ namespace emu {
 
     Version GetVersion();
 
-    void GetVirtualAmiiboDirectory(char *out_path, size_t out_path_size);
+    void GetVirtualAmiiboDirectory(char *out_path, const size_t out_path_size);
 
     EmulationStatus GetEmulationStatus();
-    void SetEmulationStatus(EmulationStatus status);
+    void SetEmulationStatus(const EmulationStatus status);
 
     Result GetActiveVirtualAmiibo(VirtualAmiiboData *out_amiibo_data, char *out_path, size_t out_path_size);
-    Result SetActiveVirtualAmiibo(char *path, size_t path_size);
+    Result SetActiveVirtualAmiibo(const char *path, const size_t path_size);
     void ResetActiveVirtualAmiibo();
 
     VirtualAmiiboStatus GetActiveVirtualAmiiboStatus();
-    void SetActiveVirtualAmiiboStatus(VirtualAmiiboStatus status);
+    void SetActiveVirtualAmiiboStatus(const VirtualAmiiboStatus status);
 
-    void IsApplicationIdIntercepted(u64 app_id, bool *out_intercepted);
+    void IsApplicationIdIntercepted(const u64 app_id, bool *out_intercepted);
 
     inline bool IsCurrentApplicationIdIntercepted() {
         bool intercepted = false;
@@ -82,6 +79,6 @@ namespace emu {
         return intercepted;
     }
 
-    Result TryParseVirtualAmiibo(char *path, size_t path_size, VirtualAmiiboData *out_amiibo_data);
+    Result TryParseVirtualAmiibo(const char *path, const size_t path_size, VirtualAmiiboData *out_amiibo_data);
 
 }
