@@ -16,7 +16,7 @@ all:
 	@mkdir -p $(CURDIR)/SdOut/switch/.overlays
 	@cp $(CURDIR)/overlay/emuiibo.ovl $(CURDIR)/SdOut/switch/.overlays/emuiibo.ovl
 	@mkdir -p $(CURDIR)/SdOut/emuiibo/overlay
-	@cp -r $(CURDIR)/lang $(CURDIR)/SdOut/emuiibo/overlay/
+	@cp -r $(CURDIR)/overlay/lang $(CURDIR)/SdOut/emuiibo/overlay/
 
 clean:
 	@rm -rf $(CURDIR)/SdOut
