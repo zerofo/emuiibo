@@ -38,9 +38,8 @@ include $(DEVKITPRO)/libnx/switch_rules
 #   NACP building is skipped as well.
 #---------------------------------------------------------------------------------
 APP_TITLE	:= 	emuiibo
-
-APP_VERSION :=	$(EMUIIBO_MAJOR).$(EMUIIBO_MINOR).$(EMUIIBO_MICRO)
-TARGET		:=	emuiibo
+APP_VERSION :=	0.6.4
+TARGET		:=	$(APP_TITLE)
 BUILD		:=	build
 SOURCES		:=	source source/emu source/tr source/ui
 DATA		:=	data

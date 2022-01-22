@@ -1,13 +1,15 @@
 
-export EMUIIBO_MAJOR := 0
-export EMUIIBO_MINOR := 6
-export EMUIIBO_MICRO := 4
+.PHONY: all emuiibo overlay dist clean
 
-.PHONY: all clean
+all: emuiibo overlay dist
 
-all:
+emuiibo:
 	@cd emuiibo && cargo update && cargo nx --release
+
+overlay:
 	@$(MAKE) -C overlay/
+
+dist:
 	@rm -rf $(CURDIR)/SdOut
 	@mkdir -p $(CURDIR)/SdOut/atmosphere/contents/0100000000000352/flags
 	@touch $(CURDIR)/SdOut/atmosphere/contents/0100000000000352/flags/boot2.flag

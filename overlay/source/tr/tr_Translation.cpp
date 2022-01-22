@@ -8,9 +8,29 @@ namespace tr {
 
     namespace {
 
-        constexpr auto DefaultNotFoundString = "???";
+        constexpr auto DefaultUnknownString = "???";
+        constexpr auto DefaultLanguage = "en";
 
-        std::unordered_map<std::string, std::string> g_LanguageStrings;
+        using LanguageStrings = std::unordered_map<std::string, std::string>;
+
+        LanguageStrings g_DefaultLanguageStrings;
+        LanguageStrings g_SystemLanguageStrings;
+
+        inline bool IsDefaultLanguage(const std::string &lang) {
+            return lang == DefaultLanguage;
+        }
+
+        std::string ConvertLanguage(const std::string &base_lang) {
+            if((base_lang == "en-US") || (base_lang == "en-GB")) {
+                return "en";
+            }
+
+            if(base_lang == "es-419") {
+                return "es";
+            }
+
+            return base_lang;
+        }
 
         bool GetSystemLanguage(std::string &out_lang) {
             if(R_SUCCEEDED(setInitialize())) {
@@ -29,8 +49,8 @@ namespace tr {
             return "sdmc:/emuiibo/overlay/lang/" + lang + ".json";
         }
 
-        bool LoadLanguage(const std::string &lang) {
-            g_LanguageStrings.clear();
+        bool LoadLanguageStrings(const std::string &lang, LanguageStrings &out_strs) {
+            out_strs.clear();
             auto ok = false;
             tsl::hlp::doWithSDCardHandle([&] {
                 try {
@@ -43,7 +63,7 @@ namespace tr {
                             if(str.count("key") && str.count("value")) {
                                 const auto &key = str["key"].get<std::string>();
                                 const auto &value = str["value"].get<std::string>();
-                                g_LanguageStrings[key] = value;
+                                out_strs[key] = value;
                             }
                         }
                     }
@@ -59,22 +79,33 @@ namespace tr {
     }
 
     bool Load() {
-        std::string cur_lang;
-        if(GetSystemLanguage(cur_lang)) {
-            if(LoadLanguage(cur_lang)) {
-                return true;
-            }
+        // Load default language
+        if(!LoadLanguageStrings(DefaultLanguage, g_DefaultLanguageStrings)) {
+            return false;
         }
 
-        return false;
+        std::string base_lang;
+        if(!GetSystemLanguage(base_lang)) {
+            return false;
+        }
+        const auto lang = ConvertLanguage(base_lang);
+        if(!IsDefaultLanguage(lang)) {
+            // If loading fails, default strings will be used
+            LoadLanguageStrings(lang, g_SystemLanguageStrings);
+        }
+
+        return true;
     }
 
     std::string Translate(const std::string &key) {
-        if(g_LanguageStrings.count(key)) {
-            return g_LanguageStrings.at(key);
+        if(g_SystemLanguageStrings.count(key)) {
+            return g_SystemLanguageStrings.at(key);
+        }
+        else if(g_DefaultLanguageStrings.count(key)) {
+            return g_DefaultLanguageStrings.at(key);
         }
         else {
-            return DefaultNotFoundString;
+            return DefaultUnknownString;
         }
     }
 
