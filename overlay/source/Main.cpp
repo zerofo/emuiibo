@@ -675,17 +675,13 @@ class AmiiboGui : public tsl::Gui {
 class EmuiiboOverlay : public tsl::Overlay {
     public:
         virtual void initServices() override {
-            tsl::hlp::doWithSmSession([&] {
-                if(emu::IsAvailable()) {
-                    g_InitializationOk = tr::Load() && R_SUCCEEDED(emu::Initialize()) && R_SUCCEEDED(pmdmntInitialize()) && R_SUCCEEDED(pminfoInitialize());
-                    if(g_InitializationOk) {
-                        g_Version = emu::GetVersion();
-                        char virtual_amiibo_dir_str[FS_MAX_PATH] = {};
-                        emu::GetVirtualAmiiboDirectory(virtual_amiibo_dir_str, sizeof(virtual_amiibo_dir_str));
-                        g_VirtualAmiiboDirectory = std::string(virtual_amiibo_dir_str);
-                    }
-                }
-            });
+            g_InitializationOk = tr::Load() && emu::IsAvailable() && R_SUCCEEDED(emu::Initialize()) && R_SUCCEEDED(pmdmntInitialize()) && R_SUCCEEDED(pminfoInitialize());
+            if(g_InitializationOk) {
+                g_Version = emu::GetVersion();
+                char virtual_amiibo_dir_str[FS_MAX_PATH] = {};
+                emu::GetVirtualAmiiboDirectory(virtual_amiibo_dir_str, sizeof(virtual_amiibo_dir_str));
+                g_VirtualAmiiboDirectory.assign(virtual_amiibo_dir_str);
+            }
         }
 
         virtual void exitServices() override {
@@ -703,5 +699,5 @@ class EmuiiboOverlay : public tsl::Overlay {
 };
 
 int main(int argc, char **argv) {
-    return tsl::loop<EmuiiboOverlay>(argc, argv);
+    return tsl::loop<EmuiiboOverlay, tsl::impl::LaunchFlags::CloseOnExit>(argc, argv);
 }

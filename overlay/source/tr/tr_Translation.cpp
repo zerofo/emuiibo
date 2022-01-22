@@ -33,16 +33,17 @@ namespace tr {
         }
 
         bool GetSystemLanguage(std::string &out_lang) {
+            auto ok = false;
             if(R_SUCCEEDED(setInitialize())) {
                 u64 lang_code = 0;
                 if(R_SUCCEEDED(setGetSystemLanguage(&lang_code))) {
                     out_lang.assign(reinterpret_cast<const char*>(&lang_code));
-                    return true;
+                    ok = true;
                 }
                 setExit();
             }
 
-            return false;
+            return ok;
         }
 
         inline std::string MakeLanguageFilePath(const std::string &lang) {
@@ -52,7 +53,7 @@ namespace tr {
         bool LoadLanguageStrings(const std::string &lang, LanguageStrings &out_strs) {
             out_strs.clear();
             auto ok = false;
-            tsl::hlp::doWithSDCardHandle([&] {
+            tsl::hlp::doWithSDCardHandle([&]() {
                 try {
                     const auto lang_path = MakeLanguageFilePath(lang);
                     std::ifstream ifs(lang_path);

@@ -1,15 +1,16 @@
 #include <emu/emu_Service.hpp>
 
-#define EMU_EMUIIBO_SERVICE_NAME "emuiibo"
-
 namespace emu {
 
     namespace {
 
+        #define EMU_EMUIIBO_SERVICE_NAME "emuiibo"
+        constexpr auto EmuiiboServiceName = smEncodeName(EMU_EMUIIBO_SERVICE_NAME);
+
         Service g_EmuiiboService;
 
-        bool smAtmosphereHasService(const SmServiceName name) {
-            bool has = false;
+        inline bool smAtmosphereHasService(const SmServiceName name) {
+            auto has = false;
             tipcDispatchInOut(smGetServiceSessionTipc(), 65100, name, has);
             return has;
         }
@@ -17,7 +18,7 @@ namespace emu {
     }
 
     bool IsAvailable() {
-        return smAtmosphereHasService(smEncodeName(EMU_EMUIIBO_SERVICE_NAME));
+        return smAtmosphereHasService(EmuiiboServiceName);
     }
 
     Result Initialize() {

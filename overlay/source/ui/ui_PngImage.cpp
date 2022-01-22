@@ -8,7 +8,7 @@ namespace ui {
     bool PngImage::Load(const std::string &png_path, const u32 max_width, const u32 max_height) {
         this->Reset();
 
-        tsl::hlp::doWithSDCardHandle([&] {
+        tsl::hlp::doWithSDCardHandle([&]() {
             auto upng = upng_new_from_file(png_path.c_str());
             if(upng == nullptr) {
                 this->SetError("UpngInvalidFile"_tr);
