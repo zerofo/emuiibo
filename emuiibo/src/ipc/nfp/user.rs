@@ -162,7 +162,7 @@ impl IUser for User {
         logger::log_line_str("ListDevices");
 
         // Send a single fake device handle
-        devices[0].npad_id = match self.input_ctx.is_controller_connected(hid::ControllerId::Player1) {
+        devices[0].id = match self.input_ctx.is_controller_connected(hid::ControllerId::Player1) {
             true => hid::ControllerId::Player1,
             false => hid::ControllerId::Handheld
         } as u32;
@@ -186,7 +186,7 @@ impl IUser for User {
         Ok(())
     }
 
-    fn mount(&mut self, _device_handle: nfp::DeviceHandle, _device_type: nfp::DeviceType, _mount_target: nfp::MountTarget) -> Result<()> {
+    fn mount(&mut self, _device_handle: nfp::DeviceHandle, _model_type: nfp::ModelType, _mount_target: nfp::MountTarget) -> Result<()> {
         result_return_unless!(self.is_state(nfp::State::Initialized), results::nfp::ResultDeviceNotFound);
         logger::log_line_str("Mount");
         
@@ -355,7 +355,7 @@ impl IUser for User {
         result_return_unless!(self.is_state(nfp::State::Initialized), results::nfp::ResultDeviceNotFound);
         logger::log_line_str("GetNpadId");
         
-        Ok(device_handle.npad_id)
+        Ok(device_handle.id)
     }
 
     fn get_application_area_size(&mut self, _device_handle: nfp::DeviceHandle) -> Result<u32> {

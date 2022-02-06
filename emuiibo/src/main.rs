@@ -1,5 +1,6 @@
 #![no_std]
 #![no_main]
+#![feature(core_intrinsics)]
 
 #[macro_use]
 extern crate nx;
@@ -51,7 +52,8 @@ pub fn main() -> Result<()> {
     logger::initialize();
 
     let mut manager = Manager::new()?;
-    manager.register_mitm_service_server::<ipc::nfp::UserManager>()?;
+    manager.register_mitm_service_server::<ipc::nfp::user::UserManager>()?;
+    // manager.register_mitm_service_server::<ipc::nfp::sys::SystemManager>()?;
     manager.register_service_server::<ipc::emu::EmulationService>()?;
     manager.loop_process()?;
 

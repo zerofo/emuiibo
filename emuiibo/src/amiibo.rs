@@ -69,7 +69,7 @@ pub struct VirtualAmiiboInfo {
     mii_charinfo_file: String,
     name: String,
     uuid: Option<Vec<u8>>,
-    version: u16,
+    version: u8,
     write_counter: u16
 }
 
@@ -100,7 +100,8 @@ const EMPTY_MII_CHARINFO: mii::CharInfo = mii::CharInfo {
     mii_sex: 0,
     mii_height: 0,
     mii_width: 0,
-    unk_2: [0; 2],
+    t_type: 0,
+    region_move: 0,
     mii_face_shape: 0,
     mii_face_color: 0,
     mii_wrinkles_style: 0,
@@ -143,7 +144,7 @@ const EMPTY_MII_CHARINFO: mii::CharInfo = mii::CharInfo {
     mii_mole_size: 0,
     mii_mole_pos_x: 0,
     mii_mole_pos_y: 0,
-    unk_3: 0
+    reserved: 0
 };
 
 const DEFAULT_MII_NAME: &'static str = "emuiibo";

@@ -2,7 +2,7 @@ use nx::fs;
 use alloc::string::String;
 use crate::emu;
 
-pub const LOG_FILE: &'static str = "sdmc:/emuiibo/emuiibo.log";
+pub const LOG_FILE: &'static str = "sdmc:/emuiibo/emuiibo-dev.log";
 
 pub const fn is_logging_enabled() -> bool {
     // Only enable logging on dev mode

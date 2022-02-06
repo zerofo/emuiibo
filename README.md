@@ -6,14 +6,19 @@
 
 # Table of contents
 
-1. [Usage](#usage)
-2. [Controlling emuiibo](#controlling-emuiibo)
-3. [Virtual amiibo creation](#virtual-amiibo-creation)
-4. [For developers](#for-developers)
-5. [Raw dumps and encryption](#raw-dumps-and-encryption)
-6. [Amiibo format](#amiibo-format)
-7. [License exemption](#license-exemption)
-8. [Credits](#credits)
+- [emuiibo](#emuiibo)
+- [Table of contents](#table-of-contents)
+  - [Usage](#usage)
+    - [SD layout](#sd-layout)
+  - [Controlling emuiibo](#controlling-emuiibo)
+  - [Virtual amiibo creation](#virtual-amiibo-creation)
+  - [For developers](#for-developers)
+  - [Raw dumps and encryption](#raw-dumps-and-encryption)
+  - [Amiibo format](#amiibo-format)
+    - [Areas](#areas)
+    - [Per-game access IDs](#per-game-access-ids)
+  - [License exemption](#license-exemption)
+  - [Credits](#credits)
 
 ## Usage
 
@@ -101,15 +106,7 @@ An access ID is a unique ID/number each game has for amiibo savedata, used to ch
 
 ### Per-game access IDs
 
-- Super Smash Bros. Ultimate: 0x34F80200
-
-- Splatoon 2: 0x10162B00
-
-- Breath of the Wild: 0x1019C800
-
-- Link's Awakening: 0x3B440400
-
-**NOTE**: if anyone is willing to make savedata editors for this amiibo saves, I'm pretty sure it would be extremely helpful for many users.
+A list is maintained at [Switchbrew](https://switchbrew.org/w/index.php?title=NFC_services#Access_ID).
 
 ## License exemption
 
