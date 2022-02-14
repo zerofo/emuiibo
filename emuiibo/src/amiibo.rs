@@ -29,6 +29,8 @@ pub struct VirtualAmiiboData {
     mii_charinfo: mii::CharInfo
 }
 
+// Note: actual amiibo ID in amiibos (nfp services have a different ID type)
+
 #[derive(Serialize, Deserialize, Debug)]
 pub struct VirtualAmiiboId {
     pub game_character_id: u16,
@@ -88,65 +90,6 @@ impl VirtualAmiiboInfo {
     }
 }
 
-// No easier way of having a constant way of creating the struct below :P
-
-const EMPTY_MII_CHARINFO: mii::CharInfo = mii::CharInfo {
-    id: util::Uuid {
-        uuid: [0; 0x10]
-    },
-    name: util::CString16::new(),
-    unk_1: 0,
-    mii_color: 0,
-    mii_sex: 0,
-    mii_height: 0,
-    mii_width: 0,
-    t_type: 0,
-    region_move: 0,
-    mii_face_shape: 0,
-    mii_face_color: 0,
-    mii_wrinkles_style: 0,
-    mii_makeup_style: 0,
-    mii_hair_style: 0,
-    mii_hair_color: 0,
-    mii_has_hair_flipped: 0,
-    mii_eye_style: 0,
-    mii_eye_color: 0,
-    mii_eye_size: 0,
-    mii_eye_thickness: 0,
-    mii_eye_angle: 0,
-    mii_eye_pos_x: 0,
-    mii_eye_pos_y: 0,
-    mii_eyebrow_style: 0,
-    mii_eyebrow_color: 0,
-    mii_eyebrow_size: 0,
-    mii_eyebrow_thickness: 0,
-    mii_eyebrow_angle: 0,
-    mii_eyebrow_pos_x: 0,
-    mii_eyebrow_pos_y: 0,
-    mii_nose_style: 0,
-    mii_nose_size: 0,
-    mii_nose_pos: 0,
-    mii_mouth_style: 0,
-    mii_mouth_color: 0,
-    mii_mouth_size: 0,
-    mii_mouth_thickness: 0,
-    mii_mouth_pos: 0,
-    mii_facial_hair_color: 0,
-    mii_beard_style: 0,
-    mii_mustache_style: 0,
-    mii_mustache_size: 0,
-    mii_mustache_pos: 0,
-    mii_glasses_style: 0,
-    mii_glasses_color: 0,
-    mii_glasses_size: 0,
-    mii_glasses_pos: 0,
-    mii_has_mole: 0,
-    mii_mole_size: 0,
-    mii_mole_pos_x: 0,
-    mii_mole_pos_y: 0,
-    reserved: 0
-};
-
 const DEFAULT_MII_NAME: &'static str = "emuiibo";
 
 pub struct VirtualAmiibo {
@@ -158,11 +101,19 @@ pub struct VirtualAmiibo {
 impl VirtualAmiibo {
     pub const fn empty() -> Self {
         // Can't use Default with charinfo here as the function MUST be const - waiting for const traits...
-        Self { info: VirtualAmiiboInfo::empty(), mii_charinfo: EMPTY_MII_CHARINFO, path: String::new() }
+        Self {
+            info: VirtualAmiiboInfo::empty(),
+            mii_charinfo: unsafe { core::mem::MaybeUninit::zeroed().assume_init() },
+            path: String::new()
+        }
     }
 
     pub fn new(info: VirtualAmiiboInfo, path: String) -> Result<Self> {
-        let mut amiibo = Self { info: info, mii_charinfo: Default::default(), path: path };
+        let mut amiibo = Self {
+            info: info,
+            mii_charinfo: Default::default(),
+            path: path
+        };
         amiibo.mii_charinfo = amiibo.load_mii_charinfo()?;
         Ok(amiibo)
     }
@@ -217,8 +168,8 @@ impl VirtualAmiibo {
                 }
             };
         }
-        tag_info.tag_type = u32::max_value();
-        tag_info.protocol = u32::max_value();
+        tag_info.tag_type = u32::MAX;
+        tag_info.protocol = u32::MAX;
         Ok(tag_info)
     }
 
@@ -244,7 +195,7 @@ impl VirtualAmiibo {
         model_info.game_character_id = self.info.id.game_character_id;
         model_info.character_variant = self.info.id.character_variant;
         model_info.figure_type = self.info.id.figure_type;
-        model_info.model_number = self.info.id.model_number;
+        model_info.model_number = self.info.id.model_number.swap_bytes();
         model_info.series = self.info.id.series;
         Ok(model_info)
     }

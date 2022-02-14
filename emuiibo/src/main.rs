@@ -1,6 +1,7 @@
 #![no_std]
 #![no_main]
 #![feature(core_intrinsics)]
+#![feature(const_maybe_uninit_zeroed)]
 
 #[macro_use]
 extern crate nx;
@@ -26,7 +27,6 @@ mod ipc;
 mod emu;
 mod amiibo;
 mod area;
-mod logger;
 
 const STACK_HEAP_SIZE: usize = 0x4000;
 static mut STACK_HEAP: [u8; STACK_HEAP_SIZE] = [0; STACK_HEAP_SIZE];
@@ -49,11 +49,10 @@ pub fn main() -> Result<()> {
     fsext::ensure_directories();
     miiext::initialize()?;
     miiext::export_miis()?;
-    logger::initialize();
 
     let mut manager = Manager::new()?;
     manager.register_mitm_service_server::<ipc::nfp::user::UserManager>()?;
-    // manager.register_mitm_service_server::<ipc::nfp::sys::SystemManager>()?;
+    manager.register_mitm_service_server::<ipc::nfp::sys::SystemManager>()?;
     manager.register_service_server::<ipc::emu::EmulationService>()?;
     manager.loop_process()?;
 

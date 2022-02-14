@@ -37,7 +37,7 @@ pub fn finalize() {
 
 pub fn generate_random_mii() -> Result<mii::CharInfo> {
     unsafe {
-        G_DB_SRV.get().build_random(mii::Age::All, mii::Gender::All, mii::FaceColor::All)
+        G_DB_SRV.get().build_random(sf::EnumAsPrimitiveType::from(mii::Age::All), sf::EnumAsPrimitiveType::from(mii::Gender::All), sf::EnumAsPrimitiveType::from(mii::Race::All))
     }
 }
 
