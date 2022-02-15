@@ -415,18 +415,12 @@ impl EmulationHandler {
             reserved: [0; 0x8E]
         };
 
-        log!("GetRegisterInfoPrivate StoreData: {:?}\n", register_info_private.mii_store_data);
-        log!("GetRegisterInfoPrivate StoreData is_valid: {}\n", register_info_private.mii_store_data.is_valid());
-
         out_register_info_private.set_as(register_info_private);
         Ok(())
     }
 
     pub fn set_register_info_private(&mut self, device_handle: nfp::DeviceHandle, register_info_private: sf::InFixedPointerBuffer<nfp::RegisterInfoPrivate>) -> Result<()> {
         log!("[{:#X}] SetRegisterInfoPrivate -- device_handle: (id: {})\n", self.application_id, device_handle.id);
-
-        log!("SetRegisterInfoPrivate StoreData: {:?}\n", register_info_private.get_as::<nfp::RegisterInfoPrivate>().mii_store_data);
-        log!("SetRegisterInfoPrivate StoreData is_valid: {}\n", register_info_private.get_as::<nfp::RegisterInfoPrivate>().mii_store_data.is_valid());
 
         Ok(())
     }

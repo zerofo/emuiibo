@@ -195,7 +195,7 @@ impl VirtualAmiibo {
         model_info.game_character_id = self.info.id.game_character_id;
         model_info.character_variant = self.info.id.character_variant;
         model_info.figure_type = self.info.id.figure_type;
-        model_info.model_number = self.info.id.model_number.swap_bytes();
+        model_info.model_number = self.info.id.model_number; // Note: we should technically reverse it since nfp wants it reversed... but it only works this way
         model_info.series = self.info.id.series;
         Ok(model_info)
     }
