@@ -76,7 +76,7 @@ impl IEmulationService for EmulationService {
 
     fn get_active_virtual_amiibo(&mut self, mut out_path: sf::OutMapAliasBuffer) -> Result<amiibo::VirtualAmiiboData> {
         let amiibo = emu::get_active_virtual_amiibo();
-        result_return_unless!(amiibo.is_valid(), resultsext::emu::ResultInvalidVirtualAmiibo);
+        result_return_unless!(amiibo.is_valid(), resultsext::emu::ResultInvalidLoadedVirtualAmiibo);
 
         let data = amiibo.produce_data()?;
         out_path.set_string(amiibo.path.clone());
@@ -86,7 +86,7 @@ impl IEmulationService for EmulationService {
     fn set_active_virtual_amiibo(&mut self, path: sf::InMapAliasBuffer) -> Result<()> {
         let path_str = path.get_string();
         let amiibo = amiibo::try_load_virtual_amiibo(path_str)?;
-        result_return_unless!(amiibo.is_valid(), resultsext::emu::ResultInvalidVirtualAmiibo);
+        result_return_unless!(amiibo.is_valid(), resultsext::emu::ResultInvalidLoadedVirtualAmiibo);
 
         emu::set_active_virtual_amiibo(amiibo);
         Ok(())
@@ -114,7 +114,7 @@ impl IEmulationService for EmulationService {
     fn try_parse_virtual_amiibo(&mut self, path: sf::InMapAliasBuffer) -> Result<amiibo::VirtualAmiiboData> {
         let path_str = path.get_string();
         let amiibo = amiibo::try_load_virtual_amiibo(path_str)?;
-        result_return_unless!(amiibo.is_valid(), resultsext::emu::ResultInvalidVirtualAmiibo);
+        result_return_unless!(amiibo.is_valid(), resultsext::emu::ResultInvalidLoadedVirtualAmiibo);
 
         let data = amiibo.produce_data()?;
         Ok(data)

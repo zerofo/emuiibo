@@ -432,7 +432,7 @@ impl EmulationHandler {
 
         let amiibo = emu::get_active_virtual_amiibo();
         result_return_unless!(amiibo.is_valid(), results::nfp::ResultDeviceNotFound);
-        Ok(area::ApplicationArea::has_any_areas(amiibo))
+        Ok(amiibo.has_any_application_areas())
     }
 }
 

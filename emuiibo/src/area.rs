@@ -20,7 +20,7 @@ impl ApplicationArea {
         Self { area_file: format!("{}/0x{:08X}.bin", areas_dir, access_id) }
     }
 
-    pub fn has_any_areas(virtual_amiibo: &amiibo::VirtualAmiibo) -> bool {
+    pub fn has_any(virtual_amiibo: &amiibo::VirtualAmiibo) -> bool {
         let areas_dir = format!("{}/areas", virtual_amiibo.path);
 
         if let Ok(mut dir) = fs::open_directory(areas_dir, fs::DirectoryOpenMode::ReadFiles()) {

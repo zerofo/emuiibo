@@ -9,8 +9,10 @@ use nx::rand::RandomGenerator;
 use nx::ipc::sf::mii;
 use nx::ipc::sf::nfp;
 
+use crate::area;
 use crate::fsext;
 use crate::miiext;
+use crate::resultsext::emu;
 
 #[derive(Copy, Clone, PartialEq, Eq, Debug, Default)]
 #[repr(C)]
@@ -142,6 +144,11 @@ impl VirtualAmiibo {
         }
     }
 
+    #[inline]
+    pub fn has_any_application_areas(&self) -> bool {
+        area::ApplicationArea::has_any(self)
+    }
+
     pub fn produce_data(&self) -> Result<VirtualAmiiboData> {
         let mut data: VirtualAmiiboData = Default::default();
         match self.info.uuid.as_ref() {
@@ -201,7 +208,7 @@ impl VirtualAmiibo {
             write_counter: self.info.write_counter,
             version: self.info.version,
             pad: 0,
-            application_area_size: 0xD8,
+            application_area_size: 0xD8, // This value is also hardcoded in official nfp commands
             reserved: [0; 0x34]
         })
     }
@@ -228,12 +235,17 @@ impl VirtualAmiibo {
     }
 
     pub fn produce_admin_info(&self) -> Result<nfp::AdminInfo> {
-        // TODO
         Ok(nfp::AdminInfo {
-            program_id: 0x01006A800016E000,
-            access_id: 0x34F80200,
-            crc32_change_counter: 10,
-            flags: nfp::AdminInfoFlags::IsInitialized() | nfp::AdminInfoFlags::HasApplicationArea(),
+            program_id: 0x01006A800016E000, // TODO: think how to implement this
+            access_id: 0x34F80200, // TODO: think how to implement this
+            crc32_change_counter: 10, // TODO: just stub it?
+            flags: {
+                let mut flags = nfp::AdminInfoFlags::IsInitialized();
+                if self.has_any_application_areas() {
+                    flags |= nfp::AdminInfoFlags::HasApplicationArea();
+                }
+                flags
+            },
             unk_0x2: 0x2,
             console_type: nfp::ProgramIdConsoleType::NintendoSwitch,
             pad: [0; 0x7],
@@ -264,7 +276,7 @@ impl VirtualAmiibo {
             Ok(())
         }
         else {
-            Err(ResultCode::new(0xBEBE))
+            Err(emu::ResultInvalidVirtualAmiiboJsonSerialization::make())
         }
     }
 
@@ -278,10 +290,10 @@ impl VirtualAmiibo {
 
 pub fn try_load_virtual_amiibo(path: String) -> Result<VirtualAmiibo> {
     let amiibo_flag_file = format!("{}/amiibo.flag", path);
-    result_return_unless!(fsext::exists_file(amiibo_flag_file), 0xBEBE);
+    result_return_unless!(fsext::exists_file(amiibo_flag_file), emu::ResultVirtualAmiiboFlagNotFound);
 
     let amiibo_json_file = format!("{}/amiibo.json", path);
-    result_return_unless!(fsext::exists_file(amiibo_json_file.clone()), 0xBEBE);
+    result_return_unless!(fsext::exists_file(amiibo_json_file.clone()), emu::ResultVirtualAmiiboJsonNotFound);
 
     let mut amiibo_json = fs::open_file(amiibo_json_file, fs::FileOpenOption::Read())?;
     let mut amiibo_json_data: Vec<u8> = vec![0; amiibo_json.get_size()?];
@@ -291,5 +303,6 @@ pub fn try_load_virtual_amiibo(path: String) -> Result<VirtualAmiibo> {
             return VirtualAmiibo::new(virtual_amiibo_info, path.clone());
         }
     }
-    Err(ResultCode::new(0xBEBE))
+
+    Err(emu::ResultInvalidVirtualAmiiboJsonDeserialization::make())
 }
