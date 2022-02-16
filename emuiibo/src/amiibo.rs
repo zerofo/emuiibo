@@ -58,6 +58,10 @@ impl VirtualAmiiboDate {
         Self { y: 0, m: 0, d: 0 }
     }
 
+    pub const fn from_date(date: nfp::Date) -> Self {
+        Self { y: date.year, m: date.month, d: date.day }
+    }
+
     pub const fn to_date(&self) -> nfp::Date {
         nfp::Date { year: self.y, month: self.m, day: self.d }
     }
@@ -157,47 +161,92 @@ impl VirtualAmiibo {
     }
 
     pub fn produce_tag_info(&self) -> Result<nfp::TagInfo> {
-        let mut tag_info: nfp::TagInfo = unsafe { core::mem::zeroed() };
-        tag_info.uuid_length = tag_info.uuid.len() as u8;
+        let mut tag_info = nfp::TagInfo {
+            uuid: [0; 0xA],
+            uuid_length: 0,
+            reserved_1: [0; 0x15],
+            protocol: u32::MAX,
+            tag_type: u32::MAX,
+            reserved_2: [0; 0x30]
+        };
         unsafe {
             match self.info.uuid.as_ref() {
-                Some(uuid) => core::ptr::copy(uuid.as_ptr(), tag_info.uuid.as_mut_ptr(), tag_info.uuid.len()),
+                Some(uuid) => {
+                    let uuid_len = uuid.len().min(tag_info.uuid.len());
+                    tag_info.uuid_length = uuid_len as u8;
+                    core::ptr::copy(uuid.as_ptr(), tag_info.uuid.as_mut_ptr(), uuid_len);
+                },
                 None => {
                     let mut rng = rand::SplCsrngGenerator::new()?;
                     rng.random_bytes(tag_info.uuid.as_mut_ptr(), tag_info.uuid.len())?;
                 }
             };
         }
-        tag_info.tag_type = u32::MAX;
-        tag_info.protocol = u32::MAX;
         Ok(tag_info)
     }
 
     pub fn produce_register_info(&self) -> Result<nfp::RegisterInfo> {
-        let mut register_info: nfp::RegisterInfo = unsafe { core::mem::zeroed() };
-        register_info.mii_charinfo = self.mii_charinfo;
-        register_info.name.set_string(self.info.name.clone())?;
-        register_info.first_write_date = self.info.first_write_date.to_date();
-        Ok(register_info)
+        Ok(nfp::RegisterInfo {
+            mii_charinfo: self.mii_charinfo,
+            first_write_date: self.info.first_write_date.to_date(),
+            name: util::CString::from_string(self.info.name.clone())?,
+            unk: 0,
+            reserved: [0; 0x7A]
+        })
     }
 
     pub fn produce_common_info(&self) -> Result<nfp::CommonInfo> {
-        let mut common_info: nfp::CommonInfo = unsafe { core::mem::zeroed() };
-        common_info.last_write_date = self.info.first_write_date.to_date();
-        common_info.application_area_size = 0xD8;
-        common_info.version = self.info.version;
-        common_info.write_counter = self.info.write_counter;
-        Ok(common_info)
+        Ok(nfp::CommonInfo {
+            last_write_date: self.info.last_write_date.to_date(),
+            write_counter: self.info.write_counter,
+            version: self.info.version,
+            pad: 0,
+            application_area_size: 0xD8,
+            reserved: [0; 0x34]
+        })
     }
 
     pub fn produce_model_info(&self) -> Result<nfp::ModelInfo> {
-        let mut model_info: nfp::ModelInfo = unsafe { core::mem::zeroed() };
-        model_info.game_character_id = self.info.id.game_character_id;
-        model_info.character_variant = self.info.id.character_variant;
-        model_info.figure_type = self.info.id.figure_type;
-        model_info.model_number = self.info.id.model_number; // Note: we should technically reverse it since nfp wants it reversed... but it only works this way
-        model_info.series = self.info.id.series;
-        Ok(model_info)
+        Ok(nfp::ModelInfo {
+            game_character_id: self.info.id.game_character_id,
+            character_variant: self.info.id.character_variant,
+            series: self.info.id.series,
+            model_number: self.info.id.model_number, // Note: we should technically reverse it since nfp wants it reversed... but it only works this way
+            figure_type: self.info.id.figure_type,
+            reserved: [0; 0x39]
+        })
+    }
+
+    pub fn produce_register_info_private(&self) -> Result<nfp::RegisterInfoPrivate> {
+        Ok(nfp::RegisterInfoPrivate {
+            mii_store_data: mii::StoreData::from_charinfo(self.mii_charinfo)?,
+            first_write_date: self.info.first_write_date.to_date(),
+            name: util::CString::from_string(self.info.name.clone())?,
+            unk: 0,
+            reserved: [0; 0x8E]
+        })
+    }
+
+    pub fn produce_admin_info(&self) -> Result<nfp::AdminInfo> {
+        // TODO
+        Ok(nfp::AdminInfo {
+            program_id: 0x01006A800016E000,
+            access_id: 0x34F80200,
+            crc32_change_counter: 10,
+            flags: nfp::AdminInfoFlags::IsInitialized() | nfp::AdminInfoFlags::HasApplicationArea(),
+            unk_0x2: 0x2,
+            console_type: nfp::ProgramIdConsoleType::NintendoSwitch,
+            pad: [0; 0x7],
+            reserved: [0; 0x28]
+        })
+    }
+
+    pub fn update_from_register_info_private(&mut self, register_info_private: &nfp::RegisterInfoPrivate) -> Result<()> {
+        self.mii_charinfo = register_info_private.mii_store_data.to_charinfo()?;
+        self.info.first_write_date = VirtualAmiiboDate::from_date(register_info_private.first_write_date);
+        self.info.name = register_info_private.name.get_string()?;
+
+        self.notify_written()
     }
 
     pub fn save(&self) -> Result<()> {
@@ -206,9 +255,17 @@ impl VirtualAmiibo {
             let _ = fs::delete_file(amiibo_json_file.clone());
             let mut amiibo_json = fs::open_file(amiibo_json_file.clone(), fs::FileOpenOption::Create() | fs::FileOpenOption::Write() | fs::FileOpenOption::Append())?;
             amiibo_json.write(data.as_ptr(), data.len())?;
-            return Ok(());
+
+            let mii_charinfo_path = format!("{}/{}", self.path, self.info.mii_charinfo_file);
+            let _ = fs::delete_file(mii_charinfo_path.clone());
+            let mut mii_charinfo_file = fs::open_file(mii_charinfo_path.clone(), fs::FileOpenOption::Create() | fs::FileOpenOption::Write() | fs::FileOpenOption::Append())?;
+            mii_charinfo_file.write_val(self.mii_charinfo)?;
+
+            Ok(())
         }
-        Err(ResultCode::new(0xBEBE))
+        else {
+            Err(ResultCode::new(0xBEBE))
+        }
     }
 
     pub fn notify_written(&mut self) -> Result<()> {

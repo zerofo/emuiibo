@@ -20,6 +20,34 @@ impl ApplicationArea {
         Self { area_file: format!("{}/0x{:08X}.bin", areas_dir, access_id) }
     }
 
+    pub fn has_any_areas(virtual_amiibo: &amiibo::VirtualAmiibo) -> bool {
+        let areas_dir = format!("{}/areas", virtual_amiibo.path);
+
+        if let Ok(mut dir) = fs::open_directory(areas_dir, fs::DirectoryOpenMode::ReadFiles()) {
+
+            loop {
+                if let Ok(next) = dir.read_next() {
+                    if let Some(entry) = next {
+                        if let Ok(name) = entry.name.get_str() {
+                            if name.ends_with(".bin") {
+                                return true;
+                            }
+                        }
+                    }
+                    else {
+                        break;
+                    }
+                }
+                else {
+                    break;
+                }
+            }
+            // return dir.get_entry_count() > 0;
+        }
+
+        false
+    }
+
     pub fn is_valid(&self) -> bool {
         !self.area_file.is_empty()
     }

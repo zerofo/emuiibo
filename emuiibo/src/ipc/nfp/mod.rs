@@ -3,7 +3,6 @@ use nx::results;
 use nx::ipc::sf;
 use nx::ipc::sf::nfp;
 use nx::ipc::sf::applet;
-use nx::ipc::sf::mii;
 use nx::wait;
 use nx::sync;
 use nx::service::hid;
@@ -372,29 +371,15 @@ impl EmulationHandler {
     }
 
     pub fn get_admin_info(&mut self, device_handle: nfp::DeviceHandle, mut out_admin_info: sf::OutFixedPointerBuffer<nfp::AdminInfo>) -> Result<()> {
-        // TODO: what state shall this be? (result handling)
+        result_return_unless!(self.is_state(nfp::State::Initialized), results::nfp::ResultDeviceNotFound);
+        result_return_unless!(self.is_device_state(nfp::DeviceState::TagMounted), results::nfp::ResultDeviceNotFound);
         log!("[{:#X}] GetAdminInfo -- device_handle: (id: {})\n", self.application_id, device_handle.id);
-
-        /*
-        Amiibo settings flags:
-        0x10 / bit-4: initialized with console settings
-        0x20 / bit-5: saved appdata (used by game) --> last write date
-
-        0x01006A800016E000
-        0x00040000000EE000
-
-        unk_8_2: 0 if 3DS title, 1 if wiiu, 2 3ds again, 3 if switch title
-        */
         
-        let mut info: nfp::AdminInfo = unsafe { core::mem::zeroed() };
-        info.program_id = 0x0005000C101D7500;
-        info.flags = nfp::AdminInfoFlags::IsInitialized() | nfp::AdminInfoFlags::HasApplicationArea();
-        info.crc32_change_counter = 20;
-        info.access_id = 0x34F80200;
-        info.unk_0x2 = 0x2;
-        info.console_type = nfp::ProgramIdConsoleType::NintendoWiiU;
+        let amiibo = emu::get_active_virtual_amiibo();
+        result_return_unless!(amiibo.is_valid(), results::nfp::ResultDeviceNotFound);
 
-        out_admin_info.set_as(info);
+        let admin_info = amiibo.produce_admin_info()?;
+        out_admin_info.set_as(admin_info);
         Ok(())
     }
 
@@ -406,27 +391,28 @@ impl EmulationHandler {
         let amiibo = emu::get_active_virtual_amiibo();
         result_return_unless!(amiibo.is_valid(), results::nfp::ResultDeviceNotFound);
 
-        let register_info = amiibo.produce_register_info()?;
-        let register_info_private = nfp::RegisterInfoPrivate {
-            mii_store_data: mii::StoreData::from_charinfo(register_info.mii_charinfo)?,
-            first_write_date: register_info.first_write_date,
-            name: register_info.name,
-            unk: register_info.unk,
-            reserved: [0; 0x8E]
-        };
-
+        let register_info_private = amiibo.produce_register_info_private()?;
         out_register_info_private.set_as(register_info_private);
         Ok(())
     }
 
     pub fn set_register_info_private(&mut self, device_handle: nfp::DeviceHandle, register_info_private: sf::InFixedPointerBuffer<nfp::RegisterInfoPrivate>) -> Result<()> {
+        result_return_unless!(self.is_state(nfp::State::Initialized), results::nfp::ResultDeviceNotFound);
+        result_return_unless!(self.is_device_state(nfp::DeviceState::TagMounted), results::nfp::ResultDeviceNotFound);
         log!("[{:#X}] SetRegisterInfoPrivate -- device_handle: (id: {})\n", self.application_id, device_handle.id);
 
+        let amiibo = emu::get_active_virtual_amiibo();
+        result_return_unless!(amiibo.is_valid(), results::nfp::ResultDeviceNotFound);
+
+        let register_info_private_type = register_info_private.get_as::<nfp::RegisterInfoPrivate>();
+        amiibo.update_from_register_info_private(register_info_private_type)?;
         Ok(())
     }
 
     pub fn delete_register_info(&mut self, device_handle: nfp::DeviceHandle) -> Result<()> {
         log!("[{:#X}] DeleteRegisterInfo -- device_handle: (id: {})\n", self.application_id, device_handle.id);
+
+        // TODO: (how to) implement this? so far we don't have any concept of unregistered amiibos, unlike real ones...
 
         Ok(())
     }
@@ -434,13 +420,19 @@ impl EmulationHandler {
     pub fn delete_application_area(&mut self, device_handle: nfp::DeviceHandle) -> Result<()> {
         log!("[{:#X}] DeleteApplicationArea -- device_handle: (id: {})\n", self.application_id, device_handle.id);
 
+        // TODO: decide on how to implement this properly
+
         Ok(())
     }
 
     pub fn exists_application_area(&mut self, device_handle: nfp::DeviceHandle) -> Result<bool> {
+        result_return_unless!(self.is_state(nfp::State::Initialized), results::nfp::ResultDeviceNotFound);
+        result_return_unless!(self.is_device_state(nfp::DeviceState::TagMounted), results::nfp::ResultDeviceNotFound);
         log!("[{:#X}] ExistsApplicationArea -- device_handle: (id: {})\n", self.application_id, device_handle.id);
 
-        Ok(true)
+        let amiibo = emu::get_active_virtual_amiibo();
+        result_return_unless!(amiibo.is_valid(), results::nfp::ResultDeviceNotFound);
+        Ok(area::ApplicationArea::has_any_areas(amiibo))
     }
 }
 
