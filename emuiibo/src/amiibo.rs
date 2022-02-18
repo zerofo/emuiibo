@@ -25,7 +25,7 @@ pub struct VirtualAmiiboUuidInfo {
 #[repr(C)]
 pub struct VirtualAmiiboData {
     uuid_info: VirtualAmiiboUuidInfo,
-    name: util::CString<41>,
+    name: util::CString<11>,
     first_write_date: nfp::Date,
     last_write_date: nfp::Date,
     mii_charinfo: mii::CharInfo
@@ -71,14 +71,14 @@ impl VirtualAmiiboDate {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct VirtualAmiiboInfo {
-    first_write_date: VirtualAmiiboDate,
-    id: VirtualAmiiboId,
-    last_write_date: VirtualAmiiboDate,
-    mii_charinfo_file: String,
-    name: String,
-    uuid: Option<Vec<u8>>,
-    version: u8,
-    write_counter: u16
+    pub first_write_date: VirtualAmiiboDate,
+    pub id: VirtualAmiiboId,
+    pub last_write_date: VirtualAmiiboDate,
+    pub mii_charinfo_file: String,
+    pub name: String,
+    pub uuid: Option<Vec<u8>>,
+    pub version: u8,
+    pub write_counter: u16
 }
 
 impl VirtualAmiiboInfo {
@@ -96,11 +96,37 @@ impl VirtualAmiiboInfo {
     }
 }
 
+#[derive(Copy, Clone, Serialize, Deserialize, Debug)]
+#[repr(C)]
+pub struct VirtualAmiiboAreaEntry {
+    pub program_id: u64,
+    pub access_id: nfp::AccessId
+}
+
+// Retail Interactive Display Menu (quite a symbolic id)
+const DEFAULY_EMPTY_AREA_PROGRAM_ID: u64 = 0x0100069000078000;
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct VirtualAmiiboAreaInfo {
+    pub areas: Vec<VirtualAmiiboAreaEntry>,
+    pub current_area_access_id: nfp::AccessId
+}
+
+impl VirtualAmiiboAreaInfo {
+    pub const fn empty() -> Self {
+        Self {
+            areas: Vec::new(),
+            current_area_access_id: 0
+        }
+    }
+}
+
 const DEFAULT_MII_NAME: &'static str = "emuiibo";
 
 pub struct VirtualAmiibo {
     pub info: VirtualAmiiboInfo,
     pub mii_charinfo: mii::CharInfo,
+    pub areas: VirtualAmiiboAreaInfo,
     pub path: String
 }
 
@@ -110,14 +136,16 @@ impl VirtualAmiibo {
         Self {
             info: VirtualAmiiboInfo::empty(),
             mii_charinfo: unsafe { core::mem::MaybeUninit::zeroed().assume_init() },
+            areas: VirtualAmiiboAreaInfo::empty(),
             path: String::new()
         }
     }
 
-    pub fn new(info: VirtualAmiiboInfo, path: String) -> Result<Self> {
+    pub fn new(info: VirtualAmiiboInfo, areas: VirtualAmiiboAreaInfo, path: String) -> Result<Self> {
         let mut amiibo = Self {
             info: info,
             mii_charinfo: Default::default(),
+            areas: areas,
             path: path
         };
         amiibo.mii_charinfo = amiibo.load_mii_charinfo()?;
@@ -146,7 +174,61 @@ impl VirtualAmiibo {
 
     #[inline]
     pub fn has_any_application_areas(&self) -> bool {
-        area::ApplicationArea::has_any(self)
+        !self.areas.areas.is_empty()
+    }
+
+    pub fn set_current_area(&mut self, access_id: nfp::AccessId) -> bool {
+        for area_entry in &self.areas.areas {
+            if area_entry.access_id == access_id {
+                self.areas.current_area_access_id = access_id;
+                return true;
+            }
+        }
+
+        false
+    }
+
+    pub fn get_current_area(&self) -> Option<VirtualAmiiboAreaEntry> {
+        for area_entry in &self.areas.areas {
+            if area_entry.access_id == self.areas.current_area_access_id {
+                return Some(*area_entry);
+            }
+        }
+
+        None
+    }
+
+    pub fn delete_current_area(&mut self) -> Result<()> {
+        self.areas.areas.retain(|&area_entry| area_entry.access_id != self.areas.current_area_access_id);
+        area::ApplicationArea::from(self, self.areas.current_area_access_id).delete()?;
+
+        self.areas.current_area_access_id = match self.areas.areas.is_empty() {
+            true => 0,
+            false => self.areas.areas[0].access_id
+        };
+
+        self.notify_written()
+    }
+
+    pub fn delete_all_areas(&mut self) -> Result<()> {
+        for area_entry in &self.areas.areas {
+            area::ApplicationArea::from(self, area_entry.access_id).delete()?;
+        }
+        self.areas.areas.clear();
+        self.areas.current_area_access_id = 0;
+
+        self.notify_written()
+    }
+
+    pub fn update_area_program_id(&mut self, access_id: nfp::AccessId, program_id: u64) -> Result<()> {
+        for area_entry in &mut self.areas.areas {
+            if area_entry.access_id == access_id {
+                area_entry.program_id = program_id;
+                break;
+            }
+        }
+
+        self.save()
     }
 
     pub fn produce_data(&self) -> Result<VirtualAmiiboData> {
@@ -235,16 +317,20 @@ impl VirtualAmiibo {
     }
 
     pub fn produce_admin_info(&self) -> Result<nfp::AdminInfo> {
+        let cur_area = self.get_current_area();
         Ok(nfp::AdminInfo {
-            program_id: 0x01006A800016E000, // TODO: think how to implement this
-            access_id: 0x34F80200, // TODO: think how to implement this
+            program_id: match cur_area {
+                Some(ref area_entry) => area_entry.program_id,
+                None => DEFAULY_EMPTY_AREA_PROGRAM_ID
+            },
+            access_id: match cur_area {
+                Some(ref area_entry) => area_entry.access_id,
+                None => 0
+            },
             crc32_change_counter: 10, // TODO: just stub it?
-            flags: {
-                let mut flags = nfp::AdminInfoFlags::IsInitialized();
-                if self.has_any_application_areas() {
-                    flags |= nfp::AdminInfoFlags::HasApplicationArea();
-                }
-                flags
+            flags: match cur_area {
+                Some(_) => nfp::AdminInfoFlags::IsInitialized() | nfp::AdminInfoFlags::HasApplicationArea(),
+                None => nfp::AdminInfoFlags::IsInitialized()
             },
             unk_0x2: 0x2,
             console_type: nfp::ProgramIdConsoleType::NintendoSwitch,
@@ -262,22 +348,32 @@ impl VirtualAmiibo {
     }
 
     pub fn save(&self) -> Result<()> {
-        if let Ok(data) = serde_json::to_vec_pretty(&self.info) {
+        if let Ok(amiibo_json_data) = serde_json::to_vec_pretty(&self.info) {
             let amiibo_json_file = format!("{}/amiibo.json", self.path);
             let _ = fs::delete_file(amiibo_json_file.clone());
             let mut amiibo_json = fs::open_file(amiibo_json_file.clone(), fs::FileOpenOption::Create() | fs::FileOpenOption::Write() | fs::FileOpenOption::Append())?;
-            amiibo_json.write(data.as_ptr(), data.len())?;
-
-            let mii_charinfo_path = format!("{}/{}", self.path, self.info.mii_charinfo_file);
-            let _ = fs::delete_file(mii_charinfo_path.clone());
-            let mut mii_charinfo_file = fs::open_file(mii_charinfo_path.clone(), fs::FileOpenOption::Create() | fs::FileOpenOption::Write() | fs::FileOpenOption::Append())?;
-            mii_charinfo_file.write_val(self.mii_charinfo)?;
-
-            Ok(())
+            amiibo_json.write(amiibo_json_data.as_ptr(), amiibo_json_data.len())?;
         }
         else {
-            Err(emu::ResultInvalidVirtualAmiiboJsonSerialization::make())
+            return Err(emu::ResultInvalidVirtualAmiiboJsonSerialization::make());
         }
+
+        let mii_charinfo_path = format!("{}/{}", self.path, self.info.mii_charinfo_file);
+        let _ = fs::delete_file(mii_charinfo_path.clone());
+        let mut mii_charinfo_file = fs::open_file(mii_charinfo_path.clone(), fs::FileOpenOption::Create() | fs::FileOpenOption::Write() | fs::FileOpenOption::Append())?;
+        mii_charinfo_file.write_val(self.mii_charinfo)?;
+
+        if let Ok(areas_json_data) = serde_json::to_vec_pretty(&self.areas) {
+            let areas_json_file = format!("{}/areas.json", self.path);
+            let _ = fs::delete_file(areas_json_file.clone());
+            let mut areas_json = fs::open_file(areas_json_file.clone(), fs::FileOpenOption::Create() | fs::FileOpenOption::Write() | fs::FileOpenOption::Append())?;
+            areas_json.write(areas_json_data.as_ptr(), areas_json_data.len())?;
+        }
+        else {
+            return Err(emu::ResultInvalidVirtualAmiiboJsonSerialization::make());
+        }
+
+        Ok(())
     }
 
     pub fn notify_written(&mut self) -> Result<()> {
@@ -288,6 +384,58 @@ impl VirtualAmiibo {
     }
 }
 
+fn convert_old_virtual_amiibo_areas(path: String) -> Result<()> {
+    let mut access_ids: Vec<nfp::AccessId> = Vec::new();
+
+    let areas_dir = format!("{}/areas", path);
+    if let Ok(mut dir) = fs::open_directory(areas_dir, fs::DirectoryOpenMode::ReadFiles()) {
+        loop {
+            if let Ok(next) = dir.read_next() {
+                if let Some(entry) = next {
+                    if let Ok(name) = entry.name.get_str() {
+                        // 0x<hex-access-id>.bin
+                        if name.ends_with(".bin") && name.starts_with("0x") && (name.len() == 2 + 8 + 4) {
+                            let hex_access_id_str = &name[2..2 + 8];
+                            if let Ok(access_id) = u32::from_str_radix(hex_access_id_str, 16) {
+                                access_ids.push(access_id);
+                            }
+                        }
+                    }
+                }
+                else {
+                    break;
+                }
+            }
+            else {
+                break;
+            }
+        }
+    }
+
+    let mut areas = VirtualAmiiboAreaInfo::empty();
+    for access_id in &access_ids {
+        let area_entry = VirtualAmiiboAreaEntry {
+            program_id: DEFAULY_EMPTY_AREA_PROGRAM_ID,
+            access_id: *access_id
+        };
+        areas.areas.push(area_entry);
+    }
+    if !access_ids.is_empty() {
+        areas.current_area_access_id = access_ids[0];
+    }
+
+    if let Ok(data) = serde_json::to_vec_pretty(&areas) {
+        let areas_json_file = format!("{}/areas.json", path);
+        let mut areas_json = fs::open_file(areas_json_file.clone(), fs::FileOpenOption::Create() | fs::FileOpenOption::Write() | fs::FileOpenOption::Append())?;
+        areas_json.write(data.as_ptr(), data.len())?;
+
+        Ok(())
+    }
+    else {
+        Err(emu::ResultInvalidVirtualAmiiboJsonSerialization::make())
+    }
+}
+
 pub fn try_load_virtual_amiibo(path: String) -> Result<VirtualAmiibo> {
     let amiibo_flag_file = format!("{}/amiibo.flag", path);
     result_return_unless!(fsext::exists_file(amiibo_flag_file), emu::ResultVirtualAmiiboFlagNotFound);
@@ -295,12 +443,33 @@ pub fn try_load_virtual_amiibo(path: String) -> Result<VirtualAmiibo> {
     let amiibo_json_file = format!("{}/amiibo.json", path);
     result_return_unless!(fsext::exists_file(amiibo_json_file.clone()), emu::ResultVirtualAmiiboJsonNotFound);
 
+    let areas_json_file = format!("{}/areas.json", path);
+
+    // TODO: leave this translation code for just the next version, then remove it
+    if !fsext::exists_file(areas_json_file.clone()) {
+        convert_old_virtual_amiibo_areas(path.clone())?;
+    }
+    result_return_unless!(fsext::exists_file(areas_json_file.clone()), emu::ResultVirtualAmiiboAreasJsonNotFound);
+
     let mut amiibo_json = fs::open_file(amiibo_json_file, fs::FileOpenOption::Read())?;
     let mut amiibo_json_data: Vec<u8> = vec![0; amiibo_json.get_size()?];
     amiibo_json.read(amiibo_json_data.as_mut_ptr(), amiibo_json_data.len())?;
+
+    let mut areas_json = fs::open_file(areas_json_file, fs::FileOpenOption::Read())?;
+    let mut areas_json_data: Vec<u8> = vec![0; areas_json.get_size()?];
+    areas_json.read(areas_json_data.as_mut_ptr(), areas_json_data.len())?;
+
     if let Ok(amiibo_json_str) = core::str::from_utf8(amiibo_json_data.as_slice()) {
         if let Ok(virtual_amiibo_info) = serde_json::from_str::<VirtualAmiiboInfo>(amiibo_json_str) {
-            return VirtualAmiibo::new(virtual_amiibo_info, path.clone());
+            if let Ok(areas_json_str) = core::str::from_utf8(areas_json_data.as_slice()) {
+                if let Ok(virtual_amiibo_areas) = serde_json::from_str::<VirtualAmiiboAreaInfo>(areas_json_str) {
+                    if virtual_amiibo_info.name.len() > 10 {
+                        return Err(emu::ResultInvalidVirtualAmiiboName::make());
+                    }
+
+                    return VirtualAmiibo::new(virtual_amiibo_info, virtual_amiibo_areas, path.clone());
+                }
+            }
         }
     }
 

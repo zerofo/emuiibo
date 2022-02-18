@@ -20,6 +20,9 @@ use nx::ipc::server;
 use nx::fs;
 use core::panic;
 
+#[macro_use]
+mod logger;
+
 mod resultsext;
 mod fsext;
 mod miiext;

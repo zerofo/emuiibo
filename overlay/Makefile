@@ -38,7 +38,10 @@ include $(DEVKITPRO)/libnx/switch_rules
 #   NACP building is skipped as well.
 #---------------------------------------------------------------------------------
 APP_TITLE	:= 	emuiibo
-APP_VERSION :=	0.7.0
+VER_MAJOR	:=	0
+VER_MINOR	:=	7
+VER_MICRO	:=	0
+APP_VERSION :=	$(VER_MAJOR).$(VER_MINOR).$(VER_MICRO)
 TARGET		:=	$(APP_TITLE)
 BUILD		:=	build
 SOURCES		:=	source source/emu source/tr source/ui
@@ -54,7 +57,7 @@ ARCH	:=	-march=armv8-a+crc+crypto -mtune=cortex-a57 -mtp=soft -fPIE
 CFLAGS	:=	-g -Wall -O2 -ffunction-sections \
 			$(ARCH) $(DEFINES)
 
-CFLAGS	+=	$(INCLUDE) -D__SWITCH__
+CFLAGS	+=	$(INCLUDE) -D__SWITCH__ -DVER_MAJOR=$(VER_MAJOR) -DVER_MINOR=$(VER_MINOR) -DVER_MICRO=$(VER_MICRO)
 
 CXXFLAGS	:= $(CFLAGS) -fexceptions -std=c++17
 

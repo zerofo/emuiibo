@@ -18,7 +18,7 @@ namespace emu {
 
     struct VirtualAmiiboData {
         VirtualAmiiboUuidInfo uuid;
-        char name[40 + 1];
+        char name[10 + 1];
         VirtualAmiiboDate first_write_date;
         VirtualAmiiboDate last_write_date;
         MiiCharInfo mii_charinfo;
@@ -26,6 +26,11 @@ namespace emu {
         inline bool IsValid() {
             return strlen(this->name) > 0;
         }
+    };
+
+    struct VirtualAmiiboAreaEntry {
+        u64 program_id;
+        u32 access_id;
     };
 
     enum class EmulationStatus : u32 {
@@ -44,6 +49,10 @@ namespace emu {
         u8 minor;
         u8 micro;
         bool dev_build;
+
+        inline constexpr bool EqualsExceptBuild(const Version &other) {
+            return (other.major == this->major) && (other.minor == this->minor) && (other.micro == this->micro);
+        }
     };
 
     bool IsAvailable();
@@ -80,5 +89,8 @@ namespace emu {
     }
 
     Result TryParseVirtualAmiibo(const char *path, const size_t path_size, VirtualAmiiboData *out_amiibo_data);
+    Result GetActiveVirtualAmiiboAreas(VirtualAmiiboAreaEntry *out_area_buf, const size_t out_area_size, u32 *out_area_count);
+    Result GetActiveVirtualAmiiboCurrentArea(u32 *out_access_id);
+    Result SetActiveVirtualAmiiboCurrentArea(const u32 access_id);
 
 }

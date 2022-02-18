@@ -5,5 +5,9 @@ result_define_group!(RESULT_MODULE => {
     VirtualAmiiboJsonNotFound: 2,
     InvalidVirtualAmiiboJsonSerialization: 3,
     InvalidVirtualAmiiboJsonDeserialization: 4,
-    InvalidLoadedVirtualAmiibo: 5
+    InvalidLoadedVirtualAmiibo: 5,
+    VirtualAmiiboAreasJsonNotFound: 6,
+    InvalidActiveVirtualAmiibo: 7,
+    InvalidVirtualAmiiboAccessId: 8,
+    InvalidVirtualAmiiboName: 9
 });

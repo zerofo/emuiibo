@@ -8,27 +8,9 @@ use nx::sync;
 use nx::service::hid;
 use nx::input;
 use nx::thread;
-use nx::diag::log;
 
 use crate::area;
 use crate::emu;
-
-macro_rules! log {
-    ($msg:literal) => {
-        {
-            if emu::CURRENT_VERSION.is_dev_build {
-                diag_log!(log::LmLogger { log::LogSeverity::Trace, false } => $msg);
-            }
-        }
-    };
-    ($fmt:literal, $( $params:expr ),*) => {
-        {
-            if emu::CURRENT_VERSION.is_dev_build {
-                diag_log!(log::LmLogger { log::LogSeverity::Trace, false } => $fmt, $( $params ),*);
-            }
-        }
-    };
-}
 
 pub struct EmulationHandler {
     session: sf::Session,
@@ -188,6 +170,7 @@ impl EmulationHandler {
         let application_area = area::ApplicationArea::from(&amiibo, access_id);
         result_return_unless!(application_area.exists(), results::nfp::ResultAreaNeedsToBeCreated);
 
+        amiibo.update_area_program_id(access_id, self.application_id)?;
         self.current_opened_area = application_area;
         Ok(())
     }
@@ -410,18 +393,26 @@ impl EmulationHandler {
     }
 
     pub fn delete_register_info(&mut self, device_handle: nfp::DeviceHandle) -> Result<()> {
+        result_return_unless!(self.is_state(nfp::State::Initialized), results::nfp::ResultDeviceNotFound);
+        result_return_unless!(self.is_device_state(nfp::DeviceState::TagMounted), results::nfp::ResultDeviceNotFound);
         log!("[{:#X}] DeleteRegisterInfo -- device_handle: (id: {})\n", self.application_id, device_handle.id);
 
-        // TODO: (how to) implement this? so far we don't have any concept of unregistered amiibos, unlike real ones...
+        let amiibo = emu::get_active_virtual_amiibo();
+        result_return_unless!(amiibo.is_valid(), results::nfp::ResultDeviceNotFound);
 
+        amiibo.delete_all_areas()?;
         Ok(())
     }
 
     pub fn delete_application_area(&mut self, device_handle: nfp::DeviceHandle) -> Result<()> {
+        result_return_unless!(self.is_state(nfp::State::Initialized), results::nfp::ResultDeviceNotFound);
+        result_return_unless!(self.is_device_state(nfp::DeviceState::TagMounted), results::nfp::ResultDeviceNotFound);
         log!("[{:#X}] DeleteApplicationArea -- device_handle: (id: {})\n", self.application_id, device_handle.id);
 
-        // TODO: decide on how to implement this properly
+        let amiibo = emu::get_active_virtual_amiibo();
+        result_return_unless!(amiibo.is_valid(), results::nfp::ResultDeviceNotFound);
 
+        amiibo.delete_current_area()?;
         Ok(())
     }
 

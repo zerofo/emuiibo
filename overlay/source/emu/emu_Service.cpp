@@ -102,4 +102,23 @@ namespace emu {
         );
     }
 
+    Result GetActiveVirtualAmiiboAreas(VirtualAmiiboAreaEntry *out_area_buf, const size_t out_area_size, u32 *out_area_count) {
+        return serviceDispatchOut(&g_EmuiiboService, 11, *out_area_count,
+            .buffer_attrs = {
+                SfBufferAttr_HipcMapAlias | SfBufferAttr_Out
+            },
+            .buffers = {
+                { out_area_buf, out_area_size }
+            },
+        );
+    }
+
+    Result GetActiveVirtualAmiiboCurrentArea(u32 *out_access_id) {
+        return serviceDispatchOut(&g_EmuiiboService, 12, *out_access_id);
+    }
+
+    Result SetActiveVirtualAmiiboCurrentArea(const u32 access_id) {
+        return serviceDispatchIn(&g_EmuiiboService, 13, access_id);
+    }
+
 }
