@@ -18,7 +18,7 @@ namespace emu {
 
     struct VirtualAmiiboData {
         VirtualAmiiboUuidInfo uuid;
-        char name[10 + 1];
+        char name[40 + 1];
         VirtualAmiiboDate first_write_date;
         VirtualAmiiboDate last_write_date;
         MiiCharInfo mii_charinfo;

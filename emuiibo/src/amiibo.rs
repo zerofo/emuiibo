@@ -25,7 +25,7 @@ pub struct VirtualAmiiboUuidInfo {
 #[repr(C)]
 pub struct VirtualAmiiboData {
     uuid_info: VirtualAmiiboUuidInfo,
-    name: util::CString<11>,
+    name: util::CString<41>,
     first_write_date: nfp::Date,
     last_write_date: nfp::Date,
     mii_charinfo: mii::CharInfo
@@ -278,7 +278,7 @@ impl VirtualAmiibo {
         Ok(nfp::RegisterInfo {
             mii_charinfo: self.mii_charinfo,
             first_write_date: self.info.first_write_date.to_date(),
-            name: util::CString::from_string(self.info.name.clone())?,
+            name: util::CString::from_str(&self.info.name.clone()[0..self.info.name.len().min(10)])?,
             unk: 0,
             reserved: [0; 0x7A]
         })
@@ -310,7 +310,7 @@ impl VirtualAmiibo {
         Ok(nfp::RegisterInfoPrivate {
             mii_store_data: mii::StoreData::from_charinfo(self.mii_charinfo)?,
             first_write_date: self.info.first_write_date.to_date(),
-            name: util::CString::from_string(self.info.name.clone())?,
+            name: util::CString::from_str(&self.info.name.clone()[0..self.info.name.len().min(10)])?,
             unk: 0,
             reserved: [0; 0x8E]
         })
@@ -463,10 +463,6 @@ pub fn try_load_virtual_amiibo(path: String) -> Result<VirtualAmiibo> {
         if let Ok(virtual_amiibo_info) = serde_json::from_str::<VirtualAmiiboInfo>(amiibo_json_str) {
             if let Ok(areas_json_str) = core::str::from_utf8(areas_json_data.as_slice()) {
                 if let Ok(virtual_amiibo_areas) = serde_json::from_str::<VirtualAmiiboAreaInfo>(areas_json_str) {
-                    if virtual_amiibo_info.name.len() > 10 {
-                        return Err(emu::ResultInvalidVirtualAmiiboName::make());
-                    }
-
                     return VirtualAmiibo::new(virtual_amiibo_info, virtual_amiibo_areas, path.clone());
                 }
             }
