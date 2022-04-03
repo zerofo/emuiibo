@@ -29,6 +29,10 @@ namespace tr {
                 return "es";
             }
 
+            if(base_lang == "fr-CA") {
+                return "fr";
+            }
+
             return base_lang;
         }
 

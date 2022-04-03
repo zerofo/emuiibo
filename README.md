@@ -128,7 +128,7 @@ A list is maintained at [Switchbrew](https://switchbrew.org/w/index.php?title=NF
 
 - **AmonRaNet** for all the work he put into the overlay.
 
-- **AmonRaNet**, **Impeeza**, **amazingfate** and **qazrfv1234** for providing/helping with default translations.
+- **AmonRaNet**, **Impeeza**, **amazingfate**, **qazrfv1234** and **shadow2560** for providing/helping with default translations.
 
 - **Thog** / **Ryujinx** devs for reversing mii services and various of its types.
 

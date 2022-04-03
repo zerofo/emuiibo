@@ -8,7 +8,7 @@ namespace emutool
     {
         public static void LogExceptionMessage(Exception ex, [CallerMemberName] string fn_name = "<unknown>")
         {
-            MessageBox.Show(ex.Message, "Caught exception (" + ex.GetType().Name + ") at " + fn_name);
+            MessageBox.Show("Caught exception (" + ex.GetType().Name + ") at " + fn_name + ": " + ex.ToString(), "Caught exception!");
             Environment.Exit(1);
         }
 

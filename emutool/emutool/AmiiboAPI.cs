@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.IO;
 
 namespace emutool
 {
@@ -77,7 +78,7 @@ namespace emutool
                 {
                     var amiibo = new Amiibo
                     {
-                        AmiiboName = entry["name"].ToString(),
+                        AmiiboName = entry["name"].ToString().Replace('/', '_'), // Avoid amiibo names conflicting with system paths
                         SeriesName = entry["amiiboSeries"].ToString(),
                         CharacterName = entry["character"].ToString(),
                         ImageURL = entry["image"].ToString(),
