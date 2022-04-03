@@ -3,7 +3,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
-using System.IO;
 
 namespace emutool
 {
@@ -68,12 +67,10 @@ namespace emutool
 
         public static AmiiboList GetAllAmiibos()
         {
-            ServicePointManager.Expect100Continue = true;
-            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
             var list = new AmiiboList();
             try
             {
-                var json = JObject.Parse(new WebClient().DownloadString(AmiiboAPIURL));
+                var json = JObject.Parse(Utils.GetFromURL(AmiiboAPIURL));
                 foreach(var entry in json["amiibo"])
                 {
                     var amiibo = new Amiibo
@@ -89,7 +86,7 @@ namespace emutool
             }
             catch(Exception ex)
             {
-                ExceptionUtils.LogExceptionMessage(ex);
+                Utils.LogExceptionMessage(ex);
             }
             return list;
         }
