@@ -103,7 +103,7 @@ pub struct VirtualAmiiboAreaEntry {
     pub access_id: nfp::AccessId
 }
 
-// Retail Interactive Display Menu (quite a symbolic id)
+// Retail Interactive Display Menu (a quite symbolic ID)
 const DEFAULY_EMPTY_AREA_PROGRAM_ID: u64 = 0x0100069000078000;
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -451,13 +451,19 @@ pub fn try_load_virtual_amiibo(path: String) -> Result<VirtualAmiibo> {
     }
     result_return_unless!(fsext::exists_file(areas_json_file.clone()), emu::ResultVirtualAmiiboAreasJsonNotFound);
 
-    let mut amiibo_json = fs::open_file(amiibo_json_file, fs::FileOpenOption::Read())?;
-    let mut amiibo_json_data: Vec<u8> = vec![0; amiibo_json.get_size()?];
-    amiibo_json.read(amiibo_json_data.as_mut_ptr(), amiibo_json_data.len())?;
+    let amiibo_json_data = {
+        let mut amiibo_json = fs::open_file(amiibo_json_file, fs::FileOpenOption::Read())?;
+        let mut data: Vec<u8> = vec![0; amiibo_json.get_size()?];
+        amiibo_json.read_array(&mut data)?;
+        data
+    };
 
-    let mut areas_json = fs::open_file(areas_json_file, fs::FileOpenOption::Read())?;
-    let mut areas_json_data: Vec<u8> = vec![0; areas_json.get_size()?];
-    areas_json.read(areas_json_data.as_mut_ptr(), areas_json_data.len())?;
+    let areas_json_data = {
+        let mut areas_json = fs::open_file(areas_json_file, fs::FileOpenOption::Read())?;
+        let mut data: Vec<u8> = vec![0; areas_json.get_size()?];
+        areas_json.read_array(&mut data)?;
+        data
+    };
 
     if let Ok(amiibo_json_str) = core::str::from_utf8(amiibo_json_data.as_slice()) {
         if let Ok(virtual_amiibo_info) = serde_json::from_str::<VirtualAmiiboInfo>(amiibo_json_str) {

@@ -1,3 +1,4 @@
+use nx::ipc::sf::nfp::McuVersionData;
 use nx::result::*;
 use nx::results;
 use nx::ipc::sf;
@@ -85,10 +86,14 @@ impl EmulationHandler {
         }
     }
 
-    pub fn initialize(&mut self, aruid: applet::AppletResourceUserId, process_id: sf::ProcessId, mcu_data: sf::InMapAliasBuffer) -> Result<()> {
+    pub fn initialize(&mut self, aruid: applet::AppletResourceUserId, process_id: sf::ProcessId, mcu_data: sf::InMapAliasBuffer<McuVersionData>) -> Result<()> {
         // TODO: make use of aruid or mcu data?
         result_return_unless!(self.is_state(nfp::State::NonInitialized), results::nfp::ResultDeviceNotFound);
-        log!("[{:#X}] Initialize -- aruid: {}, process_id: {}, mcu_data: (buf_size: {:#X})\n", self.application_id, aruid, process_id.process_id, mcu_data.size);
+        log!("[{:#X}] Initialize -- aruid: {}, process_id: {}, mcu_version_data: (count: {})\n", self.application_id, aruid, process_id.process_id, mcu_data.get_count());
+        let mcu_ver_datas = mcu_data.get_slice();
+        for mcu_ver_data in mcu_ver_datas {
+            log!("[{:#X}] Initialize -- mcu version: {}\n", self.application_id, mcu_ver_data.version);
+        }
 
         self.state.set(nfp::State::Initialized);
         self.device_state.set(nfp::DeviceState::Initialized);
@@ -113,12 +118,12 @@ impl EmulationHandler {
         Ok(())
     }
 
-    pub fn list_devices(&mut self, out_devices: sf::OutPointerBuffer) -> Result<u32> {
-        let mut devices: &mut [nfp::DeviceHandle] = out_devices.get_mut_slice();
+    pub fn list_devices(&mut self, out_devices: sf::OutPointerBuffer<nfp::DeviceHandle>) -> Result<u32> {
         result_return_unless!(self.is_state(nfp::State::Initialized), results::nfp::ResultDeviceNotFound);
-        log!("[{:#X}] ListDevices -- out_devices: (array_count: {})\n", self.application_id, devices.len());
+        log!("[{:#X}] ListDevices -- out_devices: (count: {})\n", self.application_id, out_devices.get_count());
 
         // Send a single fake device handle
+        let mut devices = out_devices.get_mut_slice();
         devices[0].id = match self.input_ctx.is_controller_connected(hid::ControllerId::Player1) {
             true => hid::ControllerId::Player1,
             false => hid::ControllerId::Handheld
@@ -175,29 +180,29 @@ impl EmulationHandler {
         Ok(())
     }
 
-    pub fn get_application_area(&mut self, device_handle: nfp::DeviceHandle, out_data: sf::OutMapAliasBuffer) -> Result<u32> {
+    pub fn get_application_area(&mut self, device_handle: nfp::DeviceHandle, out_data: sf::OutMapAliasBuffer<u8>) -> Result<u32> {
         result_return_unless!(self.is_state(nfp::State::Initialized), results::nfp::ResultDeviceNotFound);
         result_return_unless!(self.is_device_state(nfp::DeviceState::TagMounted), results::nfp::ResultDeviceNotFound);
         result_return_unless!(self.current_opened_area.exists(), results::nfp::ResultAreaNeedsToBeCreated);
-        log!("[{:#X}] GetApplicationArea -- device_handle: (id: {}), out_data: (buf_size: {:#X})\n", self.application_id, device_handle.id, out_data.size);
+        log!("[{:#X}] GetApplicationArea -- device_handle: (id: {}), out_data: (buf_size: {:#X})\n", self.application_id, device_handle.id, out_data.get_size());
 
         let area_size = self.current_opened_area.get_size()?;
-        let size = core::cmp::min(area_size, out_data.size);
+        let size = core::cmp::min(area_size, out_data.get_size());
         
-        self.current_opened_area.read(out_data.buf as *mut u8, size)?;
+        self.current_opened_area.read(out_data.get_address(), size)?;
         Ok(size as u32)
     }
 
-    pub fn set_application_area(&mut self, device_handle: nfp::DeviceHandle, data: sf::InMapAliasBuffer) -> Result<()> {
+    pub fn set_application_area(&mut self, device_handle: nfp::DeviceHandle, data: sf::InMapAliasBuffer<u8>) -> Result<()> {
         result_return_unless!(self.is_state(nfp::State::Initialized), results::nfp::ResultDeviceNotFound);
         result_return_unless!(self.is_device_state(nfp::DeviceState::TagMounted), results::nfp::ResultDeviceNotFound);
         result_return_unless!(self.current_opened_area.exists(), results::nfp::ResultAreaNeedsToBeCreated);
-        log!("[{:#X}] SetApplicationArea -- device_handle: (id: {}), data: (buf_size: {:#X})\n", self.application_id, device_handle.id, data.size);
+        log!("[{:#X}] SetApplicationArea -- device_handle: (id: {}), data: (buf_size: {:#X})\n", self.application_id, device_handle.id, data.get_size());
 
         let area_size = self.current_opened_area.get_size()?;
-        let size = core::cmp::min(area_size, data.size);
+        let size = core::cmp::min(area_size, data.get_size());
 
-        self.current_opened_area.write(data.buf, size)?;
+        self.current_opened_area.write(data.get_address(), size)?;
         let amiibo = emu::get_active_virtual_amiibo();
         amiibo.notify_written()?;
         Ok(())
@@ -217,10 +222,10 @@ impl EmulationHandler {
         Ok(())
     }
 
-    pub fn create_application_area(&mut self, device_handle: nfp::DeviceHandle, access_id: nfp::AccessId, data: sf::InMapAliasBuffer) -> Result<()> {
+    pub fn create_application_area(&mut self, device_handle: nfp::DeviceHandle, access_id: nfp::AccessId, data: sf::InMapAliasBuffer<u8>) -> Result<()> {
         result_return_unless!(self.is_state(nfp::State::Initialized), results::nfp::ResultDeviceNotFound);
         result_return_unless!(self.is_device_state(nfp::DeviceState::TagMounted), results::nfp::ResultDeviceNotFound);
-        log!("[{:#X}] CreateApplicationArea -- device_handle: (id: {}), access_id: {:#X}, data: (buf_size: {:#X})\n", self.application_id, device_handle.id, access_id, data.size);
+        log!("[{:#X}] CreateApplicationArea -- device_handle: (id: {}), access_id: {:#X}, data: (buf_size: {:#X})\n", self.application_id, device_handle.id, access_id, data.get_size());
 
         let amiibo = emu::get_active_virtual_amiibo();
         result_return_unless!(amiibo.is_valid(), results::nfp::ResultDeviceNotFound);
@@ -228,7 +233,7 @@ impl EmulationHandler {
         let application_area = area::ApplicationArea::from(&amiibo, access_id);
         result_return_if!(application_area.exists(), results::nfp::ResultAreaNeedsToBeCreated);
 
-        application_area.create(data.buf, data.size, false)?;
+        application_area.create(data.get_address(), data.get_size(), false)?;
         amiibo.notify_written()?;
         Ok(())
     }
@@ -242,7 +247,7 @@ impl EmulationHandler {
         result_return_unless!(amiibo.is_valid(), results::nfp::ResultDeviceNotFound);
 
         let tag_info = amiibo.produce_tag_info()?;
-        out_tag_info.set_as(tag_info);
+        out_tag_info.set_var(tag_info);
         Ok(())
     }
 
@@ -255,7 +260,7 @@ impl EmulationHandler {
         result_return_unless!(amiibo.is_valid(), results::nfp::ResultDeviceNotFound);
 
         let register_info = amiibo.produce_register_info()?;
-        out_register_info.set_as(register_info);
+        out_register_info.set_var(register_info);
         Ok(())
     }
 
@@ -268,7 +273,7 @@ impl EmulationHandler {
         result_return_unless!(amiibo.is_valid(), results::nfp::ResultDeviceNotFound);
 
         let common_info = amiibo.produce_common_info()?;
-        out_common_info.set_as(common_info);
+        out_common_info.set_var(common_info);
         Ok(())
     }
 
@@ -281,7 +286,7 @@ impl EmulationHandler {
         result_return_unless!(amiibo.is_valid(), results::nfp::ResultDeviceNotFound);
 
         let model_info = amiibo.produce_model_info()?;
-        out_model_info.set_as(model_info);
+        out_model_info.set_var(model_info);
         Ok(())
     }
 
@@ -333,16 +338,16 @@ impl EmulationHandler {
         Ok(sf::Handle::from(self.availability_change_event.client_handle))
     }
 
-    pub fn recreate_application_area(&mut self, device_handle: nfp::DeviceHandle, access_id: nfp::AccessId, data: sf::InMapAliasBuffer) -> Result<()> {
+    pub fn recreate_application_area(&mut self, device_handle: nfp::DeviceHandle, access_id: nfp::AccessId, data: sf::InMapAliasBuffer<u8>) -> Result<()> {
         result_return_unless!(self.is_state(nfp::State::Initialized), results::nfp::ResultDeviceNotFound);
         result_return_unless!(self.is_device_state(nfp::DeviceState::TagMounted), results::nfp::ResultDeviceNotFound);
-        log!("[{:#X}] RecreateApplicationArea -- device_handle: (id: {}), access_id: {:#X}, data: (buf_size_: {:#X})\n", self.application_id, device_handle.id, access_id, data.size);
+        log!("[{:#X}] RecreateApplicationArea -- device_handle: (id: {}), access_id: {:#X}, data: (buf_size: {:#X})\n", self.application_id, device_handle.id, access_id, data.get_size());
 
         let amiibo = emu::get_active_virtual_amiibo();
         result_return_unless!(amiibo.is_valid(), results::nfp::ResultDeviceNotFound);
 
         let application_area = area::ApplicationArea::from(&amiibo, access_id);
-        application_area.create(data.buf, data.size, true)?;
+        application_area.create(data.get_address(), data.get_size(), true)?;
         amiibo.notify_written()?;
         Ok(())
     }
@@ -362,7 +367,7 @@ impl EmulationHandler {
         result_return_unless!(amiibo.is_valid(), results::nfp::ResultDeviceNotFound);
 
         let admin_info = amiibo.produce_admin_info()?;
-        out_admin_info.set_as(admin_info);
+        out_admin_info.set_var(admin_info);
         Ok(())
     }
 
@@ -375,7 +380,7 @@ impl EmulationHandler {
         result_return_unless!(amiibo.is_valid(), results::nfp::ResultDeviceNotFound);
 
         let register_info_private = amiibo.produce_register_info_private()?;
-        out_register_info_private.set_as(register_info_private);
+        out_register_info_private.set_var(register_info_private);
         Ok(())
     }
 
@@ -387,8 +392,7 @@ impl EmulationHandler {
         let amiibo = emu::get_active_virtual_amiibo();
         result_return_unless!(amiibo.is_valid(), results::nfp::ResultDeviceNotFound);
 
-        let register_info_private_type = register_info_private.get_as::<nfp::RegisterInfoPrivate>();
-        amiibo.update_from_register_info_private(register_info_private_type)?;
+        amiibo.update_from_register_info_private(register_info_private.get_var())?;
         Ok(())
     }
 

@@ -41,17 +41,17 @@ pub fn initialize_heap(_hbl_heap: util::PointerAndSize) -> util::PointerAndSize 
     }
 }
 
-const POINTER_BUF_SIZE: usize = 0x1000;
-type Manager = server::ServerManager<POINTER_BUF_SIZE>;
-
 #[no_mangle]
 pub fn main() -> Result<()> {
     thread::get_current_thread().name.set_str("emuiibo.Main")?;
-    fs::initialize()?;
+    fs::initialize_fspsrv_session()?;
     fs::mount_sd_card("sdmc")?;
-    fsext::ensure_directories();
+    fsext::ensure_directories()?;
     miiext::initialize()?;
     miiext::export_miis()?;
+
+    const POINTER_BUF_SIZE: usize = 0x1000;
+    type Manager = server::ServerManager<POINTER_BUF_SIZE>;
 
     let mut manager = Manager::new()?;
     manager.register_mitm_service_server::<ipc::nfp::user::UserManager>()?;
@@ -60,7 +60,8 @@ pub fn main() -> Result<()> {
     manager.loop_process()?;
 
     miiext::finalize();
-    fs::finalize();
+    fs::finalize_fspsrv_session();
+    fs::unmount_all();
     Ok(())
 }
 

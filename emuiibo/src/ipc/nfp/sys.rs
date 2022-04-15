@@ -28,40 +28,11 @@ impl sf::IObject for System {
         self.handler.get_session()
     }
 
-    fn get_command_table(&self) -> sf::CommandMetadataTable {
-        vec! [
-            ipc_cmif_interface_make_command_meta!(initialize_system: 0),
-            ipc_cmif_interface_make_command_meta!(finalize_system: 1),
-            ipc_cmif_interface_make_command_meta!(list_devices: 2),
-            ipc_cmif_interface_make_command_meta!(start_detection: 3),
-            ipc_cmif_interface_make_command_meta!(stop_detection: 4),
-            ipc_cmif_interface_make_command_meta!(mount: 5),
-            ipc_cmif_interface_make_command_meta!(unmount: 6),
-            ipc_cmif_interface_make_command_meta!(flush: 10),
-            ipc_cmif_interface_make_command_meta!(restore: 11),
-            ipc_cmif_interface_make_command_meta!(get_tag_info: 13),
-            ipc_cmif_interface_make_command_meta!(get_register_info: 14),
-            ipc_cmif_interface_make_command_meta!(get_common_info: 15),
-            ipc_cmif_interface_make_command_meta!(get_model_info: 16),
-            ipc_cmif_interface_make_command_meta!(attach_activate_event: 17),
-            ipc_cmif_interface_make_command_meta!(attach_deactivate_event: 18),
-            ipc_cmif_interface_make_command_meta!(get_state: 19),
-            ipc_cmif_interface_make_command_meta!(get_device_state: 20),
-            ipc_cmif_interface_make_command_meta!(get_npad_id: 21),
-            ipc_cmif_interface_make_command_meta!(attach_availability_change_event: 23, [(3, 0, 0) =>]),
-            ipc_cmif_interface_make_command_meta!(format: 100),
-            ipc_cmif_interface_make_command_meta!(get_admin_info: 101),
-            ipc_cmif_interface_make_command_meta!(get_register_info_private: 102),
-            ipc_cmif_interface_make_command_meta!(set_register_info_private: 103),
-            ipc_cmif_interface_make_command_meta!(delete_register_info: 104),
-            ipc_cmif_interface_make_command_meta!(delete_application_area: 105),
-            ipc_cmif_interface_make_command_meta!(exists_application_area: 106),
-        ]
-    }
+    ipc_sf_object_impl_default_command_metadata!();
 }
 
 impl ISystem for System {
-    fn initialize_system(&mut self, aruid: applet::AppletResourceUserId, process_id: sf::ProcessId, mcu_data: sf::InMapAliasBuffer) -> Result<()> {
+    fn initialize_system(&mut self, aruid: applet::AppletResourceUserId, process_id: sf::ProcessId, mcu_data: sf::InMapAliasBuffer<nfp::McuVersionData>) -> Result<()> {
         self.handler.initialize(aruid, process_id, mcu_data)
     }
 
@@ -69,7 +40,7 @@ impl ISystem for System {
         self.handler.finalize()
     }
 
-    fn list_devices(&mut self, out_devices: sf::OutPointerBuffer) -> Result<u32> {
+    fn list_devices(&mut self, out_devices: sf::OutPointerBuffer<nfp::DeviceHandle>) -> Result<u32> {
         self.handler.list_devices(out_devices)
     }
 
@@ -176,11 +147,7 @@ impl sf::IObject for SystemManager {
         &mut self.session
     }
 
-    fn get_command_table(&self) -> sf::CommandMetadataTable {
-        vec! [
-            ipc_cmif_interface_make_command_meta!(create_system_interface: 0)
-        ]
-    }
+    ipc_sf_object_impl_default_command_metadata!();
 }
 
 impl server::IMitmServerObject for SystemManager {
@@ -190,15 +157,15 @@ impl server::IMitmServerObject for SystemManager {
 }
 
 impl ISystemManager for SystemManager {
-    fn create_system_interface(&mut self) -> Result<mem::Shared<dyn sf::IObject>> {
+    fn create_system_interface(&mut self) -> Result<mem::Shared<dyn ISystem>> {
         let system = System::new(self.info.program_id)?;
         Ok(mem::Shared::new(system))
     }
 }
 
 impl server::IMitmService for SystemManager {
-    fn get_name() -> &'static str {
-        nul!("nfp:sys")
+    fn get_name() -> sm::ServiceName {
+        sm::ServiceName::new("nfp:sys")
     }
 
     fn should_mitm(_info: sm::MitmProcessInfo) -> bool {
