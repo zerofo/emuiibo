@@ -30,22 +30,10 @@ ipc_sf_define_interface_trait! {
     }
 }
 
-pub struct EmulationService {
-    session: sf::Session
-}
+pub struct EmulationService {}
 
 impl sf::IObject for EmulationService {
-    fn get_session(&mut self) -> &mut sf::Session {
-        &mut self.session
-    }
-
     ipc_sf_object_impl_default_command_metadata!();
-}
-
-impl server::IServerObject for EmulationService {
-    fn new() -> Self {
-        Self { session: sf::Session::new() }
-    }
 }
 
 impl IEmulationService for EmulationService {
@@ -161,6 +149,14 @@ impl IEmulationService for EmulationService {
         else {
             Err(resultsext::emu::ResultInvalidVirtualAmiiboAccessId::make())
         }
+    }
+}
+
+impl server::ISessionObject for EmulationService {}
+
+impl server::IServerObject for EmulationService {
+    fn new() -> Self {
+        Self {}
     }
 }
 

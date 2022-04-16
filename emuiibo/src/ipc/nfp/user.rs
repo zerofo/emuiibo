@@ -32,10 +32,6 @@ impl Drop for User {
 }
 
 impl sf::IObject for User {
-    fn get_session(&mut self) -> &mut sf::Session {
-        self.handler.get_session()
-    }
-
     ipc_sf_object_impl_default_command_metadata!();
 }
 
@@ -141,16 +137,13 @@ impl IUser for User {
     }
 }
 
+impl server::ISessionObject for User {}
+
 pub struct UserManager {
-    session: sf::Session,
     info: sm::MitmProcessInfo
 }
 
 impl sf::IObject for UserManager {
-    fn get_session(&mut self) -> &mut sf::Session {
-        &mut self.session
-    }
-
     ipc_sf_object_impl_default_command_metadata!();
 }
 
@@ -161,9 +154,11 @@ impl IUserManager for UserManager {
     }
 }
 
+impl server::ISessionObject for UserManager {}
+
 impl server::IMitmServerObject for UserManager {
     fn new(info: sm::MitmProcessInfo) -> Self {
-        Self { session: sf::Session::new(), info: info }
+        Self { info: info }
     }
 }
 

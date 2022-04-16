@@ -1,4 +1,3 @@
-use nx::ipc::sf::nfp::McuVersionData;
 use nx::result::*;
 use nx::results;
 use nx::ipc::sf;
@@ -14,7 +13,6 @@ use crate::area;
 use crate::emu;
 
 pub struct EmulationHandler {
-    session: sf::Session,
     application_id: u64,
     activate_event: wait::SystemEvent,
     deactivate_event: wait::SystemEvent,
@@ -33,7 +31,7 @@ impl EmulationHandler {
         let supported_tags = hid::NpadStyleTag::ProController() | hid::NpadStyleTag::Handheld() | hid::NpadStyleTag::JoyconPair() | hid::NpadStyleTag::JoyconLeft() | hid::NpadStyleTag::JoyconRight() | hid::NpadStyleTag::SystemExt() | hid::NpadStyleTag::System();
         let controllers = [hid::ControllerId::Player1, hid::ControllerId::Handheld];
         let input_ctx = input::InputContext::new(0, supported_tags, &controllers)?;
-        Ok(Self { session: sf::Session::new(), application_id: application_id, activate_event: wait::SystemEvent::empty(), deactivate_event: wait::SystemEvent::empty(), availability_change_event: wait::SystemEvent::empty(), state: sync::Locked::new(false, nfp::State::NonInitialized), device_state: sync::Locked::new(false, nfp::DeviceState::Unavailable), should_end_thread: sync::Locked::new(false, false), emu_handler_thread: thread::Thread::empty(), current_opened_area: area::ApplicationArea::new(), input_ctx: input_ctx })
+        Ok(Self { application_id: application_id, activate_event: wait::SystemEvent::empty(), deactivate_event: wait::SystemEvent::empty(), availability_change_event: wait::SystemEvent::empty(), state: sync::Locked::new(false, nfp::State::NonInitialized), device_state: sync::Locked::new(false, nfp::DeviceState::Unavailable), should_end_thread: sync::Locked::new(false, false), emu_handler_thread: thread::Thread::empty(), current_opened_area: area::ApplicationArea::new(), input_ctx: input_ctx })
     }
 
     pub fn get_application_id(&self) -> u64 {
@@ -46,10 +44,6 @@ impl EmulationHandler {
 
     pub fn is_device_state(&mut self, device_state: nfp::DeviceState) -> bool {
         self.device_state.get_val() == device_state
-    }
-
-    pub fn get_session(&mut self) -> &mut sf::Session {
-        &mut self.session
     }
 
     fn handle_virtual_amiibo_status(&mut self, status: emu::VirtualAmiiboStatus) {
@@ -86,7 +80,7 @@ impl EmulationHandler {
         }
     }
 
-    pub fn initialize(&mut self, aruid: applet::AppletResourceUserId, process_id: sf::ProcessId, mcu_data: sf::InMapAliasBuffer<McuVersionData>) -> Result<()> {
+    pub fn initialize(&mut self, aruid: applet::AppletResourceUserId, process_id: sf::ProcessId, mcu_data: sf::InMapAliasBuffer<nfp::McuVersionData>) -> Result<()> {
         // TODO: make use of aruid or mcu data?
         result_return_unless!(self.is_state(nfp::State::NonInitialized), results::nfp::ResultDeviceNotFound);
         log!("[{:#X}] Initialize -- aruid: {}, process_id: {}, mcu_version_data: (count: {})\n", self.application_id, aruid, process_id.process_id, mcu_data.get_count());

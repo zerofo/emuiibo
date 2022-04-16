@@ -24,10 +24,6 @@ impl System {
 }
 
 impl sf::IObject for System {
-    fn get_session(&mut self) -> &mut sf::Session {
-        self.handler.get_session()
-    }
-
     ipc_sf_object_impl_default_command_metadata!();
 }
 
@@ -137,22 +133,21 @@ impl ISystem for System {
     }
 }
 
+impl server::ISessionObject for System {}
+
 pub struct SystemManager {
-    session: sf::Session,
     info: sm::MitmProcessInfo
 }
 
 impl sf::IObject for SystemManager {
-    fn get_session(&mut self) -> &mut sf::Session {
-        &mut self.session
-    }
-
     ipc_sf_object_impl_default_command_metadata!();
 }
 
+impl server::ISessionObject for SystemManager {}
+
 impl server::IMitmServerObject for SystemManager {
     fn new(info: sm::MitmProcessInfo) -> Self {
-        Self { session: sf::Session::new(), info: info }
+        Self { info: info }
     }
 }
 

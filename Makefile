@@ -4,7 +4,7 @@
 all: emuiibo overlay dist
 
 emuiibo:
-	@cd emuiibo && cargo update && cargo nx --release
+	@cd emuiibo && cargo update && cargo nx build --release
 
 overlay:
 	@$(MAKE) -C overlay/
