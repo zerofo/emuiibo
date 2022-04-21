@@ -1,8 +1,23 @@
 use alloc::{string::String, vec::Vec};
 use serde::{Serialize, Deserialize};
 use nx::{result::*, service::mii, fs};
-use crate::{area, fsext};
+use crate::{area, fsext, miiext};
 use super::{bin, compat, fmt};
+
+// Virtual amiibo format used in emuiibo v0.2 and v0.2.1
+// Consists on the following:
+/*
+- mii.dat file (with mii charinfo, generated on first boot)
+- amiibo.bin raw dump (amiibo id, uuid, etc. were grabbed from here when needed)
+- amiibo.json --> example:
+{
+    "name": "MyCoolAmiibo",
+    "firstWriteDate": [ 2020, 12, 12 ],
+    "lastWriteDate": [ 2020, 12, 12 ],
+    "applicationAreaSize": 216,
+    "randomizeUuid": true
+}
+*/
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 #[allow(non_snake_case)]
@@ -38,14 +53,23 @@ impl super::VirtualAmiiboFormat for VirtualAmiibo {
             file.read_val()?
         };
 
-        let mii_charinfo: mii::CharInfo = {
-            let mii_charinfo_path = format!("{}/mii.dat", path);
-            let mut file = fs::open_file(mii_charinfo_path, fs::FileOpenOption::Read())?;
-            file.read_val()?
-        };
-
         let amiibo_json_path = format!("{}/amiibo.json", path);
         let amiibo_json = read_deserialize_json!(amiibo_json_path => VirtualAmiiboInfo)?;
+
+        let mii_charinfo_path = format!("{}/mii.dat", path);
+        // If newly generated, charinfo may not exist yet
+        let mii_charinfo = match fs::get_entry_type(mii_charinfo_path.clone()).is_err() {
+            true => {
+                let mii_charinfo = miiext::generate_random_mii()?;
+                let mut file = fs::open_file(mii_charinfo_path, fs::FileOpenOption::Create() | fs::FileOpenOption::Write() | fs::FileOpenOption::Append())?;
+                file.write_val(mii_charinfo)?;
+                mii_charinfo
+            },
+            false => {
+                let mut file = fs::open_file(mii_charinfo_path, fs::FileOpenOption::Read())?;
+                file.read_val()?
+            }
+        };
         Ok(Self { path, info: amiibo_json, mii_charinfo, raw_bin })
     }
 }

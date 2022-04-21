@@ -6,7 +6,7 @@ use nx::fs;
 use nx::result::*;
 use alloc::string::String;
 
-// Format used in emuiibo v0.1
+// Virtual amiibo format used in emuiibo v0.1
 // It's not an actual virtual amiibo format, raw bin dumps were directly read/used
 
 #[derive(Debug)]

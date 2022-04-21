@@ -4,6 +4,38 @@ use serde::{Serialize, Deserialize};
 use crate::{fsext, miiext};
 use super::{compat, fmt};
 
+// Format used in emuiibo v0.3, v0.3.1 and v0.4
+// Consists on the following:
+/*
+- mii charinfo file (name specified below, generated on first boot)
+
+- common.json --> example:
+{
+    "writeCounter": 1234,
+    "lastWriteDate": "2020-12-12",
+    "version": 0
+}
+
+- tag.json --> example:
+{
+    "uuid": "001122334455AABBCCDD",
+    "randomUuid": true
+}
+
+- model.json --> example:
+{
+    "amiiboId": "00224466CCDDEEFF"
+}
+
+- register.json --> example:
+{
+    "name": "MyCoolAmiibo",
+    "miiCharInfo": "mii-charinfo.bin",
+    "firstWriteDate": "2020-12-12"
+}
+
+*/
+
 #[derive(Serialize, Deserialize, Clone, Debug)]
 #[allow(non_snake_case)]
 pub struct VirtualAmiiboCommonInfo {
@@ -33,9 +65,9 @@ pub struct VirtualAmiiboRegisterInfo {
     pub firstWriteDate: String
 }
 
-fn convert_date(info_date: &String) -> fmt::VirtualAmiiboDate {
-    // Dates are in "2020-12-12"-like format
+// Why did I use this format back then... it's quite annoying to parse
 
+fn convert_date(info_date: &String) -> fmt::VirtualAmiiboDate {
     let y_str = &info_date[0..4];
     let y = u16::from_str_radix(y_str, 10).unwrap();
 
@@ -47,8 +79,6 @@ fn convert_date(info_date: &String) -> fmt::VirtualAmiiboDate {
 
     fmt::VirtualAmiiboDate { y, m, d }
 }
-
-// Why did I use this format back then... it's quite annoying to parse
 
 #[inline]
 fn convert_from_hex(hex: String) -> Vec<u8> {
@@ -127,6 +157,10 @@ impl compat::DeprecatedVirtualAmiiboFormat for VirtualAmiibo {
         let name = fsext::get_path_file_name(self.path.clone());
         let path = Self::find_convert_path(self.path.clone(), name);
         let _ = fs::create_directory(path.clone());
+
+        let old_areas_path = format!("{}/areas", self.path);
+        let new_areas_path = format!("{}/areas", path);
+        let _ = fs::rename_directory(old_areas_path, new_areas_path)?;
 
         let mut amiibo = fmt::VirtualAmiibo {
             info: fmt::VirtualAmiiboInfo {

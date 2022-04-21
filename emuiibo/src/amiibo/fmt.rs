@@ -10,6 +10,8 @@ use nx::ipc::sf::mii;
 use nx::ipc::sf::nfp;
 use crate::{rc, area, fsext, miiext};
 
+// Current virtual amiibo format, used since emuiibo v0.5
+
 #[derive(Copy, Clone, PartialEq, Eq, Debug, Default)]
 #[repr(C)]
 pub struct VirtualAmiiboUuidInfo {
