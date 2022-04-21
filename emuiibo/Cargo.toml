@@ -7,16 +7,9 @@ edition = "2021"
 [dependencies]
 nx = { git = "https://github.com/aarch64-switch-rs/nx" }
 paste = "1.0"
-
-[dependencies.serde]
-version = "1.0"
-default-features = false
-features = ["derive"]
-
-[dependencies.serde_json]
-version = "1.0"
-default-features = false
-features = ["alloc"]
+static_assertions = "1.1.0"
+serde = { version = "1.0", default-features = false, features = ["derive"] }
+serde_json = { version = "1.0", default-features = false, features = ["alloc"] }
 
 [package.metadata.nx.nsp]
 npdm = "npdm.json"

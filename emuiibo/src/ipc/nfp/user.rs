@@ -140,7 +140,7 @@ impl IUser for User {
 impl server::ISessionObject for User {}
 
 pub struct UserManager {
-    info: sm::MitmProcessInfo
+    info: sm::mitm::MitmProcessInfo
 }
 
 impl sf::IObject for UserManager {
@@ -157,7 +157,7 @@ impl IUserManager for UserManager {
 impl server::ISessionObject for UserManager {}
 
 impl server::IMitmServerObject for UserManager {
-    fn new(info: sm::MitmProcessInfo) -> Self {
+    fn new(info: sm::mitm::MitmProcessInfo) -> Self {
         Self { info: info }
     }
 }
@@ -167,7 +167,7 @@ impl server::IMitmService for UserManager {
         sm::ServiceName::new("nfp:user")
     }
 
-    fn should_mitm(_info: sm::MitmProcessInfo) -> bool {
+    fn should_mitm(_info: sm::mitm::MitmProcessInfo) -> bool {
         emu::get_emulation_status() == emu::EmulationStatus::On
     }
 }

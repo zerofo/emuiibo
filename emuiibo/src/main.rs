@@ -2,9 +2,14 @@
 #![no_main]
 #![feature(core_intrinsics)]
 #![feature(const_maybe_uninit_zeroed)]
+#![feature(const_trait_impl)]
+#![feature(derive_default_enum)]
 
 #[macro_use]
 extern crate nx;
+
+#[macro_use]
+extern crate static_assertions;
 
 #[macro_use]
 extern crate alloc;
@@ -23,32 +28,46 @@ use core::panic;
 #[macro_use]
 mod logger;
 
-mod resultsext;
+mod rc;
+
+#[macro_use]
 mod fsext;
+
 mod miiext;
+
 mod ipc;
+
 mod emu;
+
 mod amiibo;
+
 mod area;
 
-const STACK_HEAP_SIZE: usize = 0x4000;
-static mut STACK_HEAP: [u8; STACK_HEAP_SIZE] = [0; STACK_HEAP_SIZE];
+rrt0_define_default_module_name!();
+
+const CUSTOM_HEAP_SIZE: usize = 0x8000;
+static mut CUSTOM_HEAP: [u8; CUSTOM_HEAP_SIZE] = [0; CUSTOM_HEAP_SIZE];
 
 #[no_mangle]
 pub fn initialize_heap(_hbl_heap: util::PointerAndSize) -> util::PointerAndSize {
     unsafe {
-        util::PointerAndSize::new(STACK_HEAP.as_mut_ptr(), STACK_HEAP.len())
+        util::PointerAndSize::new(CUSTOM_HEAP.as_mut_ptr(), CUSTOM_HEAP.len())
     }
 }
 
 #[no_mangle]
 pub fn main() -> Result<()> {
-    thread::get_current_thread().name.set_str("emuiibo.Main")?;
+    log!("Hello world!\n");
+    thread::get_current_thread().name.set_str("emuiibo.Main");
     fs::initialize_fspsrv_session()?;
     fs::mount_sd_card("sdmc")?;
+
     fsext::ensure_directories()?;
+
     miiext::initialize()?;
     miiext::export_miis()?;
+
+    amiibo::compat::convert_deprecated_virtual_amiibos();
 
     const POINTER_BUF_SIZE: usize = 0x1000;
     type Manager = server::ServerManager<POINTER_BUF_SIZE>;

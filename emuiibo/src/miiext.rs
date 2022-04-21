@@ -8,8 +8,6 @@ use nx::mem;
 use nx::fs;
 use alloc::vec::Vec;
 
-use crate::fsext;
-
 static mut G_STATIC_SRV: mem::Shared<mii::StaticService> = mem::Shared::empty();
 static mut G_DB_SRV: mem::Shared<mii::DatabaseService> = mem::Shared::empty();
 static mut G_INIT: bool = false;
@@ -43,6 +41,7 @@ pub fn generate_random_mii() -> Result<mii::CharInfo> {
 }
 
 const MII_SOURCE_FLAG: mii::SourceFlag = mii::SourceFlag::Database();
+pub const EXPORTED_MIIS_DIR: &'static str = "sdmc:/emuiibo/miis";
 
 pub fn export_miis() -> Result<()> {
     unsafe {
@@ -54,7 +53,7 @@ pub fn export_miis() -> Result<()> {
             for i in 0..mii_total {
                 let mii = miis[i as usize];
 
-                let mii_dir_path = format!("{}/{}", fsext::EXPORTED_MIIS_DIR, i);
+                let mii_dir_path = format!("{}/{}", EXPORTED_MIIS_DIR, i);
                 fs::create_directory(mii_dir_path.clone())?;
 
                 let mii_path = format!("{}/mii-charinfo.bin", mii_dir_path);

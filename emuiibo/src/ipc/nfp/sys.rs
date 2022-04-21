@@ -136,7 +136,7 @@ impl ISystem for System {
 impl server::ISessionObject for System {}
 
 pub struct SystemManager {
-    info: sm::MitmProcessInfo
+    info: sm::mitm::MitmProcessInfo
 }
 
 impl sf::IObject for SystemManager {
@@ -146,7 +146,7 @@ impl sf::IObject for SystemManager {
 impl server::ISessionObject for SystemManager {}
 
 impl server::IMitmServerObject for SystemManager {
-    fn new(info: sm::MitmProcessInfo) -> Self {
+    fn new(info: sm::mitm::MitmProcessInfo) -> Self {
         Self { info: info }
     }
 }
@@ -163,7 +163,7 @@ impl server::IMitmService for SystemManager {
         sm::ServiceName::new("nfp:sys")
     }
 
-    fn should_mitm(_info: sm::MitmProcessInfo) -> bool {
+    fn should_mitm(_info: sm::mitm::MitmProcessInfo) -> bool {
         emu::get_emulation_status() == emu::EmulationStatus::On
     }
 }

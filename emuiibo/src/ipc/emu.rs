@@ -5,11 +5,10 @@ use nx::ipc::server;
 use nx::ipc::sf::nfp;
 use nx::version;
 use alloc::string::String;
-
-use crate::resultsext;
+use crate::rc;
 use crate::emu;
 use crate::amiibo;
-use crate::fsext;
+use crate::amiibo::VirtualAmiiboFormat;
 
 ipc_sf_define_interface_trait! {
     trait IEmulationService {
@@ -17,14 +16,14 @@ ipc_sf_define_interface_trait! {
         get_virtual_amiibo_directory [1, version::VersionInterval::all()]: (out_path: sf::OutMapAliasBuffer<u8>) => ();
         get_emulation_status [2, version::VersionInterval::all()]: () => (status: emu::EmulationStatus);
         set_emulation_status [3, version::VersionInterval::all()]: (status: emu::EmulationStatus) => ();
-        get_active_virtual_amiibo [4, version::VersionInterval::all()]: (out_path: sf::OutMapAliasBuffer<u8>) => (virtual_amiibo: amiibo::VirtualAmiiboData);
+        get_active_virtual_amiibo [4, version::VersionInterval::all()]: (out_path: sf::OutMapAliasBuffer<u8>) => (virtual_amiibo: amiibo::fmt::VirtualAmiiboData);
         set_active_virtual_amiibo [5, version::VersionInterval::all()]: (path: sf::InMapAliasBuffer<u8>) => ();
         reset_active_virtual_amiibo [6, version::VersionInterval::all()]: () => ();
         get_active_virtual_amiibo_status [7, version::VersionInterval::all()]: () => (status: emu::VirtualAmiiboStatus);
         set_active_virtual_amiibo_status [8, version::VersionInterval::all()]: (status: emu::VirtualAmiiboStatus) => ();
         is_application_id_intercepted [9, version::VersionInterval::all()]: (application_id: u64) => (is_intercepted: bool);
-        try_parse_virtual_amiibo [10, version::VersionInterval::all()]: (path: sf::InMapAliasBuffer<u8>) => (virtual_amiibo: amiibo::VirtualAmiiboData);
-        get_active_virtual_amiibo_areas [11, version::VersionInterval::all()]: (out_areas: sf::OutMapAliasBuffer<amiibo::VirtualAmiiboAreaEntry>) => (count: u32);
+        try_parse_virtual_amiibo [10, version::VersionInterval::all()]: (path: sf::InMapAliasBuffer<u8>) => (virtual_amiibo: amiibo::fmt::VirtualAmiiboData);
+        get_active_virtual_amiibo_areas [11, version::VersionInterval::all()]: (out_areas: sf::OutMapAliasBuffer<amiibo::fmt::VirtualAmiiboAreaEntry>) => (count: u32);
         get_active_virtual_amiibo_current_area [12, version::VersionInterval::all()]: () => (access_id: nfp::AccessId);
         set_active_virtual_amiibo_current_area [13, version::VersionInterval::all()]: (access_id: nfp::AccessId) => ();
     }
@@ -38,32 +37,32 @@ impl sf::IObject for EmulationService {
 
 impl IEmulationService for EmulationService {
     fn get_version(&mut self) -> Result<emu::Version> {
-        log!("\n[emu] GetVersion -- (...)\n");
+        log!("GetVersion -- (...)\n");
         Ok(emu::CURRENT_VERSION)
     }
 
     fn get_virtual_amiibo_directory(&mut self, mut out_path: sf::OutMapAliasBuffer<u8>) -> Result<()> {
-        log!("\n[emu] GetVirtualAmiiboDirectory -- (...)\n");
-        out_path.set_string(String::from(fsext::VIRTUAL_AMIIBO_DIR));
+        log!("GetVirtualAmiiboDirectory -- (...)\n");
+        out_path.set_string(String::from(amiibo::VIRTUAL_AMIIBO_DIR));
         Ok(())
     }
 
     fn get_emulation_status(&mut self) -> Result<emu::EmulationStatus> {
-        log!("\n[emu] GetEmulationStatus -- (...)\n");
+        log!("GetEmulationStatus -- (...)\n");
         let status = emu::get_emulation_status();
         Ok(status)
     }
 
     fn set_emulation_status(&mut self, status: emu::EmulationStatus) -> Result<()> {
-        log!("\n[emu] SetEmulationStatus -- status: {:?}\n", status);
+        log!("SetEmulationStatus -- status: {:?}\n", status);
         emu::set_emulation_status(status);
         Ok(())
     }
 
-    fn get_active_virtual_amiibo(&mut self, mut out_path: sf::OutMapAliasBuffer<u8>) -> Result<amiibo::VirtualAmiiboData> {
-        log!("\n[emu] GetActiveVirtualAmiibo -- (...)\n");
+    fn get_active_virtual_amiibo(&mut self, mut out_path: sf::OutMapAliasBuffer<u8>) -> Result<amiibo::fmt::VirtualAmiiboData> {
+        log!("GetActiveVirtualAmiibo -- (...)\n");
         let amiibo = emu::get_active_virtual_amiibo();
-        result_return_unless!(amiibo.is_valid(), resultsext::emu::ResultInvalidActiveVirtualAmiibo);
+        result_return_unless!(amiibo.is_valid(), rc::ResultInvalidActiveVirtualAmiibo);
 
         let data = amiibo.produce_data()?;
         out_path.set_string(amiibo.path.clone());
@@ -72,51 +71,51 @@ impl IEmulationService for EmulationService {
 
     fn set_active_virtual_amiibo(&mut self, path: sf::InMapAliasBuffer<u8>) -> Result<()> {
         let path_str = path.get_string();
-        log!("\n[emu] SetActiveVirtualAmiibo -- path: '{}'\n", path_str);
-        let amiibo = amiibo::try_load_virtual_amiibo(path_str)?;
-        result_return_unless!(amiibo.is_valid(), resultsext::emu::ResultInvalidLoadedVirtualAmiibo);
+        log!("SetActiveVirtualAmiibo -- path: '{}'\n", path_str);
+        let amiibo = amiibo::fmt::VirtualAmiibo::try_load(path_str)?;
+        result_return_unless!(amiibo.is_valid(), rc::ResultInvalidLoadedVirtualAmiibo);
 
         emu::set_active_virtual_amiibo(amiibo);
         Ok(())
     }
 
     fn reset_active_virtual_amiibo(&mut self) -> Result<()> {
-        log!("\n[emu] ResetActiveVirtualAmiibo -- (...)\n");
-        emu::set_active_virtual_amiibo(amiibo::VirtualAmiibo::empty());
+        log!("ResetActiveVirtualAmiibo -- (...)\n");
+        emu::set_active_virtual_amiibo(amiibo::fmt::VirtualAmiibo::empty());
         Ok(())
     }
 
     fn get_active_virtual_amiibo_status(&mut self) -> Result<emu::VirtualAmiiboStatus> {
-        log!("\n[emu] GetActiveVirtualAmiiboStatus -- (...)\n");
+        log!("GetActiveVirtualAmiiboStatus -- (...)\n");
         let status = emu::get_active_virtual_amiibo_status();
         Ok(status)
     }
 
     fn set_active_virtual_amiibo_status(&mut self, status: emu::VirtualAmiiboStatus) -> Result<()> {
-        log!("\n[emu] SetActiveVirtualAmiiboStatus -- status: {:?}\n", status);
+        log!("SetActiveVirtualAmiiboStatus -- status: {:?}\n", status);
         emu::set_active_virtual_amiibo_status(status);
         Ok(())
     }
 
     fn is_application_id_intercepted(&mut self, application_id: u64) -> Result<bool> {
-        log!("\n[emu] IsApplicationIdIntercepted -- app_id: {:#X}\n", application_id);
+        log!("IsApplicationIdIntercepted -- app_id: {:#X}\n", application_id);
         Ok(emu::is_application_id_intercepted(application_id))
     }
 
-    fn try_parse_virtual_amiibo(&mut self, path: sf::InMapAliasBuffer<u8>) -> Result<amiibo::VirtualAmiiboData> {
+    fn try_parse_virtual_amiibo(&mut self, path: sf::InMapAliasBuffer<u8>) -> Result<amiibo::fmt::VirtualAmiiboData> {
         let path_str = path.get_string();
-        log!("\n[emu] TryParseVirtualAmiibo -- path: '{}'\n", path_str);
-        let amiibo = amiibo::try_load_virtual_amiibo(path_str)?;
-        result_return_unless!(amiibo.is_valid(), resultsext::emu::ResultInvalidLoadedVirtualAmiibo);
+        log!("TryParseVirtualAmiibo -- path: '{}'\n", path_str);
+        let amiibo = amiibo::fmt::VirtualAmiibo::try_load(path_str)?;
+        result_return_unless!(amiibo.is_valid(), rc::ResultInvalidLoadedVirtualAmiibo);
 
         let data = amiibo.produce_data()?;
         Ok(data)
     }
 
-    fn get_active_virtual_amiibo_areas(&mut self, out_areas: sf::OutMapAliasBuffer<amiibo::VirtualAmiiboAreaEntry>) -> Result<u32> {
-        log!("\n[emu] GetActiveVirtualAmiiboAreas -- (...)\n");
+    fn get_active_virtual_amiibo_areas(&mut self, out_areas: sf::OutMapAliasBuffer<amiibo::fmt::VirtualAmiiboAreaEntry>) -> Result<u32> {
+        log!("GetActiveVirtualAmiiboAreas -- (...)\n");
         let amiibo = emu::get_active_virtual_amiibo();
-        result_return_unless!(amiibo.is_valid(), resultsext::emu::ResultInvalidActiveVirtualAmiibo);
+        result_return_unless!(amiibo.is_valid(), rc::ResultInvalidActiveVirtualAmiibo);
 
         let areas = out_areas.get_mut_slice();
         let count = areas.len().min(amiibo.areas.areas.len());
@@ -128,26 +127,26 @@ impl IEmulationService for EmulationService {
     }
     
     fn get_active_virtual_amiibo_current_area(&mut self) -> Result<nfp::AccessId> {
-        log!("\n[emu] GetActiveVirtualAmiiboCurrentArea -- (...)\n");
+        log!("GetActiveVirtualAmiiboCurrentArea -- (...)\n");
         let amiibo = emu::get_active_virtual_amiibo();
-        result_return_unless!(amiibo.is_valid(), resultsext::emu::ResultInvalidActiveVirtualAmiibo);
+        result_return_unless!(amiibo.is_valid(), rc::ResultInvalidActiveVirtualAmiibo);
 
         match amiibo.get_current_area() {
             Some(area_entry) => Ok(area_entry.access_id),
-            None => Err(resultsext::emu::ResultInvalidVirtualAmiiboAccessId::make())
+            None => Err(rc::ResultInvalidVirtualAmiiboAccessId::make())
         }
     }
     
     fn set_active_virtual_amiibo_current_area(&mut self, access_id: nfp::AccessId) -> Result<()> {
-        log!("\n[emu] SetActiveVirtualAmiiboCurrentArea -- access_id: {:#X}\n", access_id);
+        log!("SetActiveVirtualAmiiboCurrentArea -- access_id: {:#X}\n", access_id);
         let amiibo = emu::get_active_virtual_amiibo();
-        result_return_unless!(amiibo.is_valid(), resultsext::emu::ResultInvalidActiveVirtualAmiibo);
+        result_return_unless!(amiibo.is_valid(), rc::ResultInvalidActiveVirtualAmiibo);
 
         if amiibo.set_current_area(access_id) {
             Ok(())
         }
         else {
-            Err(resultsext::emu::ResultInvalidVirtualAmiiboAccessId::make())
+            Err(rc::ResultInvalidVirtualAmiiboAccessId::make())
         }
     }
 }

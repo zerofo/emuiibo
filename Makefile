@@ -13,7 +13,7 @@ dist:
 	@rm -rf $(CURDIR)/SdOut
 	@mkdir -p $(CURDIR)/SdOut/atmosphere/contents/0100000000000352/flags
 	@touch $(CURDIR)/SdOut/atmosphere/contents/0100000000000352/flags/boot2.flag
-	@cp $(CURDIR)/emuiibo/target/aarch64-none-elf/release/emuiibo.nsp $(CURDIR)/SdOut/atmosphere/contents/0100000000000352/exefs.nsp
+	@cp $(CURDIR)/emuiibo/target/aarch64-nintendo-switch/release/emuiibo.nsp $(CURDIR)/SdOut/atmosphere/contents/0100000000000352/exefs.nsp
 	@cp $(CURDIR)/emuiibo/toolbox.json $(CURDIR)/SdOut/atmosphere/contents/0100000000000352/toolbox.json
 	@mkdir -p $(CURDIR)/SdOut/switch/.overlays
 	@cp $(CURDIR)/overlay/emuiibo.ovl $(CURDIR)/SdOut/switch/.overlays/emuiibo.ovl
