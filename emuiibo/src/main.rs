@@ -3,7 +3,6 @@
 #![feature(core_intrinsics)]
 #![feature(const_maybe_uninit_zeroed)]
 #![feature(const_trait_impl)]
-#![feature(derive_default_enum)]
 
 #[macro_use]
 extern crate nx;
@@ -19,7 +18,7 @@ extern crate paste;
 use nx::result::*;
 use nx::util;
 use nx::thread;
-use nx::diag::assert;
+use nx::diag::abort;
 use nx::diag::log;
 use nx::ipc::server;
 use nx::fs;
@@ -57,12 +56,13 @@ pub fn initialize_heap(_hbl_heap: util::PointerAndSize) -> util::PointerAndSize 
 
 #[no_mangle]
 pub fn main() -> Result<()> {
-    log!("Hello world!\n");
     thread::get_current_thread().name.set_str("emuiibo.Main");
     fs::initialize_fspsrv_session()?;
     fs::mount_sd_card("sdmc")?;
 
     fsext::ensure_directories()?;
+    logger::initialize();
+    log!("Hello world!\n");
 
     miiext::initialize()?;
     miiext::export_miis()?;
@@ -86,5 +86,5 @@ pub fn main() -> Result<()> {
 
 #[panic_handler]
 fn panic_handler(info: &panic::PanicInfo) -> ! {
-    util::simple_panic_handler::<log::LmLogger>(info, assert::AssertLevel::SvcBreak())
+    util::simple_panic_handler::<log::LmLogger>(info, abort::AbortLevel::SvcBreak())
 }

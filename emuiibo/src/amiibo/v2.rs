@@ -75,12 +75,14 @@ impl super::VirtualAmiiboFormat for VirtualAmiibo {
 }
 
 impl compat::DeprecatedVirtualAmiiboFormat for VirtualAmiibo {
-    fn convert(&self) -> Result<fmt::VirtualAmiibo> {
-        /* TODO: raw bin crypto stuff (like with v1) */
-
-        // Convert raw format
+    fn convert(&self, key_set: Option<bin::RetailKeySet>) -> Result<fmt::VirtualAmiibo> {
+        // Convert (and decrypt if possible) raw format
         let conv_bin = bin::ConvertedFormat::from_raw(&self.raw_bin);
-        let plain_bin = bin::PlainFormat::from_converted(&conv_bin);
+        
+        let plain_bin = match key_set {
+            Some(key_set_v) => bin::PlainFormat::decrypt_from_converted(&conv_bin, &key_set_v)?,
+            None => bin::PlainFormat::from_converted(&conv_bin)
+        };
 
         // Save converted amiibo
         let name = fsext::get_path_file_name(self.path.clone());

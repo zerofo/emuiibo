@@ -8,6 +8,7 @@
 #include <dirent.h>
 #include <fstream>
 #include <sstream>
+#include <iomanip>
 
 namespace {
 
@@ -153,7 +154,11 @@ namespace {
 
             for(u32 i = 0; i < g_VirtualAmiiboAreaCount; i++) {
                 const auto program_id = g_VirtualAmiiboAreaEntries[i].program_id;
-                g_VirtualAmiiboAreaTitles[i] = std::to_string(program_id);
+                const auto access_id = g_VirtualAmiiboAreaEntries[i].access_id;
+                std::stringstream strm;
+                strm << std::hex << std::uppercase << std::setfill('0') << std::setw(0x10) << program_id << " (0x" << std::setw(0x8) << access_id << ")";
+                g_VirtualAmiiboAreaTitles[i] = strm.str();
+
                 if(R_SUCCEEDED(nsGetApplicationControlData(NsApplicationControlSource_Storage, program_id, &g_TempControlData, sizeof(g_TempControlData), nullptr))) {
                     tsl::hlp::doWithSmSession([&]() {
                         NacpLanguageEntry *entry = nullptr;
@@ -770,5 +775,5 @@ class EmuiiboOverlay : public tsl::Overlay {
 };
 
 int main(int argc, char **argv) {
-    return tsl::loop<EmuiiboOverlay, tsl::impl::LaunchFlags::CloseOnExit>(argc, argv);
+    return tsl::loop<EmuiiboOverlay, tsl::impl::LaunchFlags::None>(argc, argv);
 }

@@ -390,22 +390,34 @@ impl VirtualAmiibo {
 
     pub fn produce_admin_info(&self) -> Result<nfp::AdminInfo> {
         let cur_area = self.get_current_area();
+
+        let program_id = match cur_area {
+            Some(ref area_entry) => area_entry.program_id,
+            None => DEFAULY_EMPTY_AREA_PROGRAM_ID
+        };
+        let console_family = {
+            // 0x0100 for Switch, 0x0004 for 3DS, 0x0005 for Wii U
+            match program_id >> 48 {
+                0x0100 => nfp::ConsoleFamily::NintendoSwitch,
+                0x0004 => nfp::ConsoleFamily::Nintendo3DS,
+                0x0005 => nfp::ConsoleFamily::NintendoWiiU,
+                _ => nfp::ConsoleFamily::Default
+            }
+        };
+
         Ok(nfp::AdminInfo {
-            program_id: match cur_area {
-                Some(ref area_entry) => area_entry.program_id,
-                None => DEFAULY_EMPTY_AREA_PROGRAM_ID
-            },
+            program_id,
             access_id: match cur_area {
                 Some(ref area_entry) => area_entry.access_id,
                 None => 0
             },
-            crc32_change_counter: 10, // TODO: just stub it?
+            crc32_change_counter: 9, // TODO: just stub this?
             flags: match cur_area {
                 Some(_) => nfp::AdminInfoFlags::IsInitialized() | nfp::AdminInfoFlags::HasApplicationArea(),
                 None => nfp::AdminInfoFlags::IsInitialized()
             },
             unk_0x2: 0x2,
-            console_type: nfp::ProgramIdConsoleType::NintendoSwitch,
+            console_family,
             pad: [0; 0x7],
             reserved: [0; 0x28]
         })

@@ -1,3 +1,4 @@
+use nx::ipc::sf::hid;
 use nx::result::*;
 use nx::mem;
 use nx::ipc::sf;
@@ -96,7 +97,7 @@ impl ISystem for System {
         self.handler.get_device_state(device_handle)
     }
 
-    fn get_npad_id(&mut self, device_handle: nfp::DeviceHandle) -> Result<u32> {
+    fn get_npad_id(&mut self, device_handle: nfp::DeviceHandle) -> Result<hid::NpadIdType> {
         self.handler.get_npad_id(device_handle)
     }
 

@@ -23,26 +23,15 @@ impl super::VirtualAmiiboFormat for VirtualAmiibo {
     }
 }
 
-const RETAIL_KEY_SET_FILE: &str = "sdmc:/switch/key_retail.bin";
-
 impl compat::DeprecatedVirtualAmiiboFormat for VirtualAmiibo {
-    fn convert(&self) -> Result<fmt::VirtualAmiibo> {
-        /* TODO: uncomment when amiibo crypto stuff is implemented
+    fn convert(&self, key_set: Option<bin::RetailKeySet>) -> Result<fmt::VirtualAmiibo> {
+        // Convert (and decrypt if possible) raw format
         let conv_bin = bin::ConvertedFormat::from_raw(&self.raw_bin);
-
-        if let Ok(key_set_file) = fs::open_file(String::from(RETAIL_KEY_SET_FILE), fs::FileOpenOption::Read()) {
-            if let Ok(key_set) = key_set_file.read_val::<bin::RetailKeySet>() {
-                let derived_key_set = bin::DerivedKeySet::derive_from(&key_set);
-
-                let plain_bin = bin::PlainFormat::decrypt_from_converted(&conv_bin, &derived_key_set);
-                return Some(Self::convert_from_plain(&plain_bin));
-            }
-        }
-        */
-
-        // Convert raw format
-        let conv_bin = bin::ConvertedFormat::from_raw(&self.raw_bin);
-        let plain_bin = bin::PlainFormat::from_converted(&conv_bin);
+        
+        let plain_bin = match key_set {
+            Some(key_set_v) => bin::PlainFormat::decrypt_from_converted(&conv_bin, &key_set_v)?,
+            None => bin::PlainFormat::from_converted(&conv_bin)
+        };
 
         // Save converted amiibo
         let name = fsext::get_path_file_name_without_extension(self.raw_bin_path.clone());

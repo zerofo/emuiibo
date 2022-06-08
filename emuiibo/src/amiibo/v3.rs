@@ -2,9 +2,9 @@ use nx::{result::*, service::mii, fs};
 use alloc::{string::String, vec::Vec};
 use serde::{Serialize, Deserialize};
 use crate::{fsext, miiext};
-use super::{compat, fmt};
+use super::{compat, fmt, bin};
 
-// Format used in emuiibo v0.3, v0.3.1 and v0.4
+// Virtual amiibo format used in emuiibo v0.3, v0.3.1 and v0.4
 // Consists on the following:
 /*
 - mii charinfo file (name specified below, generated on first boot)
@@ -152,7 +152,7 @@ impl super::VirtualAmiiboFormat for VirtualAmiibo {
 }
 
 impl compat::DeprecatedVirtualAmiiboFormat for VirtualAmiibo {
-    fn convert(&self) -> Result<fmt::VirtualAmiibo> {
+    fn convert(&self, _key_set: Option<bin::RetailKeySet>) -> Result<fmt::VirtualAmiibo> {
         // Save converted amiibo
         let name = fsext::get_path_file_name(self.path.clone());
         let path = Self::find_convert_path(self.path.clone(), name);

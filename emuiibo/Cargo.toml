@@ -1,6 +1,6 @@
 [package]
 name = "emuiibo"
-version = "0.7.0"
+version = "1.0.0"
 authors = ["XorTroll"]
 edition = "2021"
 
