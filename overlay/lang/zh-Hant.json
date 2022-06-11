@@ -46,7 +46,7 @@
         },
         {
             "key": "EmuiiboNotPresent",
-            "value": "沒有符合的emuiibo..."
+            "value": "沒有符合的emuiibo."
         },
         {
             "key": "Help",
@@ -127,6 +127,14 @@
         {
             "key": "ViewFavorites",
             "value": "書籤"
+        },
+        {
+            "key": "SelectedArea",
+            "value": "Selected area"
+        },
+        {
+            "key": "NoVirtualAmiiboAreas",
+            "value": "This virtual amiibo has no areas"
         }
     ]
 }

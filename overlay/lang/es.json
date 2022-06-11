@@ -46,7 +46,7 @@
         },
         {
             "key": "EmuiiboNotPresent",
-            "value": "emuiibo no parece estar presente..."
+            "value": "emuiibo no parece estar presente."
         },
         {
             "key": "Help",
@@ -127,6 +127,14 @@
         {
             "key": "ViewFavorites",
             "value": "Ver favoritos"
+        },
+        {
+            "key": "SelectedArea",
+            "value": "Area seleccionada"
+        },
+        {
+            "key": "NoVirtualAmiiboAreas",
+            "value": "Este amiibo virtual no tiene áreas."
         }
     ]
 }

@@ -81,44 +81,9 @@ fn convert_deprecated_virtual_amiibos_in_dir(path: String) -> Result<()> {
     Ok(())
 }
 
-pub fn crypto_test() -> Result<()> {
-    log!("Testing crypto stuff...\n");
-
-    let k_ret_bin = String::from("sdmc:/switch/key_retail.bin");
-    let mut k_ret_bin_f = fs::open_file(k_ret_bin, fs::FileOpenOption::Read())?;
-    let rks: bin::RetailKeySet = k_ret_bin_f.read_val()?;
-
-    let test_bin = String::from("sdmc:/test_amiibo_rust.bin");
-    let mut test_bin_f = fs::open_file(test_bin, fs::FileOpenOption::Read())?;
-    let raw_b: bin::RawFormat = test_bin_f.read_val()?;
-
-    let conv_b = bin::ConvertedFormat::from_raw(&raw_b);
-    let plain_b = bin::PlainFormat::decrypt_from_converted(&conv_b, &rks)?;
-
-    {
-        let dec_bin = String::from("sdmc:/test_amiibo_rust_dec.bin");
-        let _ = fs::delete_file(dec_bin.clone());
-        let mut dec_bin_f = fs::open_file(dec_bin, fs::FileOpenOption::Create() | fs::FileOpenOption::Write() | fs::FileOpenOption::Append())?;
-        dec_bin_f.write_val(plain_b)?;
-    }
-
-    {
-        let area_bin = String::from("sdmc:/test_amiibo_rust_dec_area.bin");
-        let _ = fs::delete_file(area_bin.clone());
-        let mut area_bin_f = fs::open_file(area_bin, fs::FileOpenOption::Create() | fs::FileOpenOption::Write() | fs::FileOpenOption::Append())?;
-        area_bin_f.write_val(plain_b.dec_data.app_area)?;
-    }
-
-    log!("Crypto test done!");
-
-    Ok(())
-}
-
 pub fn convert_deprecated_virtual_amiibos() {
     log!("Analyzing deprecated dir...\n");
     let _ = convert_deprecated_virtual_amiibos_in_dir(String::from(super::DEPRECATED_VIRTUAL_AMIIBO_DIR));
     log!("Analyzing regular dir...\n");
     let _ = convert_deprecated_virtual_amiibos_in_dir(String::from(super::VIRTUAL_AMIIBO_DIR));
-
-    // crypto_test().unwrap();
 }

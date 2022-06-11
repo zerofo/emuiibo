@@ -156,7 +156,7 @@ namespace {
                 const auto program_id = g_VirtualAmiiboAreaEntries[i].program_id;
                 const auto access_id = g_VirtualAmiiboAreaEntries[i].access_id;
                 std::stringstream strm;
-                strm << std::hex << std::uppercase << std::setfill('0') << std::setw(0x10) << program_id << " (0x" << std::setw(0x8) << access_id << ")";
+                strm << std::hex << std::uppercase << std::setfill('0') << "0x" << std::setw(0x8) << access_id << " (" << std::setw(0x10) << program_id << ")";
                 g_VirtualAmiiboAreaTitles[i] = strm.str();
 
                 if(R_SUCCEEDED(nsGetApplicationControlData(NsApplicationControlSource_Storage, program_id, &g_TempControlData, sizeof(g_TempControlData), nullptr))) {
@@ -640,7 +640,8 @@ class AmiiboGui : public tsl::Gui {
             const auto is_intercepted = emu::IsCurrentApplicationIdIntercepted();
             this->game_header->setColoredValue(is_intercepted ? "Intercepted"_tr : "NotIntercepted"_tr, is_intercepted ? tsl::style::color::ColorHighlight : ui::style::color::ColorWarning);
 
-            if(IsActiveVirtualAmiiboValid()) {
+            const auto has_active_virtual_amiibo = IsActiveVirtualAmiiboValid();
+            if(has_active_virtual_amiibo) {
                 this->amiibo_header->setText(std::string(g_ActiveVirtualAmiiboData.name) + " " + GetActionKeyGlyph(ActionKeyToogleConnectVirtualAmiibo));
             }
             else {
@@ -659,11 +660,16 @@ class AmiiboGui : public tsl::Gui {
 
             this->toggle_item->setState(emu::GetEmulationStatus() == emu::EmulationStatus::On);
 
-            if(g_VirtualAmiiboAreaCount > 0) {
-                this->area_header->setText("Selected area (" + std::to_string(g_VirtualAmiiboCurrentAreaIndex + 1) + " / " + std::to_string(g_VirtualAmiiboAreaCount) + "): " + g_VirtualAmiiboAreaTitles[g_VirtualAmiiboCurrentAreaIndex]);
+            if(has_active_virtual_amiibo) {
+                if(g_VirtualAmiiboAreaCount > 0) {
+                    this->area_header->setText("SelectedArea"_tr + " (" + std::to_string(g_VirtualAmiiboCurrentAreaIndex + 1) + " / " + std::to_string(g_VirtualAmiiboAreaCount) + "): " + g_VirtualAmiiboAreaTitles[g_VirtualAmiiboCurrentAreaIndex]);
+                }
+                else {
+                    this->area_header->setText("NoVirtualAmiiboAreas"_tr);
+                }
             }
             else {
-                this->area_header->setText("This amiibo has no areas...");
+                this->area_header->setText("NoActiveVirtualAmiibo"_tr);
             }
 
             tsl::Gui::update();
@@ -775,5 +781,5 @@ class EmuiiboOverlay : public tsl::Overlay {
 };
 
 int main(int argc, char **argv) {
-    return tsl::loop<EmuiiboOverlay, tsl::impl::LaunchFlags::None>(argc, argv);
+    return tsl::loop<EmuiiboOverlay, tsl::impl::LaunchFlags::CloseOnExit>(argc, argv);
 }

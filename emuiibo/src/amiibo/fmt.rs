@@ -411,7 +411,7 @@ impl VirtualAmiibo {
                 Some(ref area_entry) => area_entry.access_id,
                 None => 0
             },
-            crc32_change_counter: 9, // TODO: just stub this?
+            crc32_change_counter: 0, // TODO: just stub this?
             flags: match cur_area {
                 Some(_) => nfp::AdminInfoFlags::IsInitialized() | nfp::AdminInfoFlags::HasApplicationArea(),
                 None => nfp::AdminInfoFlags::IsInitialized()
