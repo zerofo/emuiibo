@@ -130,11 +130,11 @@
         },
         {
             "key": "SelectedArea",
-            "value": "Selected area"
+            "value": "Ausgewählter Bereich"
         },
         {
             "key": "NoVirtualAmiiboAreas",
-            "value": "This virtual amiibo has no areas"
+            "value": "Das Amiibo hat keine Bereiche."
         }
     ]
 }
