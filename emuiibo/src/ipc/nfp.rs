@@ -21,15 +21,15 @@ pub struct EmulationHandler {
     should_end_thread: sync::Locked<bool>,
     current_opened_area: area::ApplicationArea,
     emu_handler_thread: thread::Thread,
-    input_ctx: input::InputContext
+    input_ctx: input::Context
 }
 
 impl EmulationHandler {
     pub fn new(application_id: u64) -> Result<Self> {
         log!("\n[{:#X}] New handler!\n", application_id);
-        let supported_tags = hid::NpadStyleTag::FullKey() | hid::NpadStyleTag::Handheld() | hid::NpadStyleTag::JoyDual() | hid::NpadStyleTag::JoyLeft() | hid::NpadStyleTag::JoyRight() | hid::NpadStyleTag::SystemExt() | hid::NpadStyleTag::System();
+        let supported_tags = hid::NpadStyleTag::FullKey() | hid::NpadStyleTag::Handheld() | hid::NpadStyleTag::JoyDual() | hid::NpadStyleTag::JoyLeft() | hid::NpadStyleTag::JoyRight();
         let supported_npad_ids = [hid::NpadIdType::No1, hid::NpadIdType::Handheld];
-        let input_ctx = input::InputContext::new(supported_tags, &supported_npad_ids)?;
+        let input_ctx = input::Context::new(supported_tags, &supported_npad_ids)?;
         Ok(Self { application_id, activate_event: wait::SystemEvent::empty(), deactivate_event: wait::SystemEvent::empty(), availability_change_event: wait::SystemEvent::empty(), state: sync::Locked::new(false, nfp::State::NonInitialized), device_state: sync::Locked::new(false, nfp::DeviceState::Unavailable), should_end_thread: sync::Locked::new(false, false), emu_handler_thread: thread::Thread::empty(), current_opened_area: area::ApplicationArea::new(), input_ctx: input_ctx })
     }
 
@@ -121,8 +121,11 @@ impl EmulationHandler {
         // Send a single fake device handle
 
         let fake_device_npad_id = {
-            let p1 = self.input_ctx.get_player(hid::NpadIdType::No1, hid::NpadStyleTag::Handheld());
-            if p1.get_attributes().contains(hid::NpadAttribute::IsConnected()) {
+            let p1 = self.input_ctx.get_player(hid::NpadIdType::No1);
+            if p1.get_style_tag_attributes(hid::NpadStyleTag::FullKey()).contains(hid::NpadAttribute::IsConnected())
+            || p1.get_style_tag_attributes(hid::NpadStyleTag::JoyDual()).contains(hid::NpadAttribute::IsConnected())
+            || p1.get_style_tag_attributes(hid::NpadStyleTag::JoyLeft()).contains(hid::NpadAttribute::IsConnected()) 
+            || p1.get_style_tag_attributes(hid::NpadStyleTag::JoyRight()).contains(hid::NpadAttribute::IsConnected()) {
                 hid::NpadIdType::No1
             }
             else {

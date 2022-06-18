@@ -4,7 +4,9 @@ use nx::crypto::hmac;
 use nx::crypto::sha256;
 use nx::crypto::aes;
 use nx::crypto::rc;
+use nx::service::mii;
 use nx::util;
+use nx::rand::RandomGenerator;
 use nx::result::*;
 use super::ntag::Manufacturer1;
 use super::ntag::Manufacturer2;
@@ -420,19 +422,709 @@ impl Date {
 }
 const_assert!(core::mem::size_of::<Date>() == 0x2);
 
-#[derive(Copy, Clone, PartialEq, Eq, Debug)]
-#[repr(C)]
+#[derive(Copy, Clone, PartialEq, Eq, Debug, Default)]
+#[repr(C, packed)]
 pub struct MiiFormat {
-    // Note: 3DS mii format
-    // TODO: fill in (info: https://www.3dbrew.org/wiki/Mii_Maker#Mii_QR_Code_format)
-    pub data: [u8; 0x60]
-}
+    // Note: 3DS mii format (https://www.3dbrew.org/wiki/Mii#Mii_format)
 
-impl Default for MiiFormat {
-    fn default() -> Self {
-        Self {
-            data: [0; 0x60]
-        }
+    pub version: u8,
+    pub info_1_bf: u8,
+    pub info_2_bf: u8,
+    pub info_3_bf: u8,
+    pub system_id: u64,
+    pub mii_id_bf: u32,
+    pub mac_addr: [u8; 6],
+    pub pad: [u8; 2],
+    pub info_4_bf: u16,
+    pub name: util::CString16<10>,
+    pub height: u8,
+    pub build: u8,
+    pub faceline_info_1_bf: u8,
+    pub faceline_info_2_bf: u8,
+    pub hair_type: u8,
+    pub hair_info_bf: u8,
+    pub eye_info_bf: u32,
+    pub eyebrow_info_bf: u32,
+    pub nose_info_bf: u16,
+    pub mouth_info_1_bf: u16,
+    pub mouth_mustache_info_bf: u16,
+    pub mustache_beard_info_bf: u16,
+    pub glass_info_bf: u16,
+    pub mole_info_bf: u16,
+    pub author_name: util::CString16<10>,
+    pub unk: u16,
+    pub crc16: u16
+}
+const_assert!(core::mem::size_of::<MiiFormat>() == 0x60);
+
+impl MiiFormat {
+    // Info1
+    #[inline]
+    pub fn get_character_set(&self) -> u8 {
+        read_bits!(2, 3, self.info_1_bf)
+    }
+
+    #[inline]
+    pub fn set_character_set(&mut self, set: u8) {
+        write_bits!(2, 3, self.info_1_bf, set);
+    }
+
+    #[inline]
+    pub fn get_region_lock(&self) -> u8 {
+        read_bits!(4, 5, self.info_1_bf)
+    }
+
+    #[inline]
+    pub fn set_region_lock(&mut self, lock: u8) {
+        write_bits!(4, 5, self.info_1_bf, lock);
+    }
+
+    #[inline]
+    pub fn get_profanity_flag(&self) -> bool {
+        read_bits!(6, 6, self.info_1_bf) != 0
+    }
+
+    #[inline]
+    pub fn set_profanity_flag(&mut self, profanity: bool) {
+        write_bits!(6, 6, self.info_1_bf, profanity as u8);
+    }
+
+    #[inline]
+    pub fn get_allow_copying(&self) -> bool {
+        read_bits!(7, 7, self.info_1_bf) != 0
+    }
+
+    #[inline]
+    pub fn set_allow_copying(&mut self, allow: bool) {
+        write_bits!(7, 7, self.info_1_bf, allow as u8);
+    }
+
+    // Info2
+    #[inline]
+    pub fn get_slot_index(&self) -> u8 {
+        read_bits!(0, 3, self.info_2_bf)
+    }
+
+    #[inline]
+    pub fn set_slot_index(&mut self, idx: u8) {
+        write_bits!(0, 3, self.info_2_bf, idx);
+    }
+
+    #[inline]
+    pub fn get_page_index(&self) -> u8 {
+        read_bits!(4, 7, self.info_2_bf)
+    }
+
+    #[inline]
+    pub fn set_page_index(&mut self, idx: u8) {
+        write_bits!(4, 7, self.info_2_bf, idx);
+    }
+
+    // Info3
+    #[inline]
+    pub fn get_console_kind(&self) -> u8 {
+        read_bits!(1, 3, self.info_3_bf)
+    }
+
+    #[inline]
+    pub fn set_console_kind(&mut self, kind: u8) {
+        write_bits!(1, 3, self.info_3_bf, kind);
+    }
+
+    // Info4
+    #[inline]
+    pub fn get_favorite_mii_flag(&self) -> bool {
+        read_bits!(1, 1, self.info_4_bf) as u8 != 0
+    }
+
+    #[inline]
+    pub fn set_favorite_mii_flag(&mut self, favorite: bool) {
+        write_bits!(1, 1, self.info_4_bf, favorite as u16);
+    }
+
+    #[inline]
+    pub fn get_favorite_color(&self) -> u8 {
+        read_bits!(2, 5, self.info_4_bf) as u8
+    }
+
+    #[inline]
+    pub fn set_favorite_color(&mut self, color: u8) {
+        write_bits!(2, 5, self.info_4_bf, color as u16);
+    }
+
+    #[inline]
+    pub fn get_birthday_day(&self) -> u8 {
+        read_bits!(6, 10, self.info_4_bf) as u8
+    }
+
+    #[inline]
+    pub fn set_birthday_day(&mut self, day: u8) {
+        write_bits!(6, 10, self.info_4_bf, day as u16);
+    }
+
+    #[inline]
+    pub fn get_birthday_month(&self) -> u8 {
+        read_bits!(11, 14, self.info_4_bf) as u8
+    }
+
+    #[inline]
+    pub fn set_birthday_month(&mut self, month: u8) {
+        write_bits!(11, 14, self.info_4_bf, month as u16);
+    }
+
+    #[inline]
+    pub fn get_gender(&self) -> u8 {
+        read_bits!(15, 15, self.info_4_bf) as u8
+    }
+
+    #[inline]
+    pub fn set_gender(&mut self, gender: u8) {
+        write_bits!(15, 15, self.info_4_bf, gender as u16);
+    }
+
+    // MiiId
+    #[inline]
+    pub fn get_not_special_flag(&self) -> bool {
+        read_bits!(0, 0, self.mii_id_bf) as u8 != 0
+    }
+
+    #[inline]
+    pub fn set_not_special_flag(&mut self, not_special: bool) {
+        write_bits!(0, 0, self.mii_id_bf, not_special as u32);
+    }
+
+    #[inline]
+    pub fn get_maybe_dsi_mii_flag(&self) -> bool {
+        read_bits!(1, 1, self.mii_id_bf) as u8 != 0
+    }
+
+    #[inline]
+    pub fn set_maybe_dsi_mii_flag(&mut self, maybe_dsi_mii: bool) {
+        write_bits!(1, 1, self.mii_id_bf, maybe_dsi_mii as u32);
+    }
+
+    #[inline]
+    pub fn get_temp_mii_flag(&self) -> bool {
+        read_bits!(2, 2, self.mii_id_bf) as u8 != 0
+    }
+
+    #[inline]
+    pub fn set_temp_mii_flag(&mut self, temp_mii: bool) {
+        write_bits!(2, 2, self.mii_id_bf, temp_mii as u32);
+    }
+
+    #[inline]
+    pub fn get_unk_flag(&self) -> bool {
+        read_bits!(3, 3, self.mii_id_bf) as u8 != 0
+    }
+
+    #[inline]
+    pub fn set_unk_flag(&mut self, unk: bool) {
+        write_bits!(3, 3, self.mii_id_bf, unk as u32);
+    }
+
+    #[inline]
+    pub fn get_creation_date_timestamp(&self) -> u32 {
+        read_bits!(4, 31, self.mii_id_bf)
+    }
+
+    #[inline]
+    pub fn set_creation_date_timestamp(&mut self, ts: u32) {
+        write_bits!(4, 31, self.mii_id_bf, ts);
+    }
+
+    // FacelineInfo1
+    #[inline]
+    pub fn get_faceline_color(&self) -> u8 {
+        read_bits!(0, 2, self.faceline_info_1_bf)
+    }
+
+    #[inline]
+    pub fn set_faceline_color(&mut self, color: u8) {
+        write_bits!(0, 2, self.faceline_info_1_bf, color);
+    }
+
+    #[inline]
+    pub fn get_faceline_type(&self) -> u8 {
+        read_bits!(3, 6, self.faceline_info_1_bf)
+    }
+
+    #[inline]
+    pub fn set_faceline_type(&mut self, f_type: u8) {
+        write_bits!(3, 6, self.faceline_info_1_bf, f_type);
+    }
+
+    #[inline]
+    pub fn get_disable_sharing_flag(&self) -> bool {
+        read_bits!(7, 7, self.faceline_info_1_bf) != 0
+    }
+
+    #[inline]
+    pub fn set_disable_sharing_flag(&mut self, disable_sharing: bool) {
+        write_bits!(7, 7, self.faceline_info_1_bf, disable_sharing as u8);
+    }
+
+    // FacelineInfo2
+    #[inline]
+    pub fn get_faceline_make(&self) -> u8 {
+        read_bits!(0, 3, self.faceline_info_2_bf)
+    }
+
+    #[inline]
+    pub fn set_faceline_make(&mut self, make: u8) {
+        write_bits!(0, 3, self.faceline_info_2_bf, make);
+    }
+
+    #[inline]
+    pub fn get_faceline_wrinkle(&self) -> u8 {
+        read_bits!(4, 7, self.faceline_info_2_bf)
+    }
+
+    #[inline]
+    pub fn set_faceline_wrinkle(&mut self, wrinkle: u8) {
+        write_bits!(4, 7, self.faceline_info_2_bf, wrinkle);
+    }
+
+    // HairInfo
+    #[inline]
+    pub fn get_hair_flip(&self) -> u8 {
+        read_bits!(4, 4, self.hair_info_bf)
+    }
+
+    #[inline]
+    pub fn set_hair_flip(&mut self, flip: u8) {
+        write_bits!(4, 4, self.hair_info_bf, flip);
+    }
+
+    #[inline]
+    pub fn get_hair_color(&self) -> u8 {
+        read_bits!(5, 7, self.hair_info_bf)
+    }
+
+    #[inline]
+    pub fn set_hair_color(&mut self, color: u8) {
+        write_bits!(5, 7, self.hair_info_bf, color);
+    }
+
+    // EyeInfo
+    #[inline]
+    pub fn get_eye_y(&self) -> u8 {
+        read_bits!(2, 6, self.eye_info_bf) as u8
+    }
+
+    #[inline]
+    pub fn set_eye_y(&mut self, y: u8) {
+        write_bits!(2, 6, self.eye_info_bf, y as u32);
+    }
+
+    #[inline]
+    pub fn get_eye_x(&self) -> u8 {
+        read_bits!(7, 10, self.eye_info_bf) as u8
+    }
+
+    #[inline]
+    pub fn set_eye_x(&mut self, x: u8) {
+        write_bits!(7, 10, self.eye_info_bf, x as u32);
+    }
+
+    #[inline]
+    pub fn get_eye_rotate(&self) -> u8 {
+        read_bits!(11, 15, self.eye_info_bf) as u8
+    }
+
+    #[inline]
+    pub fn set_eye_rotate(&mut self, rotate: u8) {
+        write_bits!(11, 15, self.eye_info_bf, rotate as u32);
+    }
+
+    #[inline]
+    pub fn get_eye_aspect(&self) -> u8 {
+        read_bits!(16, 18, self.eye_info_bf) as u8
+    }
+
+    #[inline]
+    pub fn set_eye_aspect(&mut self, aspect: u8) {
+        write_bits!(16, 18, self.eye_info_bf, aspect as u32);
+    }
+
+    #[inline]
+    pub fn get_eye_scale(&self) -> u8 {
+        read_bits!(19, 22, self.eye_info_bf) as u8
+    }
+
+    #[inline]
+    pub fn set_eye_scale(&mut self, scale: u8) {
+        write_bits!(19, 22, self.eye_info_bf, scale as u32);
+    }
+
+    #[inline]
+    pub fn get_eye_color(&self) -> u8 {
+        read_bits!(23, 25, self.eye_info_bf) as u8
+    }
+
+    #[inline]
+    pub fn set_eye_color(&mut self, color: u8) {
+        write_bits!(23, 25, self.eye_info_bf, color as u32);
+    }
+
+    #[inline]
+    pub fn get_eye_type(&self) -> u8 {
+        read_bits!(26, 31, self.eye_info_bf) as u8
+    }
+
+    #[inline]
+    pub fn set_eye_type(&mut self, e_type: u8) {
+        write_bits!(26, 31, self.eye_info_bf, e_type as u32);
+    }
+
+    // EyebrowInfo
+    #[inline]
+    pub fn get_eyebrow_y(&self) -> u8 {
+        read_bits!(2, 6, self.eyebrow_info_bf) as u8
+    }
+
+    #[inline]
+    pub fn set_eyebrow_y(&mut self, y: u8) {
+        write_bits!(2, 6, self.eyebrow_info_bf, y as u32);
+    }
+
+    #[inline]
+    pub fn get_eyebrow_x(&self) -> u8 {
+        read_bits!(7, 10, self.eyebrow_info_bf) as u8
+    }
+
+    #[inline]
+    pub fn set_eyebrow_x(&mut self, x: u8) {
+        write_bits!(7, 10, self.eyebrow_info_bf, x as u32);
+    }
+
+    #[inline]
+    pub fn get_eyebrow_rotate(&self) -> u8 {
+        read_bits!(11, 14, self.eyebrow_info_bf) as u8
+    }
+
+    #[inline]
+    pub fn set_eyebrow_rotate(&mut self, rotate: u8) {
+        write_bits!(11, 14, self.eyebrow_info_bf, rotate as u32);
+    }
+
+    #[inline]
+    pub fn get_eyebrow_aspect(&self) -> u8 {
+        read_bits!(17, 19, self.eyebrow_info_bf) as u8
+    }
+
+    #[inline]
+    pub fn set_eyebrow_aspect(&mut self, aspect: u8) {
+        write_bits!(17, 19, self.eyebrow_info_bf, aspect as u32);
+    }
+
+    #[inline]
+    pub fn get_eyebrow_scale(&self) -> u8 {
+        read_bits!(20, 23, self.eyebrow_info_bf) as u8
+    }
+
+    #[inline]
+    pub fn set_eyebrow_scale(&mut self, scale: u8) {
+        write_bits!(20, 23, self.eyebrow_info_bf, scale as u32);
+    }
+
+    #[inline]
+    pub fn get_eyebrow_color(&self) -> u8 {
+        read_bits!(24, 26, self.eyebrow_info_bf) as u8
+    }
+
+    #[inline]
+    pub fn set_eyebrow_color(&mut self, color: u8) {
+        write_bits!(24, 26, self.eyebrow_info_bf, color as u32);
+    }
+
+    #[inline]
+    pub fn get_eyebrow_type(&self) -> u8 {
+        read_bits!(27, 31, self.eyebrow_info_bf) as u8
+    }
+
+    #[inline]
+    pub fn set_eyebrow_type(&mut self, e_type: u8) {
+        write_bits!(27, 31, self.eyebrow_info_bf, e_type as u32);
+    }
+
+    // NoseInfo
+    #[inline]
+    pub fn get_nose_y(&self) -> u8 {
+        read_bits!(2, 6, self.nose_info_bf) as u8
+    }
+
+    #[inline]
+    pub fn set_nose_y(&mut self, y: u8) {
+        write_bits!(2, 6, self.nose_info_bf, y as u16);
+    }
+
+    #[inline]
+    pub fn get_nose_scale(&self) -> u8 {
+        read_bits!(7, 10, self.nose_info_bf) as u8
+    }
+
+    #[inline]
+    pub fn set_nose_scale(&mut self, scale: u8) {
+        write_bits!(7, 10, self.nose_info_bf, scale as u16);
+    }
+
+    #[inline]
+    pub fn get_nose_type(&self) -> u8 {
+        read_bits!(11, 15, self.nose_info_bf) as u8
+    }
+
+    #[inline]
+    pub fn set_nose_type(&mut self, n_type: u8) {
+        write_bits!(11, 15, self.nose_info_bf, n_type as u16);
+    }
+
+    // MouthInfo1
+    #[inline]
+    pub fn get_mouth_aspect(&self) -> u8 {
+        read_bits!(0, 2, self.mouth_info_1_bf) as u8
+    }
+
+    #[inline]
+    pub fn set_mouth_aspect(&mut self, aspect: u8) {
+        write_bits!(0, 2, self.mouth_info_1_bf, aspect as u16);
+    }
+
+    #[inline]
+    pub fn get_mouth_scale(&self) -> u8 {
+        read_bits!(3, 6, self.mouth_info_1_bf) as u8
+    }
+
+    #[inline]
+    pub fn set_mouth_scale(&mut self, scale: u8) {
+        write_bits!(3, 6, self.mouth_info_1_bf, scale as u16);
+    }
+
+    #[inline]
+    pub fn get_mouth_color(&self) -> u8 {
+        read_bits!(7, 9, self.mouth_info_1_bf) as u8
+    }
+
+    #[inline]
+    pub fn set_mouth_color(&mut self, color: u8) {
+        write_bits!(7, 9, self.mouth_info_1_bf, color as u16);
+    }
+
+    #[inline]
+    pub fn get_mouth_type(&self) -> u8 {
+        read_bits!(10, 15, self.mouth_info_1_bf) as u8
+    }
+
+    #[inline]
+    pub fn set_mouth_type(&mut self, m_type: u8) {
+        write_bits!(10, 15, self.mouth_info_1_bf, m_type as u16);
+    }
+
+    // MouthMustacheInfo
+    #[inline]
+    pub fn get_mustache_type(&self) -> u8 {
+        read_bits!(8, 10, self.mouth_mustache_info_bf) as u8
+    }
+
+    #[inline]
+    pub fn set_mustache_type(&mut self, m_type: u8) {
+        write_bits!(8, 10, self.mouth_mustache_info_bf, m_type as u16);
+    }
+
+    #[inline]
+    pub fn get_mouth_y(&self) -> u8 {
+        read_bits!(11, 15, self.mouth_mustache_info_bf) as u8
+    }
+
+    #[inline]
+    pub fn set_mouth_y(&mut self, y: u8) {
+        write_bits!(11, 15, self.mouth_mustache_info_bf, y as u16);
+    }
+
+    // MustacheBeardInfo
+    #[inline]
+    pub fn get_mustache_y(&self) -> u8 {
+        read_bits!(1, 5, self.mustache_beard_info_bf) as u8
+    }
+
+    #[inline]
+    pub fn set_mustache_y(&mut self, y: u8) {
+        write_bits!(1, 5, self.mustache_beard_info_bf, y as u16);
+    }
+
+    #[inline]
+    pub fn get_mustache_scale(&self) -> u8 {
+        read_bits!(6, 9, self.mustache_beard_info_bf) as u8
+    }
+
+    #[inline]
+    pub fn set_mustache_scale(&mut self, scale: u8) {
+        write_bits!(6, 9, self.mustache_beard_info_bf, scale as u16);
+    }
+
+    #[inline]
+    pub fn get_beard_color(&self) -> u8 {
+        read_bits!(10, 12, self.mustache_beard_info_bf) as u8
+    }
+
+    #[inline]
+    pub fn set_beard_color(&mut self, color: u8) {
+        write_bits!(10, 12, self.mustache_beard_info_bf, color as u16);
+    }
+
+    #[inline]
+    pub fn get_beard_type(&self) -> u8 {
+        read_bits!(13, 15, self.mustache_beard_info_bf) as u8
+    }
+
+    #[inline]
+    pub fn set_beard_type(&mut self, b_type: u8) {
+        write_bits!(13, 15, self.mustache_beard_info_bf, b_type as u16);
+    }
+
+    // GlassInfo
+    #[inline]
+    pub fn get_glass_y(&self) -> u8 {
+        read_bits!(0, 4, self.glass_info_bf) as u8
+    }
+
+    #[inline]
+    pub fn set_glass_y(&mut self, y: u8) {
+        write_bits!(0, 4, self.glass_info_bf, y as u16);
+    }
+
+    #[inline]
+    pub fn get_glass_scale(&self) -> u8 {
+        read_bits!(5, 8, self.glass_info_bf) as u8
+    }
+
+    #[inline]
+    pub fn set_glass_scale(&mut self, scale: u8) {
+        write_bits!(5, 8, self.glass_info_bf, scale as u16);
+    }
+
+    #[inline]
+    pub fn get_glass_color(&self) -> u8 {
+        read_bits!(9, 11, self.glass_info_bf) as u8
+    }
+
+    #[inline]
+    pub fn set_glass_color(&mut self, color: u8) {
+        write_bits!(9, 11, self.glass_info_bf, color as u16);
+    }
+
+    #[inline]
+    pub fn get_glass_type(&self) -> u8 {
+        read_bits!(12, 15, self.glass_info_bf) as u8
+    }
+
+    #[inline]
+    pub fn set_glass_type(&mut self, g_type: u8) {
+        write_bits!(12, 15, self.glass_info_bf, g_type as u16);
+    }
+
+    // MoleInfo
+    #[inline]
+    pub fn get_mole_y(&self) -> u8 {
+        read_bits!(1, 5, self.mole_info_bf) as u8
+    }
+
+    #[inline]
+    pub fn set_mole_y(&mut self, y: u8) {
+        write_bits!(1, 5, self.mole_info_bf, y as u16);
+    }
+
+    #[inline]
+    pub fn get_mole_x(&self) -> u8 {
+        read_bits!(6, 10, self.mole_info_bf) as u8
+    }
+
+    #[inline]
+    pub fn set_mole_x(&mut self, x: u8) {
+        write_bits!(6, 10, self.mole_info_bf, x as u16);
+    }
+
+    #[inline]
+    pub fn get_mole_scale(&self) -> u8 {
+        read_bits!(11, 14, self.mole_info_bf) as u8
+    }
+
+    #[inline]
+    pub fn set_mole_scale(&mut self, scale: u8) {
+        write_bits!(11, 14, self.mole_info_bf, scale as u16);
+    }
+
+    #[inline]
+    pub fn get_mole_type(&self) -> u8 {
+        read_bits!(15, 15, self.mole_info_bf) as u8
+    }
+
+    #[inline]
+    pub fn set_mole_type(&mut self, m_type: u8) {
+        write_bits!(15, 15, self.mole_info_bf, m_type as u16);
+    }
+
+    pub unsafe fn to_charinfo(&self) -> Result<mii::CharInfo> {
+        Ok(mii::CharInfo {
+            id: {
+                let mut random = nx::rand::SplCsrngGenerator::new()?;
+                random.random()?
+            },
+            name: {
+                let name = self.name;
+                util::CString16::from_string(name.get_string()?)?
+            },
+            font_region: mii::FontRegion::Standard,
+            faceline_color: core::mem::transmute(self.get_favorite_color()),
+            gender: core::mem::transmute(self.get_gender()),
+            height: self.height,
+            build: self.build,
+            type_val: 0,
+            region_move: !self.get_disable_sharing_flag() as u8,
+            faceline_type: core::mem::transmute(self.get_faceline_type()),
+            favorite_color: self.get_faceline_color(),
+            faceline_wrinkle: core::mem::transmute(self.get_faceline_wrinkle()),
+            faceline_make: core::mem::transmute(self.get_faceline_make()),
+            hair_type: core::mem::transmute(self.hair_type),
+            hair_color: self.get_hair_color(),
+            hair_flip: core::mem::transmute(self.get_hair_flip()),
+            eye_type: core::mem::transmute(self.get_eye_type()),
+            eye_color: self.get_eye_color(),
+            eye_scale: self.get_eye_scale(),
+            eye_aspect: self.get_eye_aspect(),
+            eye_rotate: self.get_eye_rotate(),
+            eye_x: self.get_eye_x(),
+            eye_y: self.get_eye_y(),
+            eyebrow_type: core::mem::transmute(self.get_eyebrow_type()),
+            eyebrow_color: self.get_eyebrow_color(),
+            eyebrow_scale: self.get_eyebrow_scale(),
+            eyebrow_aspect: self.get_eyebrow_aspect(),
+            eyebrow_rotate: self.get_eyebrow_rotate(),
+            eyebrow_x: self.get_eyebrow_x(),
+            eyebrow_y: self.get_eyebrow_y(),
+            nose_type: core::mem::transmute(self.get_nose_type()),
+            nose_scale: self.get_nose_scale(),
+            nose_y: self.get_nose_y(),
+            mouth_type: core::mem::transmute(self.get_mouth_type()),
+            mouth_color: self.get_mouth_color(),
+            mouth_scale: self.get_mouth_scale(),
+            mouth_aspect: self.get_mouth_aspect(),
+            mouth_y: self.get_mouth_y(),
+            beard_color: self.get_beard_color(),
+            beard_type: core::mem::transmute(self.get_beard_type()),
+            mustache_type: core::mem::transmute(self.get_mustache_type()),
+            mustache_scale: self.get_mustache_scale(),
+            mustache_y: self.get_mustache_y(),
+            glass_type: core::mem::transmute(self.get_glass_type()),
+            glass_color: self.get_glass_color(),
+            glass_scale: self.get_glass_scale(),
+            glass_y: self.get_glass_y(),
+            mole_type: core::mem::transmute(self.get_mole_type()),
+            mole_scale: self.get_mole_scale(),
+            mole_x: self.get_mole_x(),
+            mole_y: self.get_mole_y(),
+            reserved: 0
+        })
     }
 }
 
@@ -446,7 +1138,7 @@ pub struct Settings {
     pub last_write_date_be: Date,
     pub crc32_be: u32,
     pub name_be: util::CString16<10>,
-    pub mii: MiiFormat,
+    pub mii_be: MiiFormat,
     pub program_id_be: u64,
     pub write_counter_be: u16,
     pub access_id_be: u32,
@@ -465,7 +1157,7 @@ impl Default for Settings {
             last_write_date_be: Date::new(2001, 9, 11),
             crc32_be: 0,
             name_be: util::CString16::from_str("emuiibo").unwrap().swap_chars(),
-            mii: Default::default(),
+            mii_be: Default::default(),
             program_id_be: 0,
             write_counter_be: 0,
             access_id_be: 0,

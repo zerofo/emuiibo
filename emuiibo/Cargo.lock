@@ -39,7 +39,7 @@ source = "git+https://github.com/aarch64-switch-rs/logpacket#d807c993fb4578e3809
 [[package]]
 name = "nx"
 version = "0.1.0"
-source = "git+https://github.com/aarch64-switch-rs/nx#20e2773f31a968d5b469cd20da5c4bc74fe6edf4"
+source = "git+https://github.com/aarch64-switch-rs/nx#bfa3d790e023acc6dbe07a3ac1f70987e6f62a28"
 dependencies = [
  "arrayvec",
  "linked_list_allocator",
@@ -128,6 +128,6 @@ dependencies = [
 
 [[package]]
 name = "unicode-ident"
-version = "1.0.0"
+version = "1.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d22af068fba1eb5edcb4aea19d382b2a3deb4c8f9d475c589b6ada9e0fd493ee"
+checksum = "5bd2fe26506023ed7b5e1e315add59d6f584c621d037f9368fea9cfb988f368c"
