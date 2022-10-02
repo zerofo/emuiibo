@@ -24,6 +24,3 @@ clean:
 	@rm -rf $(CURDIR)/SdOut
 	@cd emuiibo && cargo clean
 	@$(MAKE) clean -C overlay/
-
-translation:
-	$(CURDIR)/overlay/tools/translation.py update "*" $(ARGS)

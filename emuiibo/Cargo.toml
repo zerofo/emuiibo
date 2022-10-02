@@ -5,7 +5,7 @@ authors = ["XorTroll"]
 edition = "2021"
 
 [dependencies]
-nx = { git = "https://github.com/aarch64-switch-rs/nx" }
+nx = { git = "https://github.com/aarch64-switch-rs/nx", features = ["services", "fs", "crypto", "input", "rand"] }
 paste = "1.0"
 static_assertions = "1.1.0"
 serde = { version = "1.0", default-features = false, features = ["derive"] }

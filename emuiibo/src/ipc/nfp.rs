@@ -30,7 +30,7 @@ impl EmulationHandler {
         let supported_tags = hid::NpadStyleTag::FullKey() | hid::NpadStyleTag::Handheld() | hid::NpadStyleTag::JoyDual() | hid::NpadStyleTag::JoyLeft() | hid::NpadStyleTag::JoyRight();
         let supported_npad_ids = [hid::NpadIdType::No1, hid::NpadIdType::Handheld];
         let input_ctx = input::Context::new(supported_tags, &supported_npad_ids)?;
-        Ok(Self { application_id, activate_event: wait::SystemEvent::empty(), deactivate_event: wait::SystemEvent::empty(), availability_change_event: wait::SystemEvent::empty(), state: sync::Locked::new(false, nfp::State::NonInitialized), device_state: sync::Locked::new(false, nfp::DeviceState::Unavailable), should_end_thread: sync::Locked::new(false, false), emu_handler_thread: thread::Thread::empty(), current_opened_area: area::ApplicationArea::new(), input_ctx: input_ctx })
+        Ok(Self { application_id, activate_event: wait::SystemEvent::new()?, deactivate_event: wait::SystemEvent::new()?, availability_change_event: wait::SystemEvent::new()?, state: sync::Locked::new(false, nfp::State::NonInitialized), device_state: sync::Locked::new(false, nfp::DeviceState::Unavailable), should_end_thread: sync::Locked::new(false, false), emu_handler_thread: thread::Thread::empty(), current_opened_area: area::ApplicationArea::new(), input_ctx })
     }
 
     #[inline]
@@ -91,10 +91,6 @@ impl EmulationHandler {
 
         self.state.set(nfp::State::Initialized);
         self.device_state.set(nfp::DeviceState::Initialized);
-        
-        self.activate_event = wait::SystemEvent::new()?;
-        self.deactivate_event = wait::SystemEvent::new()?;
-        self.availability_change_event = wait::SystemEvent::new()?;
 
         // TODO: different thread names depending on the app id?
         self.emu_handler_thread = thread::Thread::new(Self::emu_handler_thread_fn, &(self as *mut Self), "emuiibo.AmiiboEmulationHandler", 0x1000)?;

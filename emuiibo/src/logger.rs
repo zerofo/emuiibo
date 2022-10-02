@@ -22,14 +22,14 @@ macro_rules! log {
     ($msg:literal) => {
         {
             if crate::logger::can_log() {
-                diag_log!(nx::diag::log::LmLogger { nx::diag::log::LogSeverity::Trace, false } => $msg);
+                diag_log!(nx::diag::log::lm::LmLogger { nx::diag::log::LogSeverity::Trace, false } => $msg);
             }
         }
     };
     ($fmt:literal, $( $params:expr ),*) => {
         {
             if crate::logger::can_log() {
-                diag_log!(nx::diag::log::LmLogger { nx::diag::log::LogSeverity::Trace, false } => $fmt, $( $params ),*);
+                diag_log!(nx::diag::log::lm::LmLogger { nx::diag::log::LogSeverity::Trace, false } => $fmt, $( $params ),*);
             }
         }
     };

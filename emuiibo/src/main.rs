@@ -86,5 +86,5 @@ pub fn main() -> Result<()> {
 
 #[panic_handler]
 fn panic_handler(info: &panic::PanicInfo) -> ! {
-    util::simple_panic_handler::<log::LmLogger>(info, abort::AbortLevel::SvcBreak())
+    util::simple_panic_handler::<log::lm::LmLogger>(info, abort::AbortLevel::SvcBreak())
 }
