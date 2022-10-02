@@ -13,19 +13,25 @@ use crate::emu;
 use super::EmulationHandler;
 
 pub struct System {
-    handler: EmulationHandler
+    handler: EmulationHandler,
+    dummy_session: sf::Session
 }
 
 impl System {
     pub fn new(application_id: u64) -> Result<Self> {
         Ok(Self {
-            handler: EmulationHandler::new(application_id)?
+            handler: EmulationHandler::new(application_id)?,
+            dummy_session: sf::Session::new()
         })
     }
 }
 
 impl sf::IObject for System {
     ipc_sf_object_impl_default_command_metadata!();
+
+    fn get_session(&mut self) -> &mut sf::Session {
+        &mut self.dummy_session
+    }
 }
 
 impl ISystem for System {
@@ -137,18 +143,26 @@ impl ISystem for System {
 impl server::ISessionObject for System {}
 
 pub struct SystemManager {
-    info: sm::mitm::MitmProcessInfo
+    info: sm::mitm::MitmProcessInfo,
+    dummy_session: sf::Session
 }
 
 impl sf::IObject for SystemManager {
     ipc_sf_object_impl_default_command_metadata!();
+
+    fn get_session(&mut self) -> &mut sf::Session {
+        &mut self.dummy_session
+    }
 }
 
 impl server::ISessionObject for SystemManager {}
 
 impl server::IMitmServerObject for SystemManager {
     fn new(info: sm::mitm::MitmProcessInfo) -> Self {
-        Self { info: info }
+        Self {
+            info,
+            dummy_session: sf::Session::new()
+        }
     }
 }
 
