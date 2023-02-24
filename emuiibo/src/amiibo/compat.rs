@@ -99,5 +99,7 @@ pub fn convert_deprecated_virtual_amiibos() {
     log!("Analyzing regular dir...\n");
     let _ = convert_deprecated_virtual_amiibos_in_dir(String::from(super::VIRTUAL_AMIIBO_DIR));
 
-    mii_test().unwrap();
+    if let Err(e) = mii_test() {
+    	log!("mii_test() failed: {:?}\n", e);
+    }
 }
