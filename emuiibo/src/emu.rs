@@ -1,6 +1,5 @@
 use nx::sync;
 use alloc::vec::Vec;
-
 use crate::amiibo;
 
 #[derive(Copy, Clone)]
@@ -34,12 +33,12 @@ pub enum VirtualAmiiboStatus {
     Disconnected
 }
 
-pub const CURRENT_VERSION: Version = Version::from(0, 6, 3, true);
+pub const CURRENT_VERSION: Version = Version::from(1, 0, 0, true);
 
 static mut G_EMULATION_STATUS: sync::Locked<EmulationStatus> = sync::Locked::new(false, EmulationStatus::Off);
 static mut G_ACTIVE_VIRTUAL_AMIIBO_STATUS: sync::Locked<VirtualAmiiboStatus> = sync::Locked::new(false, VirtualAmiiboStatus::Invalid);
 static mut G_INTERCEPTED_APPLICATION_IDS: sync::Locked<Vec<u64>> = sync::Locked::new(false, Vec::new());
-static mut G_ACTIVE_VIRTUAL_AMIIBO: sync::Locked<amiibo::VirtualAmiibo> = sync::Locked::new(false, amiibo::VirtualAmiibo::empty());
+static mut G_ACTIVE_VIRTUAL_AMIIBO: sync::Locked<amiibo::fmt::VirtualAmiibo> = sync::Locked::new(false, amiibo::fmt::VirtualAmiibo::empty());
 
 pub fn get_emulation_status() -> EmulationStatus {
     unsafe {
@@ -83,13 +82,13 @@ pub fn is_application_id_intercepted(application_id: u64) -> bool {
     }
 }
 
-pub fn get_active_virtual_amiibo() -> &'static mut amiibo::VirtualAmiibo {
+pub fn get_active_virtual_amiibo() -> &'static mut amiibo::fmt::VirtualAmiibo {
     unsafe {
         G_ACTIVE_VIRTUAL_AMIIBO.get()
     }
 }
 
-pub fn set_active_virtual_amiibo(virtual_amiibo: amiibo::VirtualAmiibo) {
+pub fn set_active_virtual_amiibo(virtual_amiibo: amiibo::fmt::VirtualAmiibo) {
     unsafe {
         G_ACTIVE_VIRTUAL_AMIIBO.set(virtual_amiibo);
         set_active_virtual_amiibo_status(VirtualAmiiboStatus::Connected);

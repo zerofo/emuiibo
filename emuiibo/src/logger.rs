@@ -1,33 +1,36 @@
-use nx::fs;
 use alloc::string::String;
-use crate::emu;
+use crate::fsext;
 
-pub const LOG_FILE: &'static str = "sdmc:/emuiibo/emuiibo.log";
+static mut G_CAN_LOG: bool = false;
 
-pub const fn is_logging_enabled() -> bool {
-    // Only enable logging on dev mode
-    emu::CURRENT_VERSION.is_dev_build
-}
+const LOG_FLAG_FILE: &str = "sdmc:/emuiibo/flags/log.flag";
 
 pub fn initialize() {
-    let _ = fs::delete_file(String::from(LOG_FILE));
-}
-
-fn log_impl(line: String) {
-    if is_logging_enabled() {
-        match fs::open_file(String::from(LOG_FILE), fs::FileOpenOption::Create() | fs::FileOpenOption::Write() | fs::FileOpenOption::Append()) {
-            Ok(mut log_file) => {
-                let _ = log_file.write(line.as_ptr(), line.len());
-            }
-            _ => {}
-        };
+    unsafe {
+        G_CAN_LOG = fsext::exists_file(String::from(LOG_FLAG_FILE));
     }
 }
 
-pub fn log_line(text: String) {
-    log_impl(format!("{}\n", text));
+#[inline(always)]
+pub fn can_log() -> bool {
+    unsafe {
+        G_CAN_LOG
+    }
 }
 
-pub fn log_line_str(text: &str) {
-    log_impl(format!("{}\n", text));
+macro_rules! log {
+    ($msg:literal) => {
+        {
+            if crate::logger::can_log() {
+                diag_log!(nx::diag::log::lm::LmLogger { nx::diag::log::LogSeverity::Trace, false } => $msg);
+            }
+        }
+    };
+    ($fmt:literal, $( $params:expr ),*) => {
+        {
+            if crate::logger::can_log() {
+                diag_log!(nx::diag::log::lm::LmLogger { nx::diag::log::LogSeverity::Trace, false } => $fmt, $( $params ),*);
+            }
+        }
+    };
 }

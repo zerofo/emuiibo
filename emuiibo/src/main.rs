@@ -1,8 +1,14 @@
 #![no_std]
 #![no_main]
+#![feature(core_intrinsics)]
+#![feature(const_maybe_uninit_zeroed)]
+#![feature(const_trait_impl)]
 
 #[macro_use]
 extern crate nx;
+
+#[macro_use]
+extern crate static_assertions;
 
 #[macro_use]
 extern crate alloc;
@@ -12,55 +18,73 @@ extern crate paste;
 use nx::result::*;
 use nx::util;
 use nx::thread;
-use nx::diag::assert;
+use nx::diag::abort;
 use nx::diag::log;
 use nx::ipc::server;
 use nx::fs;
 use core::panic;
 
-mod resultsext;
-mod fsext;
-mod miiext;
-mod ipc;
-mod emu;
-mod amiibo;
-mod area;
+#[macro_use]
 mod logger;
 
-const STACK_HEAP_SIZE: usize = 0x4000;
-static mut STACK_HEAP: [u8; STACK_HEAP_SIZE] = [0; STACK_HEAP_SIZE];
+mod rc;
+
+#[macro_use]
+mod fsext;
+
+mod miiext;
+
+mod ipc;
+
+mod emu;
+
+mod amiibo;
+
+mod area;
+
+rrt0_define_default_module_name!();
+
+const CUSTOM_HEAP_SIZE: usize = 0x8000;
+static mut CUSTOM_HEAP: [u8; CUSTOM_HEAP_SIZE] = [0; CUSTOM_HEAP_SIZE];
 
 #[no_mangle]
 pub fn initialize_heap(_hbl_heap: util::PointerAndSize) -> util::PointerAndSize {
     unsafe {
-        util::PointerAndSize::new(STACK_HEAP.as_mut_ptr(), STACK_HEAP.len())
+        util::PointerAndSize::new(CUSTOM_HEAP.as_mut_ptr(), CUSTOM_HEAP.len())
     }
 }
 
-const POINTER_BUF_SIZE: usize = 0x1000;
-type Manager = server::ServerManager<POINTER_BUF_SIZE>;
-
 #[no_mangle]
 pub fn main() -> Result<()> {
-    thread::get_current_thread().name.set_str("emuiibo.Main")?;
-    fs::initialize()?;
+    thread::get_current_thread().name.set_str("emuiibo.Main");
+    fs::initialize_fspsrv_session()?;
     fs::mount_sd_card("sdmc")?;
-    fsext::ensure_directories();
+
+    fsext::ensure_directories()?;
+    logger::initialize();
+    log!("Hello world!\n");
+
     miiext::initialize()?;
     miiext::export_miis()?;
-    logger::initialize();
+
+    amiibo::compat::convert_deprecated_virtual_amiibos();
+
+    const POINTER_BUF_SIZE: usize = 0x1000;
+    type Manager = server::ServerManager<POINTER_BUF_SIZE>;
 
     let mut manager = Manager::new()?;
-    manager.register_mitm_service_server::<ipc::nfp::UserManager>()?;
+    manager.register_mitm_service_server::<ipc::nfp::user::UserManager>()?;
+    manager.register_mitm_service_server::<ipc::nfp::sys::SystemManager>()?;
     manager.register_service_server::<ipc::emu::EmulationService>()?;
     manager.loop_process()?;
 
     miiext::finalize();
-    fs::finalize();
+    fs::finalize_fspsrv_session();
+    fs::unmount_all();
     Ok(())
 }
 
 #[panic_handler]
 fn panic_handler(info: &panic::PanicInfo) -> ! {
-    util::simple_panic_handler::<log::LmLogger>(info, assert::AssertMode::SvcBreak)
+    util::simple_panic_handler::<log::lm::LmLogger>(info, abort::AbortLevel::SvcBreak())
 }

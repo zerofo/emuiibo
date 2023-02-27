@@ -12,5 +12,4 @@ bin/
 obj/
 .vs/
 SdOut/
-Cargo.lock
 target/

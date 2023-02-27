@@ -14,10 +14,19 @@ impl ApplicationArea {
         Self { area_file: String::new() }
     }
 
-    pub fn from(virtual_amiibo: &amiibo::VirtualAmiibo, access_id: nfp::AccessId) -> Self {
+    pub fn from(virtual_amiibo: &amiibo::fmt::VirtualAmiibo, access_id: nfp::AccessId) -> Self {
         let areas_dir = format!("{}/areas", virtual_amiibo.path);
         let _ = fs::create_directory(areas_dir.clone());
         Self { area_file: format!("{}/0x{:08X}.bin", areas_dir, access_id) }
+    }
+
+    pub fn delete(&mut self) -> Result<()> {
+        if self.is_valid() {
+            fs::delete_file(self.area_file.clone())?;
+            self.area_file.clear();
+        }
+
+        Ok(())
     }
 
     pub fn is_valid(&self) -> bool {
