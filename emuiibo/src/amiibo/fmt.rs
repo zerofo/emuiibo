@@ -209,7 +209,7 @@ impl VirtualAmiibo {
             random_mii.name.set_str(DEFAULT_MII_NAME)?;
             
             let mut mii_charinfo_file = fs::open_file(mii_charinfo_path, fs::FileOpenOption::Create() | fs::FileOpenOption::Write() | fs::FileOpenOption::Append())?;
-            mii_charinfo_file.write_val(random_mii)?;
+            mii_charinfo_file.write_val(&random_mii)?;
             Ok(random_mii)
         }
     }
@@ -441,7 +441,7 @@ impl VirtualAmiibo {
         let mii_charinfo_path = format!("{}/{}", self.path, self.info.mii_charinfo_file);
         let _ = fs::delete_file(mii_charinfo_path.clone());
         let mut mii_charinfo_file = fs::open_file(mii_charinfo_path.clone(), fs::FileOpenOption::Create() | fs::FileOpenOption::Write() | fs::FileOpenOption::Append())?;
-        mii_charinfo_file.write_val(self.mii_charinfo)?;
+        mii_charinfo_file.write_val(&self.mii_charinfo)?;
 
         let areas_json_path = format!("{}/areas.json", self.path);
         write_serialize_json!(areas_json_path, &self.areas)?;

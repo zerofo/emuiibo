@@ -62,7 +62,7 @@ impl super::VirtualAmiiboFormat for VirtualAmiibo {
             true => {
                 let mii_charinfo = miiext::generate_random_mii()?;
                 let mut file = fs::open_file(mii_charinfo_path, fs::FileOpenOption::Create() | fs::FileOpenOption::Write() | fs::FileOpenOption::Append())?;
-                file.write_val(mii_charinfo)?;
+                file.write_val(&mii_charinfo)?;
                 mii_charinfo
             },
             false => {
@@ -137,12 +137,12 @@ impl compat::DeprecatedVirtualAmiiboFormat for VirtualAmiibo {
         {
             let conv_bin_path = format!("{}/amiibo-converted.bin", deprecated_path);
             let mut conv_bin_file = fs::open_file(conv_bin_path, fs::FileOpenOption::Create() | fs::FileOpenOption::Write() | fs::FileOpenOption::Append())?;
-            conv_bin_file.write_val(conv_bin)?;
+            conv_bin_file.write_val(&conv_bin)?;
         }
         {
             let plain_bin_path = format!("{}/amiibo-plain.bin", deprecated_path);
             let mut plain_bin_file = fs::open_file(plain_bin_path, fs::FileOpenOption::Create() | fs::FileOpenOption::Write() | fs::FileOpenOption::Append())?;
-            plain_bin_file.write_val(plain_bin)?;
+            plain_bin_file.write_val(&plain_bin)?;
         }
 
         let old_mii_charinfo_path = format!("{}/mii.dat", self.path);

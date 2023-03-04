@@ -62,7 +62,7 @@ pub fn export_miis() -> Result<()> {
 
         let mii_path = format!("{}/mii-charinfo.bin", mii_dir_path);
         let mut mii_file = fs::open_file(mii_path, fs::FileOpenOption::Create() | fs::FileOpenOption::Write() | fs::FileOpenOption::Append())?;
-        mii_file.write_val(mii)?;
+        mii_file.write_val(&mii)?;
 
         let mii_name = format!("{}/name.txt", mii_dir_path);
         let mut mii_name_file = fs::open_file(mii_name, fs::FileOpenOption::Create() | fs::FileOpenOption::Write() | fs::FileOpenOption::Append())?;

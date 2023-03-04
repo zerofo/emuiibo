@@ -63,12 +63,12 @@ impl compat::DeprecatedVirtualAmiiboFormat for VirtualAmiibo {
         {
             let conv_bin_path = format!("{}/converted-format.bin", deprecated_path);
             let mut conv_bin_file = fs::open_file(conv_bin_path, fs::FileOpenOption::Create() | fs::FileOpenOption::Write() | fs::FileOpenOption::Append())?;
-            conv_bin_file.write_val(conv_bin)?;
+            conv_bin_file.write_val(&conv_bin)?;
         }
         {
             let plain_bin_path = format!("{}/plain-format.bin", deprecated_path);
             let mut plain_bin_file = fs::open_file(plain_bin_path, fs::FileOpenOption::Create() | fs::FileOpenOption::Write() | fs::FileOpenOption::Append())?;
-            plain_bin_file.write_val(plain_bin)?;
+            plain_bin_file.write_val(&plain_bin)?;
         }
 
         Ok(amiibo)

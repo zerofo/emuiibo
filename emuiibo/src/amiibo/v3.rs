@@ -138,7 +138,7 @@ impl super::VirtualAmiiboFormat for VirtualAmiibo {
             true => {
                 let mii_charinfo = miiext::generate_random_mii()?;
                 let mut file = fs::open_file(mii_charinfo_path, fs::FileOpenOption::Create() | fs::FileOpenOption::Write() | fs::FileOpenOption::Append())?;
-                file.write_val(mii_charinfo)?;
+                file.write_val(&mii_charinfo)?;
                 mii_charinfo
             },
             false => {
