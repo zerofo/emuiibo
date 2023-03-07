@@ -30,6 +30,14 @@ pub fn get_path_file_name_without_extension(path: String) -> String {
     get_path_file_name(get_path_without_extension(path))
 }
 
+#[inline]
+pub fn recreate_directory(path: String) -> Result<()> {
+    // The directory might not already exist
+    let _ = fs::delete_directory(path.clone());
+    fs::create_directory(path.clone())?;
+    Ok(())
+}
+
 // Note: using macros instead of fns to avoid having to deal with serde_json's lifetime stuff
 
 macro_rules! read_deserialize_json {
@@ -67,7 +75,7 @@ macro_rules! write_serialize_json {
 pub fn ensure_directories() -> Result<()> {
     let _ = fs::create_directory(String::from(BASE_DIR));
     let _ = fs::create_directory(String::from(amiibo::VIRTUAL_AMIIBO_DIR));
-    fs::clean_directory_recursively(String::from(miiext::EXPORTED_MIIS_DIR))?;
+    recreate_directory(String::from(miiext::EXPORTED_MIIS_DIR))?;
 
     Ok(())
 }
