@@ -32,8 +32,8 @@ pub fn get_path_file_name_without_extension(path: String) -> String {
 
 #[inline]
 pub fn recreate_directory(path: String) -> Result<()> {
-    // The directory might not already exist
-    let _ = fs::delete_directory(path.clone());
+    // The directory might not already exist, thus this attempt to delete it could fail
+    let _ = fs::delete_directory_recursively(path.clone());
     fs::create_directory(path.clone())?;
     Ok(())
 }
