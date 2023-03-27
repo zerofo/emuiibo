@@ -42,6 +42,8 @@ mod amiibo;
 
 mod area;
 
+mod rand;
+
 rrt0_define_default_module_name!();
 
 const CUSTOM_HEAP_SIZE: usize = 0x8000;
@@ -64,6 +66,8 @@ pub fn main() -> Result<()> {
     logger::initialize();
     log!("Hello world!\n");
 
+    rand::initialize()?;
+
     miiext::initialize()?;
     miiext::export_miis()?;
 
@@ -79,6 +83,7 @@ pub fn main() -> Result<()> {
     manager.loop_process()?;
 
     miiext::finalize();
+    rand::finalize();
     fs::finalize_fspsrv_session();
     fs::unmount_all();
     Ok(())

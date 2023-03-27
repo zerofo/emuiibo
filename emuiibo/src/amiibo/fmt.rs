@@ -4,11 +4,10 @@ use alloc::string::String;
 use alloc::vec::Vec;
 use nx::fs;
 use nx::util;
-use nx::rand;
 use nx::rand::RandomGenerator;
 use nx::ipc::sf::mii;
 use nx::ipc::sf::nfp;
-use crate::{rc, area, fsext, miiext};
+use crate::{rc, area, fsext, miiext, rand};
 
 // Current virtual amiibo format, used since emuiibo v0.5
 
@@ -338,8 +337,11 @@ impl VirtualAmiibo {
                     core::ptr::copy(uuid.as_ptr(), tag_info.uuid.as_mut_ptr(), uuid_len);
                 },
                 None => {
-                    let mut rng = rand::SplCsrngGenerator::new()?;
-                    rng.random_bytes(tag_info.uuid.as_mut_ptr(), tag_info.uuid.len())?;
+                    rand::get_rng()?.random_bytes(tag_info.uuid.as_mut_ptr(), 7)?;
+                    tag_info.uuid[7] = 0;
+                    tag_info.uuid[8] = 0;
+                    tag_info.uuid[9] = 0;
+                    tag_info.uuid_length = tag_info.uuid.len() as u8;
                 }
             };
         }
