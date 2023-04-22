@@ -507,22 +507,31 @@ class AmiiboGui : public tsl::Gui {
                     dir_paths = g_Favorites;
                 }
                 else if(this->kind == Kind::Folder) {
-                    tsl::hlp::doWithSDCardHandle([&]() {
-                        auto dir = opendir(this->base_path.c_str());
-                        if(dir) {
-                            while(true) {
-                                auto entry = readdir(dir);
-                                if(entry == nullptr) {
-                                    break;
+                    FsFileSystem sd_fs;
+                    if(R_SUCCEEDED(fsOpenSdCardFileSystem(&sd_fs))) {
+                        FsDir amiibo_dir;
+
+                        const auto sd_path = this->base_path.substr(__builtin_strlen("sdmc:"));
+                        if(R_SUCCEEDED(fsFsOpenDirectory(&sd_fs, sd_path.c_str(), FsDirOpenMode_ReadDirs, &amiibo_dir))) {
+                            s64 count;
+                            if(R_SUCCEEDED(fsDirGetEntryCount(&amiibo_dir, &count))) {
+                                auto entries = new FsDirectoryEntry[count]();
+                                s64 read_count;
+                                if(R_SUCCEEDED(fsDirRead(&amiibo_dir, &read_count, count, entries))) {
+                                    for(s64 i = 0; i < read_count; i++) {
+                                        const auto dir_path = this->base_path + "/" + entries[i].name;
+                                        dir_paths.push_back(dir_path);
+                                    }
                                 }
-                                if(entry->d_type & DT_DIR) {
-                                    const auto dir_path = this->base_path + "/" + entry->d_name;
-                                    dir_paths.push_back(dir_path);
-                                }
+
+                                delete[] entries;
                             }
-                            closedir(dir);
+
+                            fsDirClose(&amiibo_dir);
                         }
-                    });
+
+                        fsFsClose(&sd_fs);
+                    }
                 }
 
                 for(const auto &dir_path: dir_paths) {
