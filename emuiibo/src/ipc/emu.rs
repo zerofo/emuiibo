@@ -26,6 +26,7 @@ ipc_sf_define_interface_trait! {
         get_active_virtual_amiibo_areas [11, version::VersionInterval::all()]: (out_areas: sf::OutMapAliasBuffer<amiibo::fmt::VirtualAmiiboAreaEntry>) => (count: u32);
         get_active_virtual_amiibo_current_area [12, version::VersionInterval::all()]: () => (access_id: nfp::AccessId);
         set_active_virtual_amiibo_current_area [13, version::VersionInterval::all()]: (access_id: nfp::AccessId) => ();
+        set_active_virtual_amiibo_uuid_info [14, version::VersionInterval::all()]: (uuid_info: amiibo::fmt::VirtualAmiiboUuidInfo) => ();
     }
 }
 
@@ -154,6 +155,14 @@ impl IEmulationService for EmulationService {
         else {
             Err(rc::ResultInvalidVirtualAmiiboAccessId::make())
         }
+    }
+
+    fn set_active_virtual_amiibo_uuid_info(&mut self, uuid_info: amiibo::fmt::VirtualAmiiboUuidInfo) -> Result<()> {
+        log!("SetActiveVirtualAmiiboUuidInfo -- uuid_info: {:?}\n", uuid_info);
+        let amiibo = emu::get_active_virtual_amiibo();
+        result_return_unless!(amiibo.is_valid(), rc::ResultInvalidActiveVirtualAmiibo);
+
+        amiibo.set_uuid_info(uuid_info)
     }
 }
 

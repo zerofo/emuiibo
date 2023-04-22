@@ -85,11 +85,11 @@
             "value": "模擬狀態"
         },
         {
-            "key": "EmulationStatusOn",
+            "key": "On",
             "value": "開啟"
         },
         {
-            "key": "EmulationStatusOff",
+            "key": "Off",
             "value": "關閉"
         },
         {
@@ -135,6 +135,18 @@
         {
             "key": "NoVirtualAmiiboAreas",
             "value": "This virtual amiibo has no areas"
+        },
+        {
+            "key": "EnableRandomUuid",
+            "value": "Enable random UUID"
+        },
+        {
+            "key": "DisableRandomUuid",
+            "value": "Disable random UUID"
+        },
+        {
+            "key": "RandomUuid",
+            "value": "Random UUID"
         }
     ]
 }

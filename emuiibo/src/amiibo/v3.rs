@@ -162,6 +162,14 @@ impl compat::DeprecatedVirtualAmiiboFormat for VirtualAmiibo {
         let new_areas_path = format!("{}/areas", path);
         let _ = fs::rename_directory(old_areas_path, new_areas_path)?;
 
+        let uuid = match self.tag_info.uuid.as_ref().map(|uuid| convert_uuid(uuid.clone())) {
+            Some(uuid) => uuid,
+            None => {
+                let mut uuid = vec![0u8; 10];
+                super::generate_random_uuid(&mut uuid)?;
+                uuid
+            }
+        };
         let mut amiibo = fmt::VirtualAmiibo {
             info: fmt::VirtualAmiiboInfo {
                 first_write_date: convert_date(&self.register_info.firstWriteDate),
@@ -169,7 +177,8 @@ impl compat::DeprecatedVirtualAmiiboFormat for VirtualAmiibo {
                 last_write_date: convert_date(&self.common_info.lastWriteDate),
                 mii_charinfo_file: String::from("mii-charinfo.bin"),
                 name: self.register_info.name.clone(),
-                uuid: self.tag_info.uuid.as_ref().map(|uuid| convert_uuid(uuid.clone())),
+                uuid,
+                use_random_uuid: false,
                 version: self.common_info.version as u8,
                 write_counter: self.common_info.writeCounter
             },

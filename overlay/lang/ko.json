@@ -85,11 +85,11 @@
             "value": "에뮬레이션 상태"
         },
         {
-            "key": "EmulationStatusOn",
+            "key": "On",
             "value": "켬"
         },
         {
-            "key": "EmulationStatusOff",
+            "key": "Off",
             "value": "끔"
         },
         {
@@ -135,6 +135,18 @@
         {
             "key": "NoVirtualAmiiboAreas",
             "value": "이 가상 amiibo에는 지역이 없습니다."
+        },
+        {
+            "key": "EnableRandomUuid",
+            "value": "Enable random UUID"
+        },
+        {
+            "key": "DisableRandomUuid",
+            "value": "Disable random UUID"
+        },
+        {
+            "key": "RandomUuid",
+            "value": "Random UUID"
         }
     ]
 }

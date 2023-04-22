@@ -121,4 +121,8 @@ namespace emu {
         return serviceDispatchIn(&g_EmuiiboService, 13, access_id);
     }
 
+    Result SetActiveVirtualAmiiboUuidInfo(const VirtualAmiiboUuidInfo uuid_info) {
+        return serviceDispatchIn(&g_EmuiiboService, 14, uuid_info);
+    }
+
 }

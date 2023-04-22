@@ -4,10 +4,9 @@ use alloc::string::String;
 use alloc::vec::Vec;
 use nx::fs;
 use nx::util;
-use nx::rand::RandomGenerator;
 use nx::ipc::sf::mii;
 use nx::ipc::sf::nfp;
-use crate::{rc, area, fsext, miiext, rand};
+use crate::{rc, area, fsext, miiext};
 
 // Current virtual amiibo format, used since emuiibo v0.5
 
@@ -73,7 +72,8 @@ pub struct VirtualAmiiboInfo {
     pub last_write_date: VirtualAmiiboDate,
     pub mii_charinfo_file: String,
     pub name: String,
-    pub uuid: Option<Vec<u8>>,
+    pub uuid: Vec<u8>,
+    pub use_random_uuid: bool,
     pub version: u8,
     pub write_counter: u16
 }
@@ -86,9 +86,41 @@ impl VirtualAmiiboInfo {
             last_write_date: VirtualAmiiboDate::empty(),
             mii_charinfo_file: String::new(),
             name: String::new(),
-            uuid: None,
+            uuid: Vec::new(),
+            use_random_uuid: false,
             version: 0,
             write_counter: 0
+        }
+    }
+}
+
+// Note: temporary fix
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct VirtualAmiiboInfoOptional {
+    pub first_write_date: VirtualAmiiboDate,
+    pub id: VirtualAmiiboId,
+    pub last_write_date: VirtualAmiiboDate,
+    pub mii_charinfo_file: String,
+    pub name: String,
+    pub uuid: Option<Vec<u8>>,
+    pub use_random_uuid: Option<bool>,
+    pub version: u8,
+    pub write_counter: u16
+}
+
+impl VirtualAmiiboInfoOptional {
+    pub fn convert_to_info(self) -> VirtualAmiiboInfo {
+        VirtualAmiiboInfo {
+            first_write_date: self.first_write_date,
+            id: self.id,
+            last_write_date: self.last_write_date,
+            mii_charinfo_file: self.mii_charinfo_file,
+            name: self.name,
+            uuid: self.uuid.unwrap(),
+            use_random_uuid: self.use_random_uuid.unwrap(),
+            version: self.version,
+            write_counter: self.write_counter
         }
     }
 }
@@ -302,17 +334,20 @@ impl VirtualAmiibo {
         self.save()
     }
 
+    pub fn set_uuid_info(&mut self, uuid_info: VirtualAmiiboUuidInfo) -> Result<()> {
+        self.info.uuid = Vec::from(uuid_info.uuid);
+        self.info.use_random_uuid = uuid_info.use_random_uuid;
+
+        self.save()
+    }
+
     pub fn produce_data(&self) -> Result<VirtualAmiiboData> {
         let mut data: VirtualAmiiboData = Default::default();
-        match self.info.uuid.as_ref() {
-            Some(uuid) => {
-                for i in 0..data.uuid_info.uuid.len() {
-                    data.uuid_info.uuid[i] = uuid[i];
-                }
-            },
-            None => data.uuid_info.use_random_uuid = true
-        };
 
+        for i in 0..data.uuid_info.uuid.len() {
+            data.uuid_info.uuid[i] = self.info.uuid[i];
+        }
+        data.uuid_info.use_random_uuid = self.info.use_random_uuid;
         data.name.set_string(self.info.name.clone());
         data.first_write_date = self.info.first_write_date.to_date();
         data.last_write_date = self.info.last_write_date.to_date();
@@ -329,22 +364,19 @@ impl VirtualAmiibo {
             tag_type: u32::MAX,
             reserved_2: [0; 0x30]
         };
-        unsafe {
-            match self.info.uuid.as_ref() {
-                Some(uuid) => {
-                    let uuid_len = uuid.len().min(tag_info.uuid.len());
-                    tag_info.uuid_length = uuid_len as u8;
-                    core::ptr::copy(uuid.as_ptr(), tag_info.uuid.as_mut_ptr(), uuid_len);
-                },
-                None => {
-                    rand::get_rng()?.random_bytes(tag_info.uuid.as_mut_ptr(), 7)?;
-                    tag_info.uuid[7] = 0;
-                    tag_info.uuid[8] = 0;
-                    tag_info.uuid[9] = 0;
-                    tag_info.uuid_length = tag_info.uuid.len() as u8;
-                }
-            };
+        
+        if self.info.use_random_uuid {
+            super::generate_random_uuid(&mut tag_info.uuid)?;
+            tag_info.uuid_length = tag_info.uuid.len() as u8;
         }
+        else {
+            unsafe {
+                let uuid_len = self.info.uuid.len().min(tag_info.uuid.len());
+                tag_info.uuid_length = uuid_len as u8;
+                core::ptr::copy(self.info.uuid.as_ptr(), tag_info.uuid.as_mut_ptr(), uuid_len);
+            }
+        }
+
         Ok(tag_info)
     }
 
@@ -374,7 +406,7 @@ impl VirtualAmiibo {
             game_character_id: self.info.id.game_character_id,
             character_variant: self.info.id.character_variant,
             series: self.info.id.series,
-            model_number: self.info.id.model_number, // Note: we should technically reverse it since nfp wants it reversed... but it only works this way
+            model_number: self.info.id.model_number, // Note: we should technically reverse it since nfp wants it reversed... but it only works this way?
             figure_type: self.info.id.figure_type,
             reserved: [0; 0x39]
         })
@@ -474,9 +506,28 @@ impl super::VirtualAmiiboFormat for VirtualAmiibo {
         }
         result_return_unless!(fsext::exists_file(areas_json_path.clone()), rc::ResultVirtualAmiiboAreasJsonNotFound);
 
-        let amiibo_json = read_deserialize_json!(amiibo_json_path => VirtualAmiiboInfo)?;
+        let mut needs_save = false;
+
+        let mut amiibo_json_opt = read_deserialize_json!(amiibo_json_path => VirtualAmiiboInfoOptional)?;
+        // Fix for those which lack uuids
+        if amiibo_json_opt.uuid.is_none() {
+            let mut uuid = vec![0u8; 10];
+            super::generate_random_uuid(&mut uuid)?;
+            amiibo_json_opt.uuid = Some(uuid);
+            amiibo_json_opt.use_random_uuid = Some(true);
+            needs_save = true;
+        }
+        if amiibo_json_opt.use_random_uuid.is_none() {
+            amiibo_json_opt.use_random_uuid = Some(false);
+            needs_save = true;
+        }
+
         let areas_json = read_deserialize_json!(areas_json_path => VirtualAmiiboAreaInfo)?;
 
-        VirtualAmiibo::new(amiibo_json, areas_json, path.clone())
+        let amiibo = VirtualAmiibo::new(amiibo_json_opt.convert_to_info(), areas_json, path.clone())?;
+        if needs_save {
+            amiibo.save()?;
+        }
+        Ok(amiibo)
     }
 }

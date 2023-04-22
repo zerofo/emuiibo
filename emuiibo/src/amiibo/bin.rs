@@ -1363,7 +1363,7 @@ impl PlainFormat {
                         name_str
                     }
                 },
-                uuid: Some(vec! [
+                uuid: vec! [
                     self.man_info_1.uid_p1[0],
                     self.man_info_1.uid_p1[1],
                     self.man_info_1.uid_p1[2],
@@ -1374,7 +1374,8 @@ impl PlainFormat {
                     self.man_info_1.uid_p2[3],
                     self.man_info_2.check_byte_2,
                     self.man_info_2.internal
-                ]),
+                ],
+                use_random_uuid: false,
                 version: 0,
                 write_counter: {
                     let write_counter_be = self.dec_data.settings.write_counter_be;

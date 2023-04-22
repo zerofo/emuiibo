@@ -99,9 +99,8 @@ impl compat::DeprecatedVirtualAmiiboFormat for VirtualAmiibo {
         // Prefer existing mii/app-area over raw bin mii/app-area
         amiibo.mii_charinfo = self.mii_charinfo;
         amiibo.info.name = self.info.name.clone();
-        if self.info.randomizeUuid {
-            amiibo.info.uuid = None;
-        }
+        amiibo.info.use_random_uuid = self.info.randomizeUuid;
+        super::generate_random_uuid(&mut amiibo.info.uuid)?;
         amiibo.info.first_write_date = convert_date(&self.info.firstWriteDate);
         amiibo.info.last_write_date = convert_date(&self.info.lastWriteDate);
 

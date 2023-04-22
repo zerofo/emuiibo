@@ -85,11 +85,11 @@
             "value": "Etat de l'émulation"
         },
         {
-            "key": "EmulationStatusOn",
+            "key": "On",
             "value": "activé"
         },
         {
-            "key": "EmulationStatusOff",
+            "key": "Off",
             "value": "désactivé"
         },
         {
@@ -135,6 +135,18 @@
         {
             "key": "NoVirtualAmiiboAreas",
             "value": "Cet amiibo n’a pas de zone"
+        },
+        {
+            "key": "EnableRandomUuid",
+            "value": "Enable random UUID"
+        },
+        {
+            "key": "DisableRandomUuid",
+            "value": "Disable random UUID"
+        },
+        {
+            "key": "RandomUuid",
+            "value": "Random UUID"
         }
     ]
 }

@@ -12,18 +12,6 @@
 
 namespace {
 
-    static const std::unordered_map<u64, std::string> ActionKeyGlyphTable = {
-        { HidNpadButton_StickR, "\uE0C5" },
-        { HidNpadButton_StickL, "\uE0C4" },
-        { HidNpadButton_L, "\uE0A4" },
-        { HidNpadButton_R, "\uE0A5" },
-        { HidNpadButton_A, "\uE0A0" },
-        { HidNpadButton_Y, "\uE0A3" },
-        { HidNpadButton_X, "\uE0A2" },
-        { HidNpadButton_Minus, "\uE0B4" },
-        { HidNpadButton_Plus, "\uE0B5" },
-    };
-
     constexpr auto ActionKeyShowHelp = HidNpadButton_Plus;
     constexpr auto ActionKeyEnableEmulation = HidNpadButton_R;
     constexpr auto ActionKeyDisableEmulation = HidNpadButton_L;
@@ -32,9 +20,17 @@ namespace {
     constexpr auto ActionKeyRemoveFromFavorite = HidNpadButton_X;
     constexpr auto ActionKeyToogleConnectVirtualAmiibo = HidNpadButton_StickR;
     constexpr auto ActionKeyResetActiveVirtualAmiibo = HidNpadButton_Minus;
+    constexpr auto ActionKeyEnableRandomUuid = HidNpadButton_ZR;
+    constexpr auto ActionKeyDisableRandomUuid = HidNpadButton_ZL;
     
     inline std::string GetActionKeyGlyph(const u64 action_key) {
-        return ActionKeyGlyphTable.at(action_key);
+        for(const auto &info : tsl::impl::KEYS_INFO) {
+            if(info.key == action_key) {
+                return info.glyph;
+            }
+        }
+
+        return "?";
     }
 
 }
@@ -451,6 +447,8 @@ class AmiiboGuiHelp : public tsl::Gui {
             top_list->addItem(new ui::elm::SmallListItem("AddFavorite"_tr, GetActionKeyGlyph(ActionKeyAddToFavorite)));
             top_list->addItem(new ui::elm::SmallListItem("RemoveFavorite"_tr, GetActionKeyGlyph(ActionKeyRemoveFromFavorite)));
             top_list->addItem(new ui::elm::SmallListItem("ResetActiveVirtualAmiibo"_tr, GetActionKeyGlyph(ActionKeyResetActiveVirtualAmiibo)));
+            top_list->addItem(new ui::elm::SmallListItem("EnableRandomUuid"_tr, GetActionKeyGlyph(ActionKeyEnableRandomUuid)));
+            top_list->addItem(new ui::elm::SmallListItem("DisableRandomUuid"_tr, GetActionKeyGlyph(ActionKeyDisableRandomUuid)));
 
             return root_frame;
         }
@@ -468,10 +466,11 @@ class AmiiboGui : public tsl::Gui {
         Kind kind;
         std::string base_path;
         ui::elm::DoubleSectionOverlayFrame *root_frame;
-        ui::elm::SmallToggleListItem *toggle_item;
+        ui::elm::SmallToggleListItem *emulation_toggle_item;
         ui::elm::SmallListItem *game_header;
         ui::elm::SmallListItem *amiibo_header;
         ui::elm::SmallListItem *area_header;
+        ui::elm::SmallToggleListItem *random_uuid_toggle_item;
         AmiiboIcons* amiibo_icons;
         tsl::elm::List *top_list;
         CustomList *bottom_list;
@@ -551,8 +550,8 @@ class AmiiboGui : public tsl::Gui {
             }
 
             // Emulation status
-            this->toggle_item = new ui::elm::SmallToggleListItem("EmulationStatus"_tr + " " + GetActionKeyGlyph(ActionKeyDisableEmulation) + " " + GetActionKeyGlyph(ActionKeyEnableEmulation), false, "EmulationStatusOn"_tr, "EmulationStatusOff"_tr);
-            this->toggle_item->setClickListener([&](u64 keys) {
+            this->emulation_toggle_item = new ui::elm::SmallToggleListItem("EmulationStatus"_tr + " " + GetActionKeyGlyph(ActionKeyDisableEmulation) + " " + GetActionKeyGlyph(ActionKeyEnableEmulation), false, "On"_tr, "Off"_tr);
+            this->emulation_toggle_item->setClickListener([&](u64 keys) {
                 if(keys & ActionKeyActivateItem) {
                     ToggleEmulationStatus();
                     return true;
@@ -561,7 +560,7 @@ class AmiiboGui : public tsl::Gui {
                     return false;
                 }
             });
-            this->top_list->addItem(this->toggle_item);
+            this->top_list->addItem(this->emulation_toggle_item);
 
             // Current game status
             this->game_header = new ui::elm::SmallListItem("CurrentGameIntercepted"_tr);
@@ -574,6 +573,19 @@ class AmiiboGui : public tsl::Gui {
             // Current amiibo area
             this->area_header = new ui::elm::SmallListItem("");
             this->top_list->addItem(this->area_header);
+
+            // Current amiibo random UUID status
+            this->random_uuid_toggle_item = new ui::elm::SmallToggleListItem("RandomUuid"_tr + " " + GetActionKeyGlyph(ActionKeyDisableRandomUuid) + " " + GetActionKeyGlyph(ActionKeyEnableRandomUuid), false, "On"_tr, "Off"_tr);
+            this->random_uuid_toggle_item->setClickListener([&](u64 keys) {
+                if(keys & ActionKeyActivateItem) {
+                    ToggleEmulationStatus();
+                    return true;
+                }
+                else {
+                    return false;
+                }
+            });
+            this->top_list->addItem(this->random_uuid_toggle_item);
 
             // Current amiibo icon
             this->amiibo_icons = new AmiiboIcons();
@@ -601,6 +613,16 @@ class AmiiboGui : public tsl::Gui {
                 }
                 if(keys & ActionKeyDisableEmulation) {
                     emu::SetEmulationStatus(emu::EmulationStatus::Off);
+                    return true;
+                }
+                if(keys & ActionKeyEnableRandomUuid) {
+                    g_ActiveVirtualAmiiboData.uuid_info.use_random_uuid = true;
+                    emu::SetActiveVirtualAmiiboUuidInfo(g_ActiveVirtualAmiiboData.uuid_info);
+                    return true;
+                }
+                if(keys & ActionKeyDisableRandomUuid) {
+                    g_ActiveVirtualAmiiboData.uuid_info.use_random_uuid = false;
+                    emu::SetActiveVirtualAmiiboUuidInfo(g_ActiveVirtualAmiiboData.uuid_info);
                     return true;
                 }
                 if(keys & action_key_prev_area) {
@@ -667,7 +689,7 @@ class AmiiboGui : public tsl::Gui {
                 this->amiibo_icons->setCurrentAmiiboPath({});
             }
 
-            this->toggle_item->setState(emu::GetEmulationStatus() == emu::EmulationStatus::On);
+            this->emulation_toggle_item->setState(emu::GetEmulationStatus() == emu::EmulationStatus::On);
 
             if(has_active_virtual_amiibo) {
                 if(g_VirtualAmiiboAreaCount > 0) {
@@ -676,9 +698,12 @@ class AmiiboGui : public tsl::Gui {
                 else {
                     this->area_header->setText("NoVirtualAmiiboAreas"_tr);
                 }
+
+                this->random_uuid_toggle_item->setState(g_ActiveVirtualAmiiboData.uuid_info.use_random_uuid);
             }
             else {
                 this->area_header->setText("NoActiveVirtualAmiibo"_tr);
+                this->random_uuid_toggle_item->setState(false);
             }
 
             tsl::Gui::update();
