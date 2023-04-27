@@ -4,12 +4,11 @@ In this wiki you'll learn how to set up emuiibo, amiibos and how to use it prope
 
 **Important**: Make sure you always read the README and release changelogs (which are located on the release page)!
 
-## Contents
-
-- [Downloads](#Downloads)
-- [Set-Up](##Set-Up)
-- [emutool](##emutool)
-- [Controls](##Controls)
+- [emuiibo usage](#emuiibo-usage)
+  - [Downloads](#downloads)
+  - [Set-Up](#set-up)
+  - [emutool](#emutool)
+  - [Controls](#controls)
 
 ## Downloads
 

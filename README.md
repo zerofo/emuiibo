@@ -12,6 +12,7 @@
     - [SD layout](#sd-layout)
   - [Controlling emuiibo](#controlling-emuiibo)
   - [Virtual amiibo creation](#virtual-amiibo-creation)
+  - [Supported figures](#supported-figures)
   - [For developers](#for-developers)
   - [Raw dumps and encryption](#raw-dumps-and-encryption)
   - [Amiibo format](#amiibo-format)
@@ -22,11 +23,7 @@
 
 ## Usage
 
-Build or download the latest release of emuiibo and extract the contents of 'SdOut' directory (inside 'emuiibo-v*.zip') in the root of your SD card.
-
-emuiibo comes bundled with a Tesla overlay to control it quite easily.
-
-For more detailed information of how to use emuiibo, check [the usage wiki](Usage.md).
+See [the usage wiki](Usage.md).
 
 ### SD layout
 
@@ -55,6 +52,10 @@ All this aspects can be seen/controlled via the overlay.
 Emuiibo no longer accepts raw BIN dumps to emulate amiibos. Instead, you can use `emutool` PC tool in order to generate virtual amiibos.
 
 ![Screenshot](emutool/Screenshot.png)
+
+## Supported figures
+
+Some games (like Skylanders) make use of their particular NFC technology, aside from amiibos. This project ONLY emulates amiibos; therefore, in Skylanders' case, only the two special figurines with amiibo support can be emulated here, where emuiibo will only emulate the "amiibo part" of them.
 
 ## For developers
 
