@@ -63,7 +63,7 @@ namespace {
         return (tsl::cfg::LayerWidth / 2) - 2 * IconMargin;
     }
 
-    constexpr u32 IconMaxHeight = 130 - 2 * IconMargin;
+    constexpr u32 IconMaxHeight = 100 - 2 * IconMargin;
 
 }
 
@@ -396,7 +396,7 @@ class AmiiboIcons: public tsl::elm::Element {
     public:
         static constexpr float ErrorTextFontSize = 15;
 
-        void setCurrentAmiiboPath(const std::string &path) {
+        void SetCurrentAmiiboPath(const std::string &path) {
             if(path.empty()) {
                 this->cur_virtual_amiibo_image.Reset();
                 return;
@@ -492,8 +492,6 @@ class AmiiboGui : public tsl::Gui {
                 return this->root_frame;
             }
 
-            // Iterate base folder
-            u32 virtual_amiibo_count = 0;
             if(this->kind == Kind::Root) {
                 this->bottom_list->addItem(createRootElement());
                 this->bottom_list->addItem(createFavoritesElement());
@@ -501,6 +499,9 @@ class AmiiboGui : public tsl::Gui {
                 this->bottom_list->addItem(createHelpElement());
             }
             else {
+                // Iterate base folder
+                u32 virtual_amiibo_count = 0;
+
                 std::vector<std::string> dir_paths;
                 if(this->kind == Kind::Favorites) {
                     dir_paths = g_Favorites;
@@ -547,6 +548,9 @@ class AmiiboGui : public tsl::Gui {
                         this->bottom_list->setCustomInitialFocus(new_item);
                     }
                 }
+
+                // Information about current folder
+                this->bottom_list->addItem(new ui::elm::CustomCategoryHeader("AvailableVirtualAmiibos"_tr + " '" + GetPathFileName(this->base_path) + "': " + std::to_string(virtual_amiibo_count), true, true), 0, 0);
             }
 
             // Emulation status
@@ -570,10 +574,6 @@ class AmiiboGui : public tsl::Gui {
             this->amiibo_header = new ui::elm::SmallListItem("");
             this->top_list->addItem(this->amiibo_header);
 
-            // Current amiibo area
-            this->area_header = new ui::elm::SmallListItem("");
-            this->top_list->addItem(this->area_header);
-
             // Current amiibo random UUID status
             this->random_uuid_toggle_item = new ui::elm::SmallToggleListItem("RandomUuid"_tr + " " + GetActionKeyGlyph(ActionKeyDisableRandomUuid) + " " + GetActionKeyGlyph(ActionKeyEnableRandomUuid), false, "On"_tr, "Off"_tr);
             this->random_uuid_toggle_item->setClickListener([&](u64 keys) {
@@ -587,15 +587,16 @@ class AmiiboGui : public tsl::Gui {
             });
             this->top_list->addItem(this->random_uuid_toggle_item);
 
+            // Current amiibo area
+            this->area_header = new ui::elm::SmallListItem("");
+            this->top_list->addItem(this->area_header);
+
             // Current amiibo icon
             this->amiibo_icons = new AmiiboIcons();
             this->top_list->addItem(this->amiibo_icons, IconMaxHeight + 2 * IconMargin);
 
             const auto action_key_prev_area = HidNpadButton_ZL;
             const auto action_key_next_area = HidNpadButton_ZR;
-
-            // Information about base folder
-            this->top_list->addItem(new ui::elm::SmallListItem("AvailableVirtualAmiibos"_tr + " '" + GetPathFileName(this->base_path) + "': " + std::to_string(virtual_amiibo_count)));
 
             // Main key bindings
             this->root_frame->setClickListener([&](u64 keys) {
@@ -683,10 +684,10 @@ class AmiiboGui : public tsl::Gui {
             this->amiibo_header->setColoredValue(is_connected ? "Connected"_tr : "Disconnected"_tr, is_connected ? tsl::style::color::ColorHighlight : ui::style::color::ColorWarning);
 
             if(auto amiibo_item = dynamic_cast<AmiiboListElement*>(getFocusedElement())) {
-                this->amiibo_icons->setCurrentAmiiboPath(amiibo_item->GetPath());
+                this->amiibo_icons->SetCurrentAmiiboPath(amiibo_item->GetPath());
             }
             else {
-                this->amiibo_icons->setCurrentAmiiboPath({});
+                this->amiibo_icons->SetCurrentAmiiboPath("");
             }
 
             this->emulation_toggle_item->setState(emu::GetEmulationStatus() == emu::EmulationStatus::On);

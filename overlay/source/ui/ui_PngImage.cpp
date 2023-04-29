@@ -43,8 +43,8 @@ namespace ui {
                     }
 
                     this->path = png_path;
-                    this->img_buffer_width = upng_width * scale;
-                    this->img_buffer_height = upng_height * scale;
+                    this->img_buffer_width = (int)((double)upng_width * scale);
+                    this->img_buffer_height = (int)((double)upng_height * scale);
                     this->img_buffer.resize(img_buffer_width * img_buffer_height * img_depth);
                     std::fill(img_buffer.begin(), img_buffer.end(), 0);
 
