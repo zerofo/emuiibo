@@ -13,34 +13,31 @@ namespace emutool
 {
     public partial class MainForm : Form
     {
-        public static AmiiboAPI.AmiiboList Amiibos = null;
-
         public static List<string> AmiiboSeries = null;
         public static List<AmiiboAPI.Amiibo> CurrentSeriesAmiibos = null;
 
         private static string LastUsedPath = null;
         private static string DialogCaption = null;
 
-        public static bool HasAmiibos()
-        {
-            if(Amiibos != null)
-            {
-                return Amiibos.GetAmiiboCount() > 0;
-            }
-            return false;
-        }
-
         public MainForm()
         {
             InitializeComponent();
             DialogCaption = "emutool v" + Assembly.GetExecutingAssembly().GetName().Version.ToString();
             Text = DialogCaption + " - emuiibo's tool for virtual amiibo creation";
-            Amiibos = AmiiboAPI.GetAllAmiibos();
+            AmiiboAPI.LoadAllAmiibos();
 
-            if(HasAmiibos())
+            if(AmiiboAPI.HasLoadedAmiibos)
             {
-                APIStatusLabel.Text = "AmiiboAPI was accessed - amiibo list was loaded.";
-                AmiiboSeries = Amiibos.GetAmiiboSeries();
+                if(AmiiboAPI.LoadedLocal)
+                {
+                    APIStatusLabel.Text = "AmiiboAPI could not be accessed - local amiibo list was loaded.";
+                }
+                else
+                {
+                    APIStatusLabel.Text = "AmiiboAPI was accessed - amiibo list was loaded.";
+                }
+
+                AmiiboSeries = AmiiboAPI.LoadedAmiibos.GetAmiiboSeries();
 
                 if(AmiiboSeries.Any())
                 {
@@ -65,10 +62,10 @@ namespace emutool
         {
             AmiiboComboBox.Items.Clear();
 
-            if(HasAmiibos())
+            if(AmiiboAPI.HasLoadedAmiibos)
             {
                 var series = SeriesComboBox.Text;
-                CurrentSeriesAmiibos = Amiibos.GetAmiibosBySeries(series);
+                CurrentSeriesAmiibos = AmiiboAPI.LoadedAmiibos.GetAmiibosBySeries(series);
                 if(CurrentSeriesAmiibos.Any())
                 {
                     foreach(var amiibo in CurrentSeriesAmiibos)
@@ -281,14 +278,14 @@ namespace emutool
                 else
                 {
                     var actual_base_dir = base_dir;
-                    AmiiboSeries = Amiibos.GetAmiiboSeries();
+                    AmiiboSeries = AmiiboAPI.LoadedAmiibos.GetAmiiboSeries();
                     if(AmiiboSeries.Any())
                     {
                         foreach(var series in AmiiboSeries)
                         {
                             base_dir = Path.Combine(actual_base_dir, series);
                             Utils.RecreateDirectory(base_dir);
-                            CurrentSeriesAmiibos = Amiibos.GetAmiibosBySeries(series);
+                            CurrentSeriesAmiibos = AmiiboAPI.LoadedAmiibos.GetAmiibosBySeries(series);
                             if(CurrentSeriesAmiibos.Any())
                             {
                                 foreach(var amiibo in CurrentSeriesAmiibos)
@@ -296,15 +293,7 @@ namespace emutool
                                     CreateAmiibo(amiibo.AmiiboName, amiibo.AmiiboName, base_dir, amiibo);
                                 }
                             }
-                            else
-                            {
-                                MessageBox.Show("Ey, no amiibos");
-                            }
                         }
-                    }
-                    else
-                    {
-                        MessageBox.Show("Ey, no series");
                     }
                     MessageBox.Show("All virtual amiibos were successfully created.", DialogCaption, MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
