@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Text;
 using System.Linq;
 using System.Windows.Forms;
 using System.Collections.Generic;
@@ -273,7 +274,8 @@ namespace emutool
                         dir_name = DirectoryNameBox.Text;
                     }
 
-                    CreateAmiibo(name, dir_name, base_dir, cur_amiibo);
+                    // Ensure the dir name is ASCII!
+                    CreateAmiibo(name, Utils.RemoveAccents(dir_name), base_dir, cur_amiibo);
                     MessageBox.Show("The virtual amiibo was successfully created.", DialogCaption, MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
                 else

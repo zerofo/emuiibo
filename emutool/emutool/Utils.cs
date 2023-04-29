@@ -1,6 +1,9 @@
 ﻿using System;
 using System.Net;
 using System.IO;
+using System.Linq;
+using System.Text;
+using System.Globalization;
 using System.Windows.Forms;
 using System.Runtime.CompilerServices;
 using Newtonsoft.Json.Linq;
@@ -72,6 +75,11 @@ namespace emutool
             var bytes = BitConverter.GetBytes(val);
             Array.Reverse(bytes);
             return BitConverter.ToUInt16(bytes, 0);
+        }
+
+        public static string RemoveAccents(string input)
+        {
+            return new string(input.Normalize(NormalizationForm.FormD).ToCharArray().Where(c => CharUnicodeInfo.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark).ToArray());
         }
     }
 }
