@@ -1147,16 +1147,19 @@ pub struct Settings {
 }
 const_assert!(core::mem::size_of::<Settings>() == 0xB0);
 
+// Easter egg default date: amiibo's first release
+pub const DEFAULT_SETTINGS_WRITE_DATE: Date = Date::new(2014, 6, 10);
+
 impl Default for Settings {
     fn default() -> Self {
         Self {
             flags: Flags::None(),
             country_code: CountryCode::Spain,
             crc32_write_counter_be: 0,
-            first_write_date_be: Date::new(2001, 9, 11),
-            last_write_date_be: Date::new(2001, 9, 11),
+            first_write_date_be: DEFAULT_SETTINGS_WRITE_DATE,
+            last_write_date_be: DEFAULT_SETTINGS_WRITE_DATE,
             crc32_be: 0,
-            name_be: util::CString16::from_str("emuiibo").unwrap().swap_chars(),
+            name_be: util::CString16::new(),
             mii_be: Default::default(),
             program_id_be: 0,
             write_counter_be: 0,
@@ -1312,6 +1315,11 @@ impl PlainFormat {
         let mut aes_ctr_ctx = aes::ctr::a128::Context::new(&derived_key_set.data_key.aes_key, &derived_key_set.data_key.aes_iv)?;
         aes_ctr_ctx.crypt(conv.enc_data.get_buf(), plain_bin.dec_data.get_buf_mut())?;
 
+        if plain_bin.dec_data.settings.flags == Flags::None() {
+            // Dumps with this set to none might be from retail amiibos with no usage, thus the rest of settings might be garbage data
+            plain_bin.dec_data.settings = Default::default();
+        }
+
         let tag_data_start = &plain_bin.man_info_1 as *const _ as *const u8;
         let tag_data_size = core::mem::size_of::<Manufacturer1>() + core::mem::size_of::<Struct1>();
         let tag_data = unsafe {
@@ -1355,7 +1363,7 @@ impl PlainFormat {
                 mii_charinfo_file,
                 name: {
                     let name_be = self.dec_data.settings.name_be;
-                    let name_str = name_be.get_string()?;
+                    let name_str = name_be.swap_chars().get_string()?;
                     if name_str.is_empty() {
                         String::from("emuiibo")
                     }
