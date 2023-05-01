@@ -8,6 +8,7 @@ use nx::service::mii;
 use nx::util;
 use nx::rand::RandomGenerator;
 use nx::result::*;
+use crate::fsext;
 use super::ntag::Manufacturer1;
 use super::ntag::Manufacturer2;
 use super::{ntag, fmt};
@@ -1365,7 +1366,7 @@ impl PlainFormat {
                     let name_be = self.dec_data.settings.name_be;
                     let name_str = name_be.swap_chars().get_string()?;
                     if name_str.is_empty() {
-                        String::from("emuiibo")
+                        fsext::get_path_file_name(path.clone())
                     }
                     else {
                         name_str
