@@ -14,6 +14,11 @@ jobs:
       with:
         submodules: recursive
       
+    - name: Update packages
+      run: |
+        sudo -n apt-get update
+        sudo -n apt-get upgrade -y git build-essential
+
     - name: Prepare Rust
       uses: actions-rs/toolchain@v1
       with:
