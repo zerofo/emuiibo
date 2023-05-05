@@ -42,7 +42,7 @@ jobs:
         make install -j$(nproc)
 
     - name: Build
-      run: make
+      run: make -j$(nproc)
 
     - name: ZIP product
       run: zip -r SdOut.zip SdOut/
