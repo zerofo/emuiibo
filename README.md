@@ -37,16 +37,33 @@
 Table of contents
 </h3>
 
+- [Download](#download)
 - [Virtual amiibos](#virtual-amiibos)
   - [Virtual amiibo creation](#virtual-amiibo-creation)
   - [Supported figures](#supported-figures)
   - [Areas](#areas)
   - [Per-game access IDs](#per-game-access-ids)
-- [Controlling emuiibo](#controlling-emuiibo)
+- [Usage and controlling](#usage-and-controlling)
 - [Boot procedure](#boot-procedure)
 - [For developers](#for-developers)
 - [Credits](#credits)
   - [License exemption](#license-exemption)
+
+## Download
+
+Make sure you always read the README and release changelogs (which are located on the release page)!
+
+You will need the following files:
+
+- emuiibo and emutool (grab the latest release [here](https://github.com/XorTroll/emuiibo/releases/latest))
+- Tesla (grab the latest [Tesla-Menu](https://github.com/WerWolv/Tesla-Menu/releases/latest) and [nx-ovlloader](https://github.com/WerWolv/nx-ovlloader/releases/latest))
+
+Extract all ZIP files and copy the folders on your SD card. It should look like this in the end:
+
+- *emuiibo*: `sd:/atmosphere/contents/0100000000000352/exefs.nsp` and `/flags` folder
+- *emuiibo overlay*: `sd:/switch/.overlays/emuiibo.ovl`
+- *tesla-menu*: `sd:/switch/.overlays/ovlmenu.ovl`
+- *nx-ovlloader*: `sd:/atmosphere/contents/420000000007E51A/exefs.nsp` and `/flags` folder
 
 ## Virtual amiibos
 
@@ -78,6 +95,26 @@ While old emuiibo formats are supported and converted to the current format (see
 
 ![Screenshot](emutool/Screenshot.png)
 
+On the left half of the program:
+
+- In the first dropdown menu on top, you can choose amiibos from a certain collection. In the second dropdown menu next to it, you can choose any amiibo you want to create.
+
+On the right half of the tool:
+
+- You can choose a name for the amiibo you want to create, a custom directory name (if you uncheck "Use name as directory name" below it).
+
+- You can then choose if you want the amiibo to use randomized UUIDs. This means that the console always read it as a new/unique amiibo (some games have restrictions to use the same amiibo only once or once a day). Note that this might cause issues for games which save data into amiibos, so avoid using it on those!
+
+- Then, you can choose if you want to save the amiibo picture shown on the left into the amiibo folder (it will be saved as a PNG file).
+
+**Optional**:
+
+- If you have a FTP connection on your switch console, you can directly save your amiibo on your SD into `/emuiibo/amiibo`
+
+In the last step you click on "Create virtual amiibo" and choose a location, where you want to save it to. If an SD card with emuiibo is detected, the program will point to that SD's `/emuiibo/amiibo` folder.
+
+Now you can copy the generated amiibo folder onto your SD card, in `sd:/emuiibo/amiibo` or in any subdirectories inside it!
+
 ### Supported figures
 
 Some games (like Skylanders) make use of their particular NFC technology, aside from amiibos. This project ONLY emulates amiibos; therefore, in Skylanders' case, only the two special figurines with amiibo support can be emulated here, where emuiibo will only emulate the "amiibo part" of them.
@@ -92,8 +129,8 @@ An access ID is a unique ID/number each game has for amiibo savedata, used to ch
 
 ### Per-game access IDs
 
-| Game                                    | Application ID   | Access ID  |
-|-----------------------------------------|------------------|------------|
+| Game                                    | Application ID     | Access ID  |
+|-----------------------------------------|--------------------|------------|
 | Splatoon 2                              | 0x01003BC0000A0000 | 0x10162B00 |
 | Shovel Knight: Treasure Trove           | 0x010057D0021E8000 | 0x1016E100 |
 | The Legend of Zelda: Breath of the Wild | 0x01007EF00011E000 | 0x1019C800 |
@@ -103,15 +140,42 @@ An access ID is a unique ID/number each game has for amiibo savedata, used to ch
 
 Some of these IDs were obtained from [switchbrew](https://switchbrew.org/w/index.php?title=NFC_services#Access_ID).
 
-## Controlling emuiibo
+## Usage and controlling
+
+If you set up everything mentioned above, you're ready to use emuiibo ingame.
+
+**Tip:** Enable it (emulation status) before you start a game, because it does not work in some games if you enable it after launching the game! It really depends on how the game uses amiibos internally, so this guarantees emuiibo will intercept the game.
+
+To see if emuiibo is working ingame, check if emuiibo is intercepting the game when it's trying to access amiibos. If it's not, try launching the game with emuiibo enabled first.
+
+To open the Tesla overlay, hold down **L1 + DPAD-down** and then press **R3 (right stick)**. If you did it, the overlay will open on the left side of the screen. Now choose emuiibo.
+
+You can see/control the following options in the top part of the overlay:
 
 - **Emulation status (on/off)**: when emuiibo's emulation status is on, it means that any game trying to access/read amiibos will be intercepted by emuiibo. When it's off, it means that amiibo services will work normally, and nothing will be intercepted. This is basically a toggle to globally disable or enable amiibo emulation.
 
-- **Active virtual amiibo**: it's the amiibo which will be sent to the games which try to scan amiibos, if emulation is on. Via tools such as the overlay, one can change the active virtual amiibo.
+- **Active virtual amiibo**: it's the amiibo which will be sent to the games which try to scan amiibos, if emulation is on. If the amiibo happens to have an image, this will be displayed in the top part of the overlay.
 
-- **Virtual amiibo status (connected/disconnected)**: when the active virtual amiibo is connected, it means that the amiibo is always "placed", as if you were holding a real amiibo on the NFC point and never moving it - the game always detects it. When it is disconnected, it means that you "removed" it, as if you just removed the amiibo from the NFC point. Some games might ask you to remove the amiibo after saving data, so you must disconnect the virtual amiibo to "simulate" that removal. This is a new feature in v0.5, which fixed errors, since emuiibo tried to handle this automatically in previous versions, causing some games to fail.
+- **Virtual amiibo status (connected/disconnected)**: when the active virtual amiibo is connected, it means that the amiibo is always "placed", as if you were holding a real amiibo on the NFC point and never moving it - the game always detects it. When it is disconnected, it means that you "removed" it, as if you just removed the amiibo from the NFC point. Some games might ask you to remove the amiibo after saving data, so you must disconnect the virtual amiibo to "simulate" that removal. This is a recent feature, since emuiibo tried to handle this automatically in previous versions, causing some games to fail.
 
-All this aspects (and more) can be seen/controlled via the overlay.
+- **Random UUID (on/off)**: when a virtual amiibo is selected, this will toggle the random UUID option on the amiibo (see above), which will make emuiibo use randomized UUIDs any time a game accesses the amiibo.
+
+In the main menu of the bottom part, You can browse virtual amiibos (and thus select them) through the (sub)directories in `sd:/emuiibo/amiibo`. You can also mark some of them as favorites, which can be easily accessed from a separate menu below.
+
+After you selected an amiibo, you can see it's selected on top in the overlay and that it is *connected*.
+A virtual amiibo being **connected** is the equivalent of holding a real amiibo figurine/card on the NFC point. To **disconnect** the amiibo (the equivalent of removing a real amiibo from the NFC point), just select the same amiibo again.
+
+To go back in the menus, just press **B** button.
+
+**Example of use**:
+
+1. Open the overlay and choose emuiibo
+2. Enable emuiibo
+3. Start the game
+4. Navigate to the games NFC feature to use the amiibo and activate it
+5. Open the overlay and choose your amiibo (the amiibo will then be *connected*).
+6. The game should now register/make use of it
+7. If the game tells you to remove the amiibo, *disconnect* it.
 
 ## Boot procedure
 
