@@ -13,7 +13,7 @@ emuiibo:
 overlay:
 	@$(MAKE) -C overlay/
 
-dist:
+dist: emuiibo overlay
 	@rm -rf $(CURDIR)/SdOut
 	@mkdir -p $(CURDIR)/SdOut/atmosphere/contents/$(PROGRAM_ID)/flags
 	@touch $(CURDIR)/SdOut/atmosphere/contents/$(PROGRAM_ID)/flags/boot2.flag
