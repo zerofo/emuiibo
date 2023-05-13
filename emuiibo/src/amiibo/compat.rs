@@ -81,20 +81,6 @@ fn convert_deprecated_virtual_amiibos_in_dir(path: String) -> Result<()> {
     Ok(())
 }
 
-/*
-fn mii_test() -> Result<()> {
-    let mut f = fs::open_file(String::from("sdmc:/mii-3ds.bin"), fs::FileOpenOption::Read())?;
-    let m: bin::MiiFormat = f.read_val()?;
-    let mc = unsafe { m.to_charinfo() }?;
-
-    let mcp = String::from("sdmc:/mii-conv.bin");
-    let _ = fs::delete_file(mcp.clone());
-    let mut f2 = fs::open_file(mcp, fs::FileOpenOption::Create() | fs::FileOpenOption::Write() | fs::FileOpenOption::Append())?;
-    f2.write_val(&mc)?;
-    Ok(())
-}
-*/
-
 pub fn convert_deprecated_virtual_amiibos() {
     log!("Analyzing deprecated dir...\n");
     let _ = convert_deprecated_virtual_amiibos_in_dir(String::from(super::DEPRECATED_VIRTUAL_AMIIBO_DIR));
