@@ -34,7 +34,7 @@ namespace emutool
                 }
                 else
                 {
-                    APIStatusLabel.Text = "AmiiboAPI was accessed - amiibo list was loaded.";
+                    APIStatusLabel.Text = "AmiiboAPI was accessed - remote amiibo list was loaded.";
                 }
 
                 AmiiboSeries = AmiiboAPI.LoadedAmiibos.GetAmiiboSeries();
