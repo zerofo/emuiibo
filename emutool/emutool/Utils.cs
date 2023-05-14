@@ -81,5 +81,14 @@ namespace emutool
         {
             return new string(input.Normalize(NormalizationForm.FormD).ToCharArray().Where(c => CharUnicodeInfo.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark).ToArray());
         }
+
+        public static string TruncateString(this string value, int len)
+        {
+            if(string.IsNullOrEmpty(value))
+            {
+                return value;
+            }
+            return value.Length <= len ? value : value.Substring(0, len); 
+        }
     }
 }

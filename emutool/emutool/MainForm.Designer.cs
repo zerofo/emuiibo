@@ -146,7 +146,7 @@
             this.UseNameCheck.Name = "UseNameCheck";
             this.UseNameCheck.Size = new System.Drawing.Size(160, 17);
             this.UseNameCheck.TabIndex = 10;
-            this.UseNameCheck.Text = "Use name as directory name";
+            this.UseNameCheck.Text = "Use amiibo name as directory name";
             this.UseNameCheck.UseVisualStyleBackColor = true;
             this.UseNameCheck.CheckedChanged += new System.EventHandler(this.UseNameCheck_CheckedChanged);
             // 

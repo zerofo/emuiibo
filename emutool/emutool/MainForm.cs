@@ -83,7 +83,7 @@ namespace emutool
             {
                 var cur_amiibo = CurrentSeriesAmiibos[AmiiboComboBox.SelectedIndex];
                 AmiiboPictureBox.ImageLocation = cur_amiibo.ImageURL;
-                AmiiboNameBox.Text = cur_amiibo.AmiiboName;
+                AmiiboNameBox.Text = AmiiboAPI.ValidateAmiiboName(cur_amiibo.AmiiboName);
                 CreateAllCheck.Checked = false;
             }
             catch(Exception ex)
@@ -348,7 +348,7 @@ namespace emutool
         {
             if(!CreateAllCheck.Checked)
             {
-                AmiiboNameBox.Text = AmiiboComboBox.Text;
+                AmiiboNameBox.Text = AmiiboAPI.ValidateAmiiboName(AmiiboComboBox.Text);
             }
 
             LastUsedPath = null;

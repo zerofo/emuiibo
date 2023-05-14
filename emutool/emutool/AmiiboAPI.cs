@@ -74,6 +74,12 @@ namespace emutool
 
         public static string AmiiboAPIJSONPath => Path.Combine(Environment.CurrentDirectory, "amiibo_api.json");
 
+        public static string ValidateAmiiboName(string name)
+        {
+            // Avoid amiibo names conflicting with system paths
+            return Utils.TruncateString(name.Replace('/', '_'), 10);
+        }
+
         private static AmiiboList ParseAmiiboAPIJSON(JObject json)
         {
             var list = new AmiiboList();
@@ -81,7 +87,7 @@ namespace emutool
             {
                 var amiibo = new Amiibo
                 {
-                    AmiiboName = entry["name"].ToString().Replace('/', '_'), // Avoid amiibo names conflicting with system paths
+                    AmiiboName = entry["name"].ToString(),
                     SeriesName = entry["amiiboSeries"].ToString(),
                     CharacterName = entry["character"].ToString(),
                     ImageURL = entry["image"].ToString(),
