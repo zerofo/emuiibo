@@ -1,4 +1,4 @@
-use alloc::{string::String, vec::Vec};
+use alloc::{string::{String, ToString}, vec::Vec};
 use serde::{Serialize, Deserialize};
 use nx::{result::*, service::mii, fs};
 use crate::{area, fsext, miiext};
@@ -93,7 +93,7 @@ impl compat::DeprecatedVirtualAmiiboFormat for VirtualAmiibo {
         let new_areas_path = format!("{}/areas", path);
         let _ = fs::rename_directory(old_areas_path, new_areas_path)?;
 
-        let mii_charinfo_name = String::from("mii-charinfo.bin");
+        let mii_charinfo_name = "mii-charinfo.bin".to_string();
         let mut amiibo = plain_bin.to_virtual_amiibo(path.clone(), mii_charinfo_name)?;
 
         // Prefer existing mii/app-area over raw bin mii/app-area

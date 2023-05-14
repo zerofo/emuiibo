@@ -1,10 +1,10 @@
+use alloc::string::ToString;
 use nx::ipc::sf::sm;
 use nx::result::*;
 use nx::ipc::sf;
 use nx::ipc::server;
 use nx::ipc::sf::nfp;
 use nx::version;
-use alloc::string::String;
 use crate::rc;
 use crate::emu;
 use crate::amiibo;
@@ -50,7 +50,7 @@ impl IEmulationService for EmulationService {
 
     fn get_virtual_amiibo_directory(&mut self, mut out_path: sf::OutMapAliasBuffer<u8>) -> Result<()> {
         log!("GetVirtualAmiiboDirectory -- (...)\n");
-        out_path.set_string(String::from(amiibo::VIRTUAL_AMIIBO_DIR));
+        out_path.set_string(amiibo::VIRTUAL_AMIIBO_DIR.to_string());
         Ok(())
     }
 

@@ -2,6 +2,7 @@ use crate::area;
 use crate::fsext;
 
 use super::{bin, compat, fmt};
+use alloc::string::ToString;
 use nx::fs;
 use nx::result::*;
 use alloc::string::String;
@@ -38,7 +39,7 @@ impl compat::DeprecatedVirtualAmiiboFormat for VirtualAmiibo {
         let path = Self::find_convert_path(String::new(), name);
         fs::create_directory(path.clone())?;
 
-        let mii_charinfo_name = String::from("mii-charinfo.bin");
+        let mii_charinfo_name = "mii-charinfo.bin".to_string();
         let mut amiibo = plain_bin.to_virtual_amiibo(path.clone(), mii_charinfo_name)?;
 
         // Save application area if present

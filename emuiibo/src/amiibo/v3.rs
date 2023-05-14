@@ -1,5 +1,5 @@
 use nx::{result::*, service::mii, fs};
-use alloc::{string::String, vec::Vec};
+use alloc::{string::{String, ToString}, vec::Vec};
 use serde::{Serialize, Deserialize};
 use crate::{fsext, miiext};
 use super::{compat, fmt, bin};
@@ -175,7 +175,7 @@ impl compat::DeprecatedVirtualAmiiboFormat for VirtualAmiibo {
                 first_write_date: convert_date(&self.register_info.firstWriteDate),
                 id: convert_amiibo_id(self.model_info.amiiboId.clone()),
                 last_write_date: convert_date(&self.common_info.lastWriteDate),
-                mii_charinfo_file: String::from("mii-charinfo.bin"),
+                mii_charinfo_file: "mii-charinfo.bin".to_string(),
                 name: self.register_info.name.clone(),
                 uuid,
                 use_random_uuid: false,

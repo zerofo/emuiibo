@@ -63,7 +63,7 @@ pub fn main() -> Result<()> {
     fs::mount_sd_card("sdmc")?;
 
     fsext::ensure_directories()?;
-    logger::initialize();
+    logger::initialize()?;
     log!("Hello world!\n");
 
     rand::initialize()?;

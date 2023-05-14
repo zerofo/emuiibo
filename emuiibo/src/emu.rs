@@ -1,6 +1,4 @@
-use alloc::string::ToString;
 use nx::sync;
-use nx::fs;
 use alloc::vec::Vec;
 use crate::amiibo;
 use crate::fsext;
@@ -43,7 +41,7 @@ static mut G_ACTIVE_VIRTUAL_AMIIBO_STATUS: sync::Locked<VirtualAmiiboStatus> = s
 static mut G_INTERCEPTED_APPLICATION_IDS: sync::Locked<Vec<u64>> = sync::Locked::new(false, Vec::new());
 static mut G_ACTIVE_VIRTUAL_AMIIBO: sync::Locked<amiibo::fmt::VirtualAmiibo> = sync::Locked::new(false, amiibo::fmt::VirtualAmiibo::empty());
 
-pub const EMULATION_STATUS_ON_FLAG_FILE: &'static str = "sdmc:/emuiibo/flags/status_on.flag";
+const STATUS_ON_FLAG: &str = "status_on";
 
 pub fn get_emulation_status() -> EmulationStatus {
     unsafe {
@@ -52,7 +50,7 @@ pub fn get_emulation_status() -> EmulationStatus {
 }
 
 pub fn load_emulation_status() {
-    let status = if fsext::exists_file(EMULATION_STATUS_ON_FLAG_FILE.to_string()) {
+    let status = if fsext::has_flag(STATUS_ON_FLAG) {
         EmulationStatus::On
     }
     else {
@@ -69,12 +67,7 @@ pub fn set_emulation_status(status: EmulationStatus) {
         G_EMULATION_STATUS.set(status);
     }
 
-    if status == EmulationStatus::On {
-        let _ = fs::create_file(EMULATION_STATUS_ON_FLAG_FILE.to_string(), 0, fs::FileAttribute::None());
-    }
-    else {
-        let _ = fs::delete_file(EMULATION_STATUS_ON_FLAG_FILE.to_string());
-    }
+    fsext::set_flag(STATUS_ON_FLAG, status == EmulationStatus::On);
 }
 
 pub fn get_active_virtual_amiibo_status() -> VirtualAmiiboStatus {

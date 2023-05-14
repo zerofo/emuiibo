@@ -44,10 +44,8 @@ jobs:
     - name: Build
       run: make -j$(nproc)
 
-    - name: ZIP product
-      run: zip -r SdOut.zip SdOut/
-
-    - uses: actions/upload-artifact@master
+    - name: Upload
+      uses: actions/upload-artifact@v3
       with:
         name: SdOut
-        path: SdOut.zip
+        path: SdOut

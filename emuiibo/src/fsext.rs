@@ -1,3 +1,4 @@
+use alloc::string::ToString;
 use alloc::vec::Vec;
 use nx::result::*;
 use nx::fs;
@@ -13,6 +14,27 @@ pub fn exists_file(path: String) -> bool {
 }
 
 pub const BASE_DIR: &'static str = "sdmc:/emuiibo";
+
+pub const FLAGS_DIR: &'static str = "sdmc:/emuiibo/flags";
+
+#[inline(always)]
+pub fn make_flag_path(name: &str) -> String {
+    format!("{}/{}.flag", FLAGS_DIR, name)
+}
+
+pub fn has_flag(name: &str) -> bool {
+    exists_file(make_flag_path(name))
+}
+
+pub fn set_flag(name: &str, enabled: bool) {
+    let flag_path = make_flag_path(name);
+    if enabled {
+        let _ = fs::create_file(flag_path, 0, fs::FileAttribute::None());
+    }
+    else {
+        let _ = fs::delete_file(flag_path);
+    }
+}
 
 pub fn get_path_without_extension(path: String) -> String {
     let mut path_items: Vec<&str> = path.split_terminator('.').collect();
@@ -73,9 +95,10 @@ macro_rules! write_serialize_json {
 }
 
 pub fn ensure_directories() -> Result<()> {
-    let _ = fs::create_directory(String::from(BASE_DIR));
-    let _ = fs::create_directory(String::from(amiibo::VIRTUAL_AMIIBO_DIR));
-    recreate_directory(String::from(miiext::EXPORTED_MIIS_DIR))?;
+    let _ = fs::create_directory(BASE_DIR.to_string());
+    let _ = fs::create_directory(amiibo::VIRTUAL_AMIIBO_DIR.to_string());
+    let _ = fs::create_directory(FLAGS_DIR.to_string());
+    recreate_directory(miiext::EXPORTED_MIIS_DIR.to_string())?;
 
     Ok(())
 }
