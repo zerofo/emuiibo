@@ -74,15 +74,15 @@ namespace emu {
     VirtualAmiiboStatus GetActiveVirtualAmiiboStatus();
     void SetActiveVirtualAmiiboStatus(const VirtualAmiiboStatus status);
 
-    void IsApplicationIdIntercepted(const u64 app_id, bool *out_intercepted);
+    bool IsApplicationIdIntercepted(const u64 app_id);
 
     inline bool IsCurrentApplicationIdIntercepted() {
         bool intercepted = false;
         u64 process_id = 0;
         if(R_SUCCEEDED(pmdmntGetApplicationProcessId(&process_id))) {
             u64 program_id = 0;
-            if(R_SUCCEEDED(pminfoGetProgramId(&program_id, process_id))) {
-                IsApplicationIdIntercepted(program_id, &intercepted);
+            if(R_SUCCEEDED(pmdmntGetProgramId(&program_id, process_id))) {
+                intercepted = IsApplicationIdIntercepted(program_id);
             }
         }
         return intercepted;

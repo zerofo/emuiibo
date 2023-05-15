@@ -72,8 +72,9 @@ pub fn main() -> Result<()> {
     miiext::export_miis()?;
 
     amiibo::compat::convert_deprecated_virtual_amiibos();
-
     emu::load_emulation_status();
+
+    ipc::nfp::initialize()?;
 
     const POINTER_BUF_SIZE: usize = 0x1000;
     type Manager = server::ServerManager<POINTER_BUF_SIZE>;

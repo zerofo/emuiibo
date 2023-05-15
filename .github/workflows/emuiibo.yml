@@ -1,7 +1,11 @@
 
 name: Build emuiibo
 
-on: [push]
+on:
+  push:
+    paths:
+      - 'emuiibo/**'
+      - 'overlay/**'
 
 jobs:
   emuiibo:

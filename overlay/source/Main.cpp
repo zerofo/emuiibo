@@ -779,7 +779,7 @@ class AmiiboGui : public tsl::Gui {
 class EmuiiboOverlay : public tsl::Overlay {
     public:
         virtual void initServices() override {
-            g_InitializationOk = tr::Load() && emu::IsAvailable() && R_SUCCEEDED(emu::Initialize()) && R_SUCCEEDED(pmdmntInitialize()) && R_SUCCEEDED(pminfoInitialize()) && R_SUCCEEDED(nsInitialize());
+            g_InitializationOk = tr::Load() && emu::IsAvailable() && R_SUCCEEDED(emu::Initialize()) && R_SUCCEEDED(pmdmntInitialize()) && R_SUCCEEDED(nsInitialize());
             if(g_InitializationOk) {
                 g_Version = emu::GetVersion();
                 g_InitializationOk &= g_Version.EqualsExceptBuild(ExpectedVersion);
@@ -795,7 +795,6 @@ class EmuiiboOverlay : public tsl::Overlay {
         virtual void exitServices() override {
             SaveFavorites();
             nsExit();
-            pminfoExit();
             pmdmntExit();
             emu::Exit();
         }

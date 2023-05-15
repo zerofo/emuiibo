@@ -45,6 +45,7 @@ Table of contents
   - [Per-game access IDs](#per-game-access-ids)
 - [Usage and controlling](#usage-and-controlling)
 - [Boot procedure](#boot-procedure)
+- [Compiling](#compiling)
 - [For developers](#for-developers)
 - [Credits](#credits)
   - [License exemption](#license-exemption)
@@ -188,6 +189,12 @@ To go back in the menus, just press **B** button.
     - If `sd:/switch/key_retail.bin` is present, the bin dump's encrypted sections can be also used, which means that amiibo settings (mii, name, etc.) and game app-area (save-data), if present, are also extracted for the new format.
 
     - The bin dump file does not get removed, but it will get moved inside the modern amiibo format, along with the decrypted file.
+
+## Compiling
+
+In order to compile emuiibo you need to [setup Rust for Nintendo Switch development](https://github.com/aarch64-switch-rs/setup-guide). You'll also need devkitPro (devkitA64 specifically).
+
+With this requirements satisfied, simply clone (recursively) this repo and hit `make`
 
 ## For developers
 
