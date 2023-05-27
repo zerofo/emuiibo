@@ -1,3 +1,4 @@
+use alloc::string::ToString;
 use nx::result::*;
 use serde::{Serialize, Deserialize};
 use alloc::string::String;
@@ -523,6 +524,9 @@ impl super::VirtualAmiiboFormat for VirtualAmiibo {
         }
 
         let areas_json = read_deserialize_json!(areas_json_path => VirtualAmiiboAreaInfo)?;
+        for entry in areas_json.areas.iter() {
+            push_access_id_cache(entry.program_id, entry.access_id)?;
+        }
 
         let amiibo = VirtualAmiibo::new(amiibo_json_opt.convert_to_info(), areas_json, path.clone())?;
         if needs_save {
@@ -530,4 +534,38 @@ impl super::VirtualAmiiboFormat for VirtualAmiibo {
         }
         Ok(amiibo)
     }
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct AccessIdCache {
+    pub cache: Vec<VirtualAmiiboAreaEntry>
+}
+
+impl AccessIdCache {
+    pub const fn new() -> Self {
+        Self {
+            cache: Vec::new()
+        }
+    }
+}
+
+pub const ACCESS_ID_CACHE_PATH: &'static str = "sdmc:/emuiibo/access_id_cache.json";
+
+pub fn push_access_id_cache(program_id: u64, access_id: nfp::AccessId) -> Result<()> {
+    let mut cache_json = read_deserialize_json!(ACCESS_ID_CACHE_PATH.to_string() => AccessIdCache).unwrap_or(AccessIdCache::new());
+
+    let mut found = false;
+    for entry in cache_json.cache.iter_mut() {
+        if entry.program_id == program_id {
+            entry.access_id = access_id;
+            found = true;
+            break;
+        }
+    }
+
+    if !found {
+        cache_json.cache.push(VirtualAmiiboAreaEntry { program_id, access_id });
+    }
+    write_serialize_json!(ACCESS_ID_CACHE_PATH.to_string(), &cache_json)?;
+    Ok(())
 }

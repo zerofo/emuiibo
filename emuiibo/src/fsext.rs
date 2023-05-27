@@ -71,12 +71,7 @@ macro_rules! read_deserialize_json {
             data
         };
     
-        let t = match serde_json::from_slice::<$t>(&json_data) {
-            Ok(t) => t,
-            Err(_) => return Err($crate::rc::ResultInvalidJsonDeserialization::make())
-        };
-    
-        Ok(t.clone())
+        serde_json::from_slice::<$t>(&json_data).map_err(|_| $crate::rc::ResultInvalidJsonDeserialization::make())
     }};
 }
 

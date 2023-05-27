@@ -129,17 +129,15 @@ impl EmulationHandler {
         // Send a single fake device handle
 
         let fake_device_npad_id = {
-            unsafe {
-                let p1 = get_input_context().get_player(hid::NpadIdType::No1);
-                if p1.get_style_tag_attributes(hid::NpadStyleTag::FullKey()).contains(hid::NpadAttribute::IsConnected())
+            let p1 = get_input_context().get_player(hid::NpadIdType::No1);
+            if p1.get_style_tag_attributes(hid::NpadStyleTag::FullKey()).contains(hid::NpadAttribute::IsConnected())
                 || p1.get_style_tag_attributes(hid::NpadStyleTag::JoyDual()).contains(hid::NpadAttribute::IsConnected())
                 || p1.get_style_tag_attributes(hid::NpadStyleTag::JoyLeft()).contains(hid::NpadAttribute::IsConnected()) 
                 || p1.get_style_tag_attributes(hid::NpadStyleTag::JoyRight()).contains(hid::NpadAttribute::IsConnected()) {
-                    hid::NpadIdType::No1
-                }
-                else {
-                    hid::NpadIdType::Handheld
-                }
+                hid::NpadIdType::No1
+            }
+            else {
+                hid::NpadIdType::Handheld
             }
         };
 

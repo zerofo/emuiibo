@@ -23,13 +23,6 @@ pub fn initialize() -> Result<()> {
     Ok(())
 }
 
-#[inline(always)]
-pub fn can_log() -> bool {
-    unsafe {
-        G_CAN_LOG
-    }
-}
-
 pub fn log_string(log_str: String) {
     unsafe {
         if G_CAN_LOG {
