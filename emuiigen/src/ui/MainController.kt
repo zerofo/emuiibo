@@ -15,8 +15,6 @@ import javafx.scene.control.Alert
 import javafx.scene.control.ButtonType
 import javafx.scene.image.ImageView
 import javafx.scene.image.Image
-import javafx.scene.layout.AnchorPane
-import javafx.scene.layout.VBox
 import javafx.event.EventHandler
 import javafx.event.ActionEvent
 import javafx.stage.Stage
