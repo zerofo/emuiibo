@@ -76,9 +76,12 @@ class MainController {
         val series = this.getSelectedAmiiboSeriesName();
         val amiibos = this.Amiibos.get(series);
         amiibos?.let {
+            val amiibo_names = mutableListOf<String>();
             for(amiibo in amiibos) {
-                this.AmiiboBox.items.addAll(amiibo.amiibo_name);
+                amiibo_names.add(amiibo.amiibo_name);
             }
+            amiibo_names.sort();
+            this.AmiiboBox.items.setAll(amiibo_names);
             this.AmiiboBox.selectionModel.select(0);
         }
         ?: let {
@@ -179,11 +182,11 @@ class MainController {
                     Platform.runLater {
                         this@MainController.Amiibos = api_amiibos;
 
-                        for(series_name in api_amiibos.keys) {
-                            this@MainController.GenerateOneAmiiboSeriesBox.items.addAll(series_name);
-                            this@MainController.GenerateSeriesAmiiboSeriesBox.items.addAll(series_name);
-                        }
+                        val series_names = api_amiibos.keys.toMutableList();
+                        series_names.sort();
+                        this@MainController.GenerateOneAmiiboSeriesBox.items.setAll(series_names);
                         this@MainController.GenerateOneAmiiboSeriesBox.selectionModel.select(0);
+                        this@MainController.GenerateSeriesAmiiboSeriesBox.items.setAll(series_names);
                         this@MainController.GenerateSeriesAmiiboSeriesBox.selectionModel.select(0);
                     }
                 }
