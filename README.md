@@ -1,9 +1,6 @@
 <p align="center">
-  <img alt="Discord Server" src="emutool/PcIcon.png">
-</p>
-<h1 align="center">
-  emuiibo
-</h1>
+  <img alt="emuiibo" src="res/logo.png">
+</p
 
 <p align="center">
   Virtual amiibo (amiibo emulation) system for Nintendo Switch
