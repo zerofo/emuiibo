@@ -7,7 +7,6 @@ import java.util.concurrent.Callable
 import javafx.fxml.FXML
 import javafx.scene.control.Button
 import javafx.scene.control.CheckBox
-import javafx.scene.control.ComboBox
 import javafx.scene.control.Label
 import javafx.scene.control.TextField
 import javafx.scene.control.ListView
@@ -25,6 +24,7 @@ import javafx.beans.value.ChangeListener
 import javafx.beans.binding.Bindings
 import javafx.concurrent.Task
 import javafx.application.HostServices
+import org.controlsfx.control.SearchableComboBox
 import com.xortroll.emuiibo.emuiigen.Amiibo
 import com.xortroll.emuiibo.emuiigen.AmiiboStatus
 import com.xortroll.emuiibo.emuiigen.AmiiboStatusKind
@@ -44,8 +44,8 @@ class MainController {
 
     @FXML lateinit var AboutButton: Button;
     
-    @FXML lateinit var GenerateOneAmiiboSeriesBox: ComboBox<String>;
-    @FXML lateinit var AmiiboBox: ComboBox<String>;
+    @FXML lateinit var GenerateOneAmiiboSeriesBox: SearchableComboBox<String>;
+    @FXML lateinit var AmiiboBox: SearchableComboBox<String>;
     @FXML lateinit var AmiiboImage: ImageView;
     @FXML lateinit var StatusLabel: Label;
 
@@ -62,7 +62,7 @@ class MainController {
 
     @FXML lateinit var GenerateSeriesUseRandomUuidCheck: CheckBox;
     @FXML lateinit var GenerateSeriesImageSaveCheck: CheckBox;
-    @FXML lateinit var GenerateSeriesAmiiboSeriesBox: ComboBox<String>;
+    @FXML lateinit var GenerateSeriesAmiiboSeriesBox: SearchableComboBox<String>;
     @FXML lateinit var GenerateSeriesButton: Button;
 
     lateinit var MainStage: Stage;
@@ -71,25 +71,24 @@ class MainController {
     lateinit var Amiibos: Map<String, List<AmiiboAPIEntry>>;
 
     fun updateSelectedAmiiboSeries() {
-        this.AmiiboBox.items.clear();
-
         val series = this.getSelectedAmiiboSeriesName();
-        val amiibos = this.Amiibos.get(series);
-        amiibos?.let {
-            val amiibo_names = mutableListOf<String>();
-            for(amiibo in amiibos) {
-                amiibo_names.add(amiibo.amiibo_name);
+        if(series != null) {
+            val amiibos = this.Amiibos.get(series);
+            amiibos?.let {
+                val amiibo_names = mutableListOf<String>();
+                for(amiibo in amiibos) {
+                    amiibo_names.add(amiibo.amiibo_name);
+                }
+                amiibo_names.sort();
+                this.AmiiboBox.items.setAll(amiibo_names);
             }
-            amiibo_names.sort();
-            this.AmiiboBox.items.setAll(amiibo_names);
-            this.AmiiboBox.selectionModel.select(0);
-        }
-        ?: let {
-            System.out.println("Internal unexpected error");
+            ?: let {
+                System.out.println("Internal unexpected error");
+            }
         }
     }
 
-    inline fun getSelectedAmiiboSeriesName() : String {
+    inline fun getSelectedAmiiboSeriesName() : String? {
         return this.GenerateOneAmiiboSeriesBox.selectionModel.selectedItem;
     }
 
@@ -97,25 +96,36 @@ class MainController {
         return this.AmiiboBox.selectionModel.selectedIndex;
     }
     
-    inline fun getSelectedAmiibo() : AmiiboAPIEntry {
-        return this.Amiibos.get(this.getSelectedAmiiboSeriesName())!!.get(this.getSelectedAmiiboIndex());
+    inline fun getSelectedAmiibo() : AmiiboAPIEntry? {
+        val series_name = this.getSelectedAmiiboSeriesName();
+        if(series_name != null) {
+            return this.Amiibos.get(series_name)?.get(this.getSelectedAmiiboIndex());
+        }
+        else {
+            return null;
+        }
     }
 
     fun updateSelectedAmiibo() {
         val series = this.getSelectedAmiiboSeriesName();
-        val amiibos = this.Amiibos.get(series);
-        amiibos?.let {
-            val amiibo_idx = this.getSelectedAmiiboIndex();
+        if(series != null) {
+            val amiibos = this.Amiibos.get(series);
+            amiibos?.let {
+                val amiibo_idx = this.getSelectedAmiiboIndex();
 
-            if(amiibo_idx >= 0) {
-                val amiibo = amiibos.get(amiibo_idx);
+                if(amiibo_idx >= 0) {
+                    val amiibo = amiibos.get(amiibo_idx);
 
-                val img = Image(amiibo.image_url, true);
-                this@MainController.AmiiboImage.setImage(img);
+                    val img = Image(amiibo.image_url, true);
+                    this@MainController.AmiiboImage.setImage(img);
+                }
+            }
+            ?: let {
+                this@MainController.showError("Internal unexpected error...");
             }
         }
-        ?: let {
-            this@MainController.showError("Internal unexpected error...");
+        else {
+            this@MainController.AmiiboImage.setImage(null);
         }
     }
 
@@ -340,12 +350,16 @@ class MainController {
 
                     if(this@MainController.showYesNo("The virtual amiibo will be generated at:\n" + path.toString() + "/{amiibo.json, amiibo.flag, ...}\n\nProceed with generation?")) {
                         val selected_amiibo = this@MainController.getSelectedAmiibo();
-
-                        if(this@MainController.generateAmiibo(path.toString(), selected_amiibo, amiibo_name, this@MainController.GenerateOneUseRandomUuidCheck.isSelected(), this@MainController.GenerateOneImageSaveCheck.isSelected())) {
-                            this@MainController.showInfo("The virtual amiibo was successfully generated!");
+                        if(selected_amiibo != null) {
+                            if(this@MainController.generateAmiibo(path.toString(), selected_amiibo, amiibo_name, this@MainController.GenerateOneUseRandomUuidCheck.isSelected(), this@MainController.GenerateOneImageSaveCheck.isSelected())) {
+                                this@MainController.showInfo("The virtual amiibo was successfully generated!");
+                            }
+                            else {
+                                this@MainController.showError("The virtual amiibo could not be generated...");
+                            }
                         }
                         else {
-                            this@MainController.showError("The virtual amiibo could not be generated...");
+                            this@MainController.showError("There is no virtual amiibo selected...");
                         }
                     }
                 }

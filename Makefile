@@ -1,5 +1,5 @@
 
-.PHONY: all emuiibo sysmodule overlay emuiigen dist clean
+.PHONY: all emuiibo sysmodule overlay emuiigen dist emuiibo-clean emuiigen-clean
 
 # We need to provide a custom target triple since the official tier 3 one doesn't provide crypto support
 TARGET_TRIPLE := aarch64-nintendo-switch-freestanding-crypto
@@ -29,8 +29,10 @@ dist:
 emuiigen:
 	@cd emuiigen && mvn package
 
-clean:
+emuiibo-clean:
 	@rm -rf $(CURDIR)/SdOut
 	@cd emuiibo && cargo clean
-	@cd emuiigen && mvn clean
 	@$(MAKE) clean -C overlay/
+
+emuiigen-clean:
+	@cd emuiigen && mvn clean
