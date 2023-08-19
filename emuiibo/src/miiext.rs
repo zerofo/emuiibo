@@ -45,7 +45,7 @@ const DEFAULT_MII_NAME: &'static str = "emuiibo";
 
 #[inline]
 pub fn generate_random_mii() -> Result<mii::CharInfo> {
-    let mut char_info = get_database_service()?.get().build_random(sf::EnumAsPrimitiveType::from(mii::Age::All), sf::EnumAsPrimitiveType::from(mii::Gender::All), sf::EnumAsPrimitiveType::from(mii::Race::All))?;
+    let mut char_info = get_database_service()?.get().build_random(sf::EnumAsPrimitiveType::from(mii::Age::All), sf::EnumAsPrimitiveType::from(mii::Gender::All), sf::EnumAsPrimitiveType::from(mii::FaceColor::All))?;
     // Default name is "no name", use our own default instead
     char_info.name.set_str(DEFAULT_MII_NAME)?;
     Ok(char_info)

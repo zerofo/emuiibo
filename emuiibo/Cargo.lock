@@ -39,7 +39,7 @@ source = "git+https://github.com/aarch64-switch-rs/logpacket#d807c993fb4578e3809
 [[package]]
 name = "nx"
 version = "0.1.0"
-source = "git+https://github.com/aarch64-switch-rs/nx#a84734943b70b69c3f22f31c53fbb65f93b6c6a8"
+source = "git+https://github.com/aarch64-switch-rs/nx#6fdf0deb0261fd927313ad2f6e6e3d47ce481cde"
 dependencies = [
  "arrayvec",
  "linked_list_allocator",
