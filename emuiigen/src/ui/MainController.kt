@@ -175,6 +175,21 @@ class MainController {
         FileUtils.deleteDirectory(Paths.get(TemporaryFtpDirectory).toAbsolutePath().toFile());
     }
 
+    fun processFtpPort(is_ftp: Boolean, port_str: String) : Int? {
+        if(is_ftp) {
+            try {
+                return port_str.toInt();
+            }
+            catch(ex: Exception) {
+                this.showError("Invalid FTP port: " + ex.toString());
+                return null;
+            }
+        }
+        else {
+            return 0;
+        }
+    }
+
     fun chooseBaseAmiiboPath(is_ftp: Boolean) : Pair<String, String>? {
         val path = if(is_ftp) {
             Paths.get(TemporaryFtpDirectory).toAbsolutePath()
@@ -451,7 +466,11 @@ class MainController {
 
                 val is_ftp = this@MainController.GenerateOneFtpCheck.isSelected();
                 val ftp_addr = this@MainController.GenerateOneFtpAddress.getText();
-                val ftp_port = this@MainController.GenerateOneFtpPort.getText().toInt();
+                val ftp_port = this@MainController.processFtpPort(is_ftp, this@MainController.GenerateOneFtpPort.getText());
+                if(ftp_port == null) {
+                    return;
+                }
+
                 val use_random_uuid = this@MainController.GenerateOneUseRandomUuidCheck.isSelected();
                 val save_image = this@MainController.GenerateOneImageSaveCheck.isSelected();
 
@@ -489,7 +508,11 @@ class MainController {
 
                 val is_ftp = this@MainController.GenerateAllFtpCheck.isSelected();
                 val ftp_addr = this@MainController.GenerateAllFtpAddress.getText();
-                val ftp_port = this@MainController.GenerateAllFtpPort.getText().toInt();
+                val ftp_port = this@MainController.processFtpPort(is_ftp, this@MainController.GenerateAllFtpPort.getText());
+                if(ftp_port == null) {
+                    return;
+                }
+
                 val use_random_uuid = this@MainController.GenerateAllUseRandomUuidCheck.isSelected();
                 val save_image = this@MainController.GenerateAllImageSaveCheck.isSelected();
 
@@ -529,7 +552,11 @@ class MainController {
 
                 val is_ftp = this@MainController.GenerateSeriesFtpCheck.isSelected();
                 val ftp_addr = this@MainController.GenerateSeriesFtpAddress.getText();
-                val ftp_port = this@MainController.GenerateSeriesFtpPort.getText().toInt();
+                val ftp_port = this@MainController.processFtpPort(is_ftp, this@MainController.GenerateSeriesFtpPort.getText());
+                if(ftp_port == null) {
+                    return;
+                }
+
                 val use_random_uuid = this@MainController.GenerateSeriesUseRandomUuidCheck.isSelected();
                 val save_image = this@MainController.GenerateSeriesImageSaveCheck.isSelected();
 

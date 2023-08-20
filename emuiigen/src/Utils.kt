@@ -1,14 +1,16 @@
 package com.xortroll.emuiibo.emuiigen
 
+import org.apache.commons.io.FileUtils
 import org.apache.commons.io.FilenameUtils
 import org.apache.commons.io.IOUtils
 import org.apache.commons.net.ftp.FTPClient
 import org.apache.commons.net.ftp.FTPReply
 import java.net.URL
+import java.io.File
+import java.io.FileOutputStream
 import java.nio.charset.StandardCharsets
 import java.nio.channels.Channels
 import java.text.Normalizer
-import java.io.FileOutputStream
 
 class Utils {
     companion object {
@@ -33,10 +35,7 @@ class Utils {
         }
 
         fun netDownloadFile(url: String, path: String) {
-            val url_v = URL(url);
-            val ch = Channels.newChannel(url_v.openStream());
-            val fos = FileOutputStream(path);
-            fos.getChannel().transferFrom(ch, 0, Long.MAX_VALUE);
+            FileUtils.copyURLToFile(URL(url), File(path), 10000, 10000);
         }
 
         fun unaccentString(str: String) : String {
