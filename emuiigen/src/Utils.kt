@@ -44,10 +44,10 @@ class Utils {
         }
 
         fun ensureValidFileDirectoryName(str: String) : String {
-            // Ensure valid ASCII (for Switch filesystem)
+            // Ensure no trailing dots (for NTFS)
             val str_no_trailing_dots = str.trimEnd('.');
 
-            // Ensure no trailing dots (for NTFS)
+            // Ensure valid ASCII (for Switch filesystem)
             val str_no_accents = unaccentString(str_no_trailing_dots);
 
             return str_no_accents;
