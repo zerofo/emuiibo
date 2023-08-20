@@ -24,14 +24,8 @@ class Utils {
             ).toUShort()
         }
 
-        fun netDownloadBytes(url: String) : ByteArray {
-            val strm = URL(url).openStream();
-            return IOUtils.toByteArray(strm);
-        }
-
         fun netDownloadString(url: String) : String {
-            val strm = URL(url).openStream();
-            return IOUtils.toString(strm, StandardCharsets.UTF_8);
+            return IOUtils.toString(URL(url));
         }
 
         fun netDownloadFile(url: String, path: String) {
