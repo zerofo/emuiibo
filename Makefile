@@ -1,14 +1,25 @@
 
-.PHONY: all emuiibo sysmodule overlay emuiigen dist emuiibo-clean emuiigen-clean
+.PHONY: all dev emuiibo emuiibo-dev sysmodule sysmodule-dev overlay emuiigen dist clean emuiibo-clean emuiigen-clean
 
 # We need to provide a custom target triple since the official tier 3 one doesn't provide crypto support
 TARGET_TRIPLE := aarch64-nintendo-switch-freestanding-crypto
 PROGRAM_ID := 0100000000000352
 
+all: emuiibo emuiigen
+
+dev: emuiibo-dev emuiigen
+
+clean: emuiibo-clean emuiigen-clean
+
 emuiibo: sysmodule overlay dist
+
+emuiibo-dev: sysmodule-dev overlay dist
 
 sysmodule:
 	@cd emuiibo && cargo update && cargo nx build --release --target $(TARGET_TRIPLE).json
+
+sysmodule-dev:
+	@cd emuiibo && cargo update && cargo nx build --target $(TARGET_TRIPLE).json
 
 overlay:
 	@$(MAKE) -C overlay/
@@ -34,5 +45,3 @@ emuiibo-clean:
 
 emuiigen-clean:
 	@cd emuiigen && mvn clean
-
-all: emuiibo emuiigen

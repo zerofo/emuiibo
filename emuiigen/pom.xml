@@ -8,7 +8,7 @@
     <groupId>com.xortroll.emuiibo.emuiigen</groupId>
     <artifactId>emuiigen</artifactId>
 
-    <version>1.0.0-dev</version>
+    <version>1.0.0</version>
     <name>emuiigen</name>
 
     <properties>
@@ -103,6 +103,11 @@
             <groupId>commons-io</groupId>
             <artifactId>commons-io</artifactId>
             <version>2.12.0</version>
+        </dependency>
+        <dependency>
+            <groupId>commons-net</groupId>
+            <artifactId>commons-net</artifactId>
+            <version>3.9.0</version>
         </dependency>
         <dependency>
             <groupId>org.json</groupId>

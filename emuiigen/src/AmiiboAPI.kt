@@ -35,7 +35,7 @@ class AmiiboAPI {
         }
 
         fun readApi() : Map<String, List<AmiiboAPIEntry>>? {
-            val cur_path = Path.of(URLDecoder.decode(this.javaClass.getProtectionDomain().getCodeSource().getLocation().getPath(), "UTF-8")).parent;
+            val cur_path = Path.of(URLDecoder.decode(this::class.java.getProtectionDomain().getCodeSource().getLocation().getPath(), "UTF-8")).parent;
             val local_api_json_path = Paths.get(cur_path.toAbsolutePath().toString(), "api.json").toString();
 
             try {
