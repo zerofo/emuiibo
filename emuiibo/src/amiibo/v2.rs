@@ -49,24 +49,24 @@ impl super::VirtualAmiiboFormat for VirtualAmiibo {
     fn try_load(path: String) -> Result<Self> {
         let raw_bin: bin::RawFormat = {
             let raw_bin_path = format!("{}/amiibo.bin", path);
-            let mut file = fs::open_file(raw_bin_path, fs::FileOpenOption::Read())?;
+            let mut file = fs::open_file(raw_bin_path.as_str(), fs::FileOpenOption::Read())?;
             file.read_val()?
         };
 
         let amiibo_json_path = format!("{}/amiibo.json", path);
-        let amiibo_json = read_deserialize_json!(amiibo_json_path => VirtualAmiiboInfo)?;
+        let amiibo_json = read_deserialize_json!(amiibo_json_path.as_str() => VirtualAmiiboInfo)?;
 
         let mii_charinfo_path = format!("{}/mii.dat", path);
         // If newly generated, charinfo may not exist yet
-        let mii_charinfo = match fs::get_entry_type(mii_charinfo_path.clone()).is_err() {
+        let mii_charinfo = match fs::get_entry_type(mii_charinfo_path.as_str()).is_err() {
             true => {
                 let mii_charinfo = miiext::generate_random_mii()?;
-                let mut file = fs::open_file(mii_charinfo_path, fs::FileOpenOption::Create() | fs::FileOpenOption::Write() | fs::FileOpenOption::Append())?;
+                let mut file = fs::open_file(mii_charinfo_path.as_str(), fs::FileOpenOption::Create() | fs::FileOpenOption::Write() | fs::FileOpenOption::Append())?;
                 file.write_val(&mii_charinfo)?;
                 mii_charinfo
             },
             false => {
-                let mut file = fs::open_file(mii_charinfo_path, fs::FileOpenOption::Read())?;
+                let mut file = fs::open_file(mii_charinfo_path.as_str(), fs::FileOpenOption::Read())?;
                 file.read_val()?
             }
         };
@@ -85,13 +85,13 @@ impl compat::DeprecatedVirtualAmiiboFormat for VirtualAmiibo {
         };
 
         // Save converted amiibo
-        let name = fsext::get_path_file_name(self.path.clone());
+        let name = fsext::get_path_file_name(self.path.as_str());
         let path = Self::find_convert_path(self.path.clone(), name);
-        let _ = fs::create_directory(path.clone());
+        let _ = fs::create_directory(path.as_str());
 
         let old_areas_path = format!("{}/areas", self.path);
         let new_areas_path = format!("{}/areas", path);
-        let _ = fs::rename_directory(old_areas_path, new_areas_path)?;
+        let _ = fs::rename_directory(old_areas_path.as_str(), new_areas_path.as_str())?;
 
         let mii_charinfo_name = "mii-charinfo.bin".to_string();
         let mut amiibo = plain_bin.to_virtual_amiibo(path.clone(), mii_charinfo_name)?;
@@ -117,7 +117,8 @@ impl compat::DeprecatedVirtualAmiiboFormat for VirtualAmiibo {
 
             if existing_access_id.is_none() || (existing_id != access_id) {
                 let bin_area = area::ApplicationArea::from(&amiibo, access_id);
-                bin_area.create(plain_bin.dec_data.app_area.as_ptr(), plain_bin.dec_data.app_area.len(), false)?;
+                // TSAFETY: This is fine as we're writing from a valid memory range
+                unsafe {bin_area.create(plain_bin.dec_data.app_area.as_ptr(), plain_bin.dec_data.app_area.len(), false)?;}
 
                 amiibo.ensure_area_registered(access_id, program_id);
             }
@@ -127,33 +128,33 @@ impl compat::DeprecatedVirtualAmiiboFormat for VirtualAmiibo {
 
         // Save deprecated amiibo inside /v2 dir
         let deprecated_path = format!("{}/v2", path);
-        fs::create_directory(deprecated_path.clone())?;
+        fs::create_directory(deprecated_path.as_str())?;
 
         let old_raw_bin_path = format!("{}/amiibo.bin", self.path);
         let new_raw_bin_path = format!("{}/amiibo.bin", deprecated_path);
-        fs::rename_file(old_raw_bin_path, new_raw_bin_path)?;
+        fs::rename_file(old_raw_bin_path.as_str(), new_raw_bin_path.as_str())?;
 
         {
             let conv_bin_path = format!("{}/amiibo-converted.bin", deprecated_path);
-            let mut conv_bin_file = fs::open_file(conv_bin_path, fs::FileOpenOption::Create() | fs::FileOpenOption::Write() | fs::FileOpenOption::Append())?;
+            let mut conv_bin_file = fs::open_file(conv_bin_path.as_str(), fs::FileOpenOption::Create() | fs::FileOpenOption::Write() | fs::FileOpenOption::Append())?;
             conv_bin_file.write_val(&conv_bin)?;
         }
         {
             let plain_bin_path = format!("{}/amiibo-plain.bin", deprecated_path);
-            let mut plain_bin_file = fs::open_file(plain_bin_path, fs::FileOpenOption::Create() | fs::FileOpenOption::Write() | fs::FileOpenOption::Append())?;
+            let mut plain_bin_file = fs::open_file(plain_bin_path.as_str(), fs::FileOpenOption::Create() | fs::FileOpenOption::Write() | fs::FileOpenOption::Append())?;
             plain_bin_file.write_val(&plain_bin)?;
         }
 
         let old_mii_charinfo_path = format!("{}/mii.dat", self.path);
         let new_mii_charinfo_path = format!("{}/mii.dat", deprecated_path);
-        fs::rename_file(old_mii_charinfo_path, new_mii_charinfo_path)?;
+        fs::rename_file(old_mii_charinfo_path.as_str(), new_mii_charinfo_path.as_str())?;
 
         let old_amiibo_json_path = format!("{}/amiibo.json", self.path);
         let new_amiibo_json_path = format!("{}/amiibo.json", deprecated_path);
-        fs::rename_file(old_amiibo_json_path, new_amiibo_json_path)?;
+        fs::rename_file(old_amiibo_json_path.as_str(), new_amiibo_json_path.as_str())?;
 
         if self.path != path {
-            fs::delete_directory_recursively(self.path.clone())?;
+            fs::delete_directory_recursively(self.path.as_str())?;
         }
 
         Ok(amiibo)

@@ -1,25 +1,20 @@
 use nx::rand;
 use nx::result::*;
+use nx::sync::Mutex;
 
-static mut G_RNG: Option<rand::SplCsrngGenerator> = None;
+static G_RNG: Mutex<Option<rand::SplCsrngGenerator>> = Mutex::new(None);
 
 pub fn initialize() -> Result<()> {
-    unsafe {
-        G_RNG = Some(rand::SplCsrngGenerator::new()?);
-    }
+        *G_RNG.lock() = Some(rand::SplCsrngGenerator::new()?);
 
     Ok(())
 }
 
 pub fn finalize() {
-    unsafe {
-        G_RNG = None;
-    }
+        *G_RNG.lock() = None;
 }
 
 #[inline]
-pub fn get_rng() -> Result<&'static mut rand::SplCsrngGenerator> {
-    unsafe {
-        G_RNG.as_mut().ok_or(nx::rc::ResultNotInitialized::make())
-    }
+pub fn get_rng() -> Result<rand::SplCsrngGenerator> {
+        G_RNG.lock().clone().ok_or(nx::rc::ResultNotInitialized::make())
 }

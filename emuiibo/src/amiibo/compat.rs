@@ -4,7 +4,7 @@ use crate::amiibo::bin;
 use super::{v1, v2, v3, fmt, VirtualAmiiboFormat};
 use alloc::string::{String, ToString};
 
-const RETAIL_KEY_SET_FILE: &str = "sdmc:/switch/key_retail.bin";
+pub(crate) const RETAIL_KEY_SET_FILE: &str = "sdmc:/switch/key_retail.bin";
 
 pub trait DeprecatedVirtualAmiiboFormat: super::VirtualAmiiboFormat {
     fn convert(&self, key_set: Option<bin::RetailKeySet>) -> Result<fmt::VirtualAmiibo>;
@@ -19,7 +19,7 @@ pub trait DeprecatedVirtualAmiiboFormat: super::VirtualAmiiboFormat {
         let mut name_idx: usize = 0;
         loop {
             // Path already exists
-            if fs::get_entry_type(path.clone()).is_ok() {
+            if fs::get_entry_type(path.as_str()).is_ok() {
                 name_idx += 1;
                 path = format!("{}/{}_{}", super::VIRTUAL_AMIIBO_DIR, name, name_idx);
             }
@@ -32,16 +32,17 @@ pub trait DeprecatedVirtualAmiiboFormat: super::VirtualAmiiboFormat {
     }
 }
 
-fn convert_deprecated_virtual_amiibos_in_dir(path: String) -> Result<()> {
+fn convert_deprecated_virtual_amiibos_in_dir(path: &str) -> Result<()> {
     let mut key_set: Option<bin::RetailKeySet> = None;
-    if let Ok(mut key_set_file) = fs::open_file(RETAIL_KEY_SET_FILE.to_string(), fs::FileOpenOption::Read()) {
+    let key_set_file = fs::open_file(RETAIL_KEY_SET_FILE, fs::FileOpenOption::Read());
+    if let Ok(mut key_set_file) = key_set_file {
         if let Ok(key_set_v) = key_set_file.read_val::<bin::RetailKeySet>() {
             log!("Found key_retail.bin --- old amiibo / raw dump conversions will include encrypted sections too!");
             key_set = Some(key_set_v);
         }
     }
 
-    let mut dir = fs::open_directory(path.clone(), fs::DirectoryOpenMode::ReadDirectories() | fs::DirectoryOpenMode::ReadFiles())?;
+    let mut dir = fs::open_directory(path, fs::DirectoryOpenMode::ReadDirectories() | fs::DirectoryOpenMode::ReadFiles())?;
 
     loop {
         if let Some(entry) = dir.read_next()? {
@@ -83,7 +84,7 @@ fn convert_deprecated_virtual_amiibos_in_dir(path: String) -> Result<()> {
 
 pub fn convert_deprecated_virtual_amiibos() {
     log!("Analyzing deprecated dir...\n");
-    let _ = convert_deprecated_virtual_amiibos_in_dir(super::DEPRECATED_VIRTUAL_AMIIBO_DIR.to_string());
+    let _ = convert_deprecated_virtual_amiibos_in_dir(super::DEPRECATED_VIRTUAL_AMIIBO_DIR);
     log!("Analyzing regular dir...\n");
-    let _ = convert_deprecated_virtual_amiibos_in_dir(super::VIRTUAL_AMIIBO_DIR.to_string());
+    let _ = convert_deprecated_virtual_amiibos_in_dir(super::VIRTUAL_AMIIBO_DIR);
 }

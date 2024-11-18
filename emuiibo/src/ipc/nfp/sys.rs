@@ -6,19 +6,20 @@ use nx::ipc::sf;
 use nx::ipc::server;
 use nx::ipc::sf::applet;
 use nx::ipc::sf::nfp;
-use nx::ipc::sf::nfp::ISystem;
-use nx::ipc::sf::nfp::ISystemManager;
+use nx::ipc::sf::nfp::ISystemServer;
+use nx::ipc::sf::nfp::ISystemManagerServer;
 use nx::ipc::sf::sm;
+use nx::service::nfp::System;
 
 use crate::emu;
 use super::EmulationHandler;
 
-pub struct System {
+pub struct SystemEmulator {
     handler: EmulationHandler,
     dummy_session: sf::Session
 }
 
-impl System {
+impl SystemEmulator {
     pub fn new(application_id: ncm::ProgramId) -> Result<Self> {
         Ok(Self {
             handler: EmulationHandler::new(application_id)?,
@@ -27,17 +28,21 @@ impl System {
     }
 }
 
-impl sf::IObject for System {
-    ipc_sf_object_impl_default_command_metadata!();
+impl sf::IObject for SystemEmulator {
+    //ipc_sf_object_impl_default_command_metadata!();
 
-    fn get_session(&mut self) -> &mut sf::Session {
+    fn get_session(&self) -> &sf::Session {
+        &self.dummy_session
+    }
+
+    fn get_session_mut(&mut self) -> &mut sf::Session {
         &mut self.dummy_session
     }
 }
 
-impl ISystem for System {
-    fn initialize_system(&mut self, aruid: applet::AppletResourceUserId, process_id: sf::ProcessId, mcu_data: sf::InMapAliasBuffer<nfp::McuVersionData>) -> Result<()> {
-        self.handler.initialize(aruid, process_id, mcu_data)
+impl ISystemServer for SystemEmulator {
+    fn initialize_system(&mut self, process_id: sf::AppletResourceUserId, _reserved: u64, mcu_data: sf::InMapAliasBuffer<nfp::McuVersionData>) -> Result<()> {
+        self.handler.initialize(process_id, mcu_data)
     }
 
     fn finalize_system(&mut self) -> Result<()> {
@@ -141,7 +146,11 @@ impl ISystem for System {
     }
 }
 
-impl server::ISessionObject for System {}
+impl server::ISessionObject for SystemEmulator {
+    fn try_handle_request_by_id(&mut self, req_id: u32, protocol: nx::ipc::CommandProtocol, server_ctx: &mut server::ServerContext) -> Option<Result<()>> {
+        <Self as ISystemServer>::try_handle_request_by_id(self, req_id, protocol, server_ctx)
+    }
+}
 
 pub struct SystemManager {
     info: sm::mitm::MitmProcessInfo,
@@ -149,14 +158,22 @@ pub struct SystemManager {
 }
 
 impl sf::IObject for SystemManager {
-    ipc_sf_object_impl_default_command_metadata!();
+    //ipc_sf_object_impl_default_command_metadata!();
 
-    fn get_session(&mut self) -> &mut sf::Session {
+    fn get_session(&self) -> &sf::Session {
+        &self.dummy_session
+    }
+
+    fn get_session_mut(&mut self) -> &mut sf::Session {
         &mut self.dummy_session
     }
 }
 
-impl server::ISessionObject for SystemManager {}
+impl server::ISessionObject for SystemManager {
+    fn try_handle_request_by_id(&mut self, req_id: u32, protocol: nx::ipc::CommandProtocol, server_ctx: &mut server::ServerContext) -> Option<Result<()>> {
+        <Self as ISystemManagerServer>::try_handle_request_by_id(self, req_id, protocol, server_ctx)
+    }
+}
 
 impl server::IMitmServerObject for SystemManager {
     fn new(info: sm::mitm::MitmProcessInfo) -> Self {
@@ -167,10 +184,10 @@ impl server::IMitmServerObject for SystemManager {
     }
 }
 
-impl ISystemManager for SystemManager {
-    fn create_system_interface(&mut self) -> Result<mem::Shared<dyn ISystem>> {
-        let system = System::new(self.info.program_id)?;
-        Ok(mem::Shared::new(system))
+use crate::nx::ipc::client::IClientObject;
+impl ISystemManagerServer for SystemManager {
+    fn create_system_interface(&mut self) -> Result<System> {
+        Ok(System::new(sf::Session::new()))
     }
 }
 
@@ -179,6 +196,7 @@ impl server::IMitmService for SystemManager {
         sm::ServiceName::new("nfp:sys")
     }
 
+    #[inline(never)]
     fn should_mitm(_info: sm::mitm::MitmProcessInfo) -> bool {
         emu::get_emulation_status() == emu::EmulationStatus::On
     }

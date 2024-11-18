@@ -5,16 +5,19 @@ authors = ["XorTroll"]
 edition = "2021"
 
 [dependencies]
-nx = { git = "https://github.com/aarch64-switch-rs/nx", features = ["services", "fs", "crypto", "input", "rand"] }
+#nx = { git = "https://github.com/aarch64-switch-rs/nx", features = ["services", "fs", "crypto", "input", "rand"] }
+nx = { path = "/mnt/c/Users/woolf/VSCode/libnx-rs-examples/vendor/nx", features = ["services", "fs", "crypto", "input", "rand"] }
 paste = "1.0"
 static_assertions = "1.1.0"
 serde = { version = "1.0", default-features = false, features = ["derive"] }
 serde_json = { version = "1.0", default-features = false, features = ["alloc"] }
+atomic_enum = "0.3.0"
+generic_once_cell = { version = "0.1.1", default-features = false }
 
 [package.metadata.nx.nsp.npdm]
 name = "emuiibo"
 signature_key_generation = 0
-main_thread_stack_size = "0x8000"
+main_thread_stack_size = "0x100000"
 main_thread_priority = 49
 main_thread_core_number = 3
 system_resource_size = 0
@@ -165,3 +168,6 @@ enable_system_calls = [
     "CallSecureMonitor"
 ]
 kernel_version = "3.0"
+
+[profile.dev]
+lto = true

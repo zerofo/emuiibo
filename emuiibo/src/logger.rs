@@ -1,39 +1,41 @@
+use core::sync::atomic::AtomicBool;
 use alloc::string::String;
-use alloc::string::ToString;
 use nx::fs;
+use nx::fs::FileAccessor;
 use nx::result::*;
+use nx::sync;
 use crate::fsext;
 
-static mut G_CAN_LOG: bool = false;
-static mut G_LOG_FILE: Option<fs::FileAccessor> = None;
+static G_CAN_LOG: AtomicBool = AtomicBool::new(false);
+static mut G_LOG_FILE: sync::Mutex<Option<FileAccessor>> = sync::Mutex::new(None);
 
 const LOG_FLAG: &str = "log";
 const LOG_FILE: &str = "sdmc:/emuiibo/emuiibo.log";
 
 pub fn initialize() -> Result<()> {
     unsafe {
-        G_CAN_LOG = fsext::has_flag(LOG_FLAG);
-
-        if G_CAN_LOG {
-            let _ = fs::delete_file(LOG_FILE.to_string());
-            G_LOG_FILE = Some(fs::open_file(LOG_FILE.to_string(), fs::FileOpenOption::Create() | fs::FileOpenOption::Write() | fs::FileOpenOption::Append())?);
+        let can_log = fsext::has_flag(LOG_FLAG);
+        if can_log {
+            let _ = fs::delete_file(LOG_FILE);
+            *G_LOG_FILE.lock() = Some(fs::open_file(LOG_FILE, fs::FileOpenOption::Create() | fs::FileOpenOption::Write() | fs::FileOpenOption::Append())?);
+            G_CAN_LOG.store(true, core::sync::atomic::Ordering::Release);
         }
     }
 
     Ok(())
 }
 
-pub fn log_string(log_str: String) {
-    unsafe {
-        if G_CAN_LOG {
-            let _ = G_LOG_FILE.as_mut().unwrap().write_array(log_str.as_bytes());
-        }
-    }
+pub fn log_string(s: String) {
+    log_str(s.as_str())
 }
 
 #[inline(always)]
 pub fn log_str(log_str: &str) {
-    log_string(log_str.to_string());
+    unsafe {
+        if G_CAN_LOG.load(core::sync::atomic::Ordering::Acquire) {
+            let _ = G_LOG_FILE.lock().as_mut().expect("We only allow logging after the log file has been opened").write_array(log_str.as_bytes());
+        }
+    }
 }
 
 macro_rules! log {

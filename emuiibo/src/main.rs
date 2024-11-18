@@ -1,6 +1,7 @@
 #![no_std]
 #![no_main]
 #![feature(const_trait_impl)]
+#![feature(try_blocks)]
 
 #[macro_use]
 extern crate nx;
@@ -20,7 +21,9 @@ use nx::diag::abort;
 use nx::diag::log;
 use nx::ipc::server;
 use nx::fs;
+use nx::service::applet;
 use core::panic;
+use core::sync::atomic::AtomicBool;
 
 #[macro_use]
 mod logger;
@@ -56,36 +59,63 @@ pub fn initialize_heap(_hbl_heap: util::PointerAndSize) -> util::PointerAndSize 
 
 #[no_mangle]
 pub fn main() -> Result<()> {
-    thread::get_current_thread().name.set_str("emuiibo.Main");
+    //applet::initialize();
+
     fs::initialize_fspsrv_session()?;
     fs::mount_sd_card("sdmc")?;
 
     fsext::ensure_directories()?;
-    logger::initialize()?;
+    if let Err(rc) = logger::initialize() {
+        let _a = rc;
+    }
     log!("Hello world!\n");
 
-    rand::initialize()?;
+    if let Err(e) = rand::initialize() {
+        log!("Error initlializing rand provider: {:?}", e);
+        return Ok(());
+    }
 
-    miiext::initialize()?;
-    miiext::export_miis()?;
+    if let Err(e) = miiext::initialize()  {
+        log!("Error initlializing mii module provider: {:?}", e);
+        rand::finalize();
+        return Ok(());
+    }
+
+    if let Err(e)  = miiext::export_miis() {
+        log!("Error exporting mii module provider: {:?}", e);
+        rand::finalize();
+        miiext::finalize();
+        return Ok(());
+    }
 
     amiibo::compat::convert_deprecated_virtual_amiibos();
     emu::load_emulation_status();
 
-    ipc::nfp::initialize()?;
+    if let Err(e) = ipc::nfp::initialize() {
+        log!("Error initializing nfp module provider: {:?}", e);
+        rand::finalize();
+        miiext::finalize();
+        return Ok(());
+    }
 
     const POINTER_BUF_SIZE: usize = 0x1000;
     type Manager = server::ServerManager<POINTER_BUF_SIZE>;
 
     let mut manager = Manager::new()?;
-    manager.register_mitm_service_server::<ipc::nfp::user::UserManager>()?;
-    manager.register_mitm_service_server::<ipc::nfp::sys::SystemManager>()?;
-    manager.register_service_server::<ipc::emu::EmulationService>()?;
-    manager.loop_process()?;
+    let res: nx::result::Result<()> = try {
+        manager.register_mitm_service_server::<ipc::nfp::user::UserManager>()?;
+        manager.register_mitm_service_server::<ipc::nfp::sys::SystemManager>()?;
+        manager.register_service_server::<ipc::emu::EmulationServer>()?;
+        manager.loop_process()?;
+    };
+    
+    if let Err(e)= res {
+        log!("Error running the server manager: {:?}", e);
+    }
 
+    
     miiext::finalize();
     rand::finalize();
-    fs::finalize_fspsrv_session();
     fs::unmount_all();
     Ok(())
 }
