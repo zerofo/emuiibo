@@ -8,7 +8,7 @@ use atomic_enum::atomic_enum;
 
 use core::sync::atomic::Ordering;
 
-#[derive(Copy, Clone)]
+#[derive(nx::ipc::sf::Request, nx::ipc::sf::Response, Copy, Clone)]
 #[repr(C)]
 pub struct Version {
     pub major: u8,
@@ -29,7 +29,7 @@ impl Version {
 }
 
 #[atomic_enum]
-#[derive(PartialEq, Eq)]
+#[derive(nx::ipc::sf::Request, nx::ipc::sf::Response, PartialEq, Eq)]
 #[repr(u32)]
 pub enum EmulationStatus {
     On,
@@ -38,7 +38,7 @@ pub enum EmulationStatus {
 
 
 #[atomic_enum]
-#[derive(PartialEq, Eq)]
+#[derive(nx::ipc::sf::Request, nx::ipc::sf::Response, PartialEq, Eq)]
 #[repr(u32)]
 #[allow(dead_code)]
 pub enum VirtualAmiiboStatus {

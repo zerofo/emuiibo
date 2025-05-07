@@ -1,7 +1,5 @@
 use alloc::string::String;
 use nx::result::*;
-use nx::rand::RandomGenerator;
-use crate::rand;
 
 pub mod compat;
 
@@ -26,8 +24,9 @@ pub trait VirtualAmiiboFormat {
     fn try_load(path: String) -> Result<Self> where Self: Sized;
 }
 
-pub fn generate_random_uuid(uuid: &mut [u8]) -> Result<()> {
-    rand::get_rng()?.random_bytes(uuid.as_mut_ptr(), 7)?;
+pub fn generate_random_uuid(uuid: &mut [u8;10]) -> Result<()> {
+    use nx::rand::RngCore;
+    nx::rand::get_rng()?.fill_bytes(&mut uuid[..7]);
     uuid[7] = 0;
     uuid[8] = 0;
     uuid[9] = 0;

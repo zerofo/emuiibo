@@ -6,8 +6,9 @@ use nx::crypto::aes;
 use nx::crypto::rc;
 use nx::service::mii;
 use nx::util;
-use nx::rand::RandomGenerator;
+use nx::rand::RngCore;
 use nx::result::*;
+use nx::util::Uuid;
 use crate::fsext;
 use crate::miiext;
 use super::ntag::Manufacturer1;
@@ -459,6 +460,7 @@ pub struct MiiFormat {
 }
 const_assert!(core::mem::size_of::<MiiFormat>() == 0x60);
 
+#[allow(dead_code)]
 impl MiiFormat {
     // Info1
     #[inline]
@@ -1069,8 +1071,9 @@ impl MiiFormat {
     pub unsafe fn to_charinfo(&self) -> Result<mii::CharInfo> {
         Ok(mii::CharInfo {
             id: {
-                let mut random = nx::rand::SplCsrngGenerator::new()?;
-                random.random()?
+                let mut uuid: Uuid = Default::default();
+                nx::rand::get_rng()?.fill_bytes(&mut uuid.uuid);
+                uuid
             },
             name: {
                 let name = self.name;

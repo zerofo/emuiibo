@@ -100,7 +100,11 @@ impl compat::DeprecatedVirtualAmiiboFormat for VirtualAmiibo {
         amiibo.mii_charinfo = self.mii_charinfo;
         amiibo.info.name = self.info.name.clone();
         amiibo.info.use_random_uuid = self.info.randomizeUuid;
-        super::generate_random_uuid(&mut amiibo.info.uuid)?;
+        amiibo.info.uuid = {
+            let mut uuid = [0u8;10];
+            super::generate_random_uuid(&mut uuid)?;
+            uuid.to_vec()
+        };
         amiibo.info.first_write_date = convert_date(&self.info.firstWriteDate);
         amiibo.info.last_write_date = convert_date(&self.info.lastWriteDate);
 
@@ -154,7 +158,7 @@ impl compat::DeprecatedVirtualAmiiboFormat for VirtualAmiibo {
         fs::rename_file(old_amiibo_json_path.as_str(), new_amiibo_json_path.as_str())?;
 
         if self.path != path {
-            fs::delete_directory_recursively(self.path.as_str())?;
+            fs::remove_dir_all(self.path.as_str())?;
         }
 
         Ok(amiibo)

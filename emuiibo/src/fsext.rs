@@ -31,7 +31,7 @@ pub fn set_flag(name: &str, enabled: bool) {
         let _ = fs::create_file(flag_path.as_str(), 0, fs::FileAttribute::None());
     }
     else {
-        let _ = fs::delete_file(flag_path.as_str());
+        let _ = fs::remove_file(flag_path.as_str());
     }
 }
 
@@ -58,7 +58,7 @@ pub fn get_path_file_name_without_extension(path: String) -> String {
 pub fn recreate_directory(path: impl AsRef<str>) -> Result<()> {
     let path = path.as_ref();
     // The directory might not already exist, thus this attempt to delete it could fail
-    let _ = fs::delete_directory_recursively(path);
+    let _ = fs::remove_dir_all(path);
     fs::create_directory(path)?;
     Ok(())
 }
@@ -81,7 +81,7 @@ macro_rules! read_deserialize_json {
 macro_rules! write_serialize_json {
     ($path:expr, $t:expr) => {{
         if let Ok(json_data) = serde_json::to_vec_pretty($t) {
-            let _ = nx::fs::delete_file($path);
+            let _ = nx::fs::remove_file($path);
             let mut file = nx::fs::open_file($path, nx::fs::FileOpenOption::Create() | nx::fs::FileOpenOption::Write() | nx::fs::FileOpenOption::Append())?;
             file.write_array(&json_data)?;
             Ok(())

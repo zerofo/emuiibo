@@ -5,8 +5,14 @@ authors = ["XorTroll"]
 edition = "2021"
 
 [dependencies]
-#nx = { git = "https://github.com/aarch64-switch-rs/nx", features = ["services", "fs", "crypto", "input", "rand"] }
-nx = { path = "/mnt/c/Users/woolf/VSCode/libnx-rs-examples/vendor/nx", features = ["services", "fs", "crypto", "input", "rand"] }
+nx = { git = "https://github.com/pantsman0/nx", branch = "getting_ready_for_merge", features = [
+    "services",
+    "fs",
+    "crypto",
+    "input",
+    "rand",
+] }
+#nx = { path = "../../nx", features = ["services", "fs", "crypto", "input", "rand"] }
 paste = "1.0"
 static_assertions = "1.1.0"
 serde = { version = "1.0", default-features = false, features = ["derive"] }
@@ -35,8 +41,8 @@ program_id = "0x0100000000000352"
 flags = "0xFFFFFFFFFFFFFFFF"
 
 [package.metadata.nx.nsp.npdm.service_access_control]
-accessed_services = [ "*" ]
-hosted_services = [ "*" ]
+accessed_services = ["*"]
+hosted_services = ["*"]
 
 [package.metadata.nx.nsp.npdm.kernel_capabilities]
 highest_priority = 63
@@ -165,7 +171,7 @@ enable_system_calls = [
     "GetProcessInfo",
     "CreateResourceLimit",
     "SetResourceLimitLimitValue",
-    "CallSecureMonitor"
+    "CallSecureMonitor",
 ]
 kernel_version = "3.0"
 

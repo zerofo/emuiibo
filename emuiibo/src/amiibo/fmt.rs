@@ -11,21 +11,21 @@ use crate::{rc, area, fsext, miiext};
 
 // Current virtual amiibo format, used since emuiibo v0.5 (with slight modifications)
 
-#[derive(Copy, Clone, PartialEq, Eq, Debug, Default)]
+#[derive(nx::ipc::sf::Request, nx::ipc::sf::Response, Copy, Clone, PartialEq, Eq, Debug, Default)]
 #[repr(C)]
 pub struct VirtualAmiiboUuidInfo {
-    use_random_uuid: bool,
-    uuid: [u8; 10]
+    pub use_random_uuid: bool,
+    pub uuid: [u8; 10]
 }
 
-#[derive(Copy, Clone, PartialEq, Eq, Debug, Default)]
+#[derive(nx::ipc::sf::Request, nx::ipc::sf::Response, Copy, Clone, PartialEq, Eq, Debug, Default)]
 #[repr(C)]
 pub struct VirtualAmiiboData {
-    uuid_info: VirtualAmiiboUuidInfo,
-    name: util::ArrayString<41>,
-    first_write_date: nfp::Date,
-    last_write_date: nfp::Date,
-    mii_charinfo: mii::CharInfo
+    pub uuid_info: VirtualAmiiboUuidInfo,
+    pub name: util::ArrayString<41>,
+    pub first_write_date: nfp::Date,
+    pub last_write_date: nfp::Date,
+    pub mii_charinfo: mii::CharInfo
 }
 
 // Note: actual amiibo ID in amiibos (nfp services have a different ID type)
@@ -53,10 +53,6 @@ pub struct VirtualAmiiboDate {
 }
 
 impl VirtualAmiiboDate {
-    pub const fn empty() -> Self {
-        Self { y: 0, m: 0, d: 0 }
-    }
-
     pub const fn from_date(date: nfp::Date) -> Self {
         Self { y: date.year, m: date.month, d: date.day }
     }
@@ -77,22 +73,6 @@ pub struct VirtualAmiiboInfo {
     pub use_random_uuid: bool,
     pub version: u8,
     pub write_counter: u16
-}
-
-impl VirtualAmiiboInfo {
-    pub const fn empty() -> Self {
-        Self {
-            first_write_date: VirtualAmiiboDate::empty(),
-            id: VirtualAmiiboId::empty(),
-            last_write_date: VirtualAmiiboDate::empty(),
-            mii_charinfo_file: String::new(),
-            name: String::new(),
-            uuid: Vec::new(),
-            use_random_uuid: false,
-            version: 0,
-            write_counter: 0
-        }
-    }
 }
 
 // Note: temporary fix
@@ -126,7 +106,7 @@ impl VirtualAmiiboInfoOptional {
     }
 }
 
-#[derive(Copy, Clone, Serialize, Deserialize, Debug)]
+#[derive(nx::ipc::sf::Request, nx::ipc::sf::Response, Copy, Clone, Serialize, Deserialize, Debug)]
 #[repr(C)]
 pub struct VirtualAmiiboAreaEntry {
     pub program_id: u64,
@@ -203,16 +183,6 @@ pub struct VirtualAmiibo {
 }
 
 impl VirtualAmiibo {
-    pub const fn empty() -> Self {
-        // Can't use Default with charinfo here as the function MUST be const - waiting for const traits...
-        Self {
-            info: VirtualAmiiboInfo::empty(),
-            mii_charinfo: unsafe { core::mem::MaybeUninit::zeroed().assume_init() },
-            areas: VirtualAmiiboAreaInfo::empty(),
-            path: String::new()
-        }
-    }
-
     pub fn new(info: VirtualAmiiboInfo, areas: VirtualAmiiboAreaInfo, path: String) -> Result<Self> {
         let mut amiibo = Self {
             info: info,
@@ -470,7 +440,7 @@ impl VirtualAmiibo {
         let _ = fs::create_file(amiibo_flag_path.as_str(), 0, fs::FileAttribute::None());
 
         let mii_charinfo_path = format!("{}/{}", self.path, self.info.mii_charinfo_file);
-        let _ = fs::delete_file(mii_charinfo_path.as_str());
+        let _ = fs::remove_file(mii_charinfo_path.as_str());
         let mut mii_charinfo_file = fs::open_file(mii_charinfo_path.as_str(), fs::FileOpenOption::Create() | fs::FileOpenOption::Write() | fs::FileOpenOption::Append())?;
         mii_charinfo_file.write_val(&self.mii_charinfo)?;
 
@@ -508,9 +478,9 @@ impl super::VirtualAmiiboFormat for VirtualAmiibo {
         let mut amiibo_json_opt = read_deserialize_json!(amiibo_json_path.as_str() => VirtualAmiiboInfoOptional)?;
         // Fix for those which lack uuids
         if amiibo_json_opt.uuid.is_none() {
-            let mut uuid = vec![0u8; 10];
+            let mut uuid = [0u8; 10];
             super::generate_random_uuid(&mut uuid)?;
-            amiibo_json_opt.uuid = Some(uuid);
+            amiibo_json_opt.uuid = Some(uuid.to_vec());
             amiibo_json_opt.use_random_uuid = Some(true);
             needs_save = true;
         }

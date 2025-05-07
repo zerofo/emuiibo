@@ -108,7 +108,7 @@ impl EmulationHandler {
         // TODO: make use of aruid or mcu data?
         result_return_unless!(self.is_state(nfp::State::NonInitialized), nfp::rc::ResultDeviceNotFound);
         log!("[{:#X}] Initialize -- aruid: {}, process_id: {}, mcu_version_data: (count: {})\n", self.application_id.0, aruid.aruid, aruid.process_id, mcu_data.get_count());
-        let mcu_ver_datas = mcu_data.get_slice();
+        let mcu_ver_datas = mcu_data.get_maybe_unaligned();
         for mcu_ver_data in mcu_ver_datas {
             log!("[{:#X}] Initialize -- mcu version: {}\n", self.application_id.0, mcu_ver_data.version);
         }
@@ -120,8 +120,9 @@ impl EmulationHandler {
         }
 
         // TODO: different thread names depending on the app id?
+        let thread_name = format!("emuWoker:{:X?}", self.application_id.0);
         let handle = self.emulation_state.clone();
-        self.emu_handler_thread = Some(thread::Builder::new().core(thread::ThreadStartCore::Default).priority(thread::ThreadPriority::Set(0x2B)).name("emuiibo.AmiiboEmulationHandler").stack_size(0x1000).spawn(move || {
+        self.emu_handler_thread = Some(thread::Builder::new().core(thread::ThreadStartCore::Default).priority(thread::ThreadPriority::Set(0x2B)).name(thread_name).stack_size(0x1000).spawn(move || {
             Self::emu_handler_thread_fn(handle);
         })?);
         Ok(())
@@ -158,7 +159,7 @@ impl EmulationHandler {
             }
         };
 
-        let devices = out_devices.get_mut_slice();
+        let devices = unsafe {out_devices.get_mut_slice()};
         devices[0].id = fake_device_npad_id as u32;
         Ok(1)
     }

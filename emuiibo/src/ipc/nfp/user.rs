@@ -1,7 +1,6 @@
 
 use nx::ipc::sf::hid;
 use nx::result::*;
-use nx::mem;
 use nx::ipc::sf;
 use nx::ipc::server;
 use nx::ipc::sf::applet;
@@ -10,15 +9,12 @@ use nx::ipc::sf::nfp;
 use nx::ipc::sf::nfp::IUserServer;
 use nx::ipc::sf::nfp::IUserManagerServer;
 use nx::ipc::sf::sm;
-use nx::service::nfp::User;
-use nx::sync::Mutex;
 
 use crate::emu;
 use super::EmulationHandler;
 
 pub struct UserEmulator {
-    handler: EmulationHandler,
-    dummy_session: sf::Session
+    handler: EmulationHandler
 }
 
 impl UserEmulator {
@@ -26,8 +22,7 @@ impl UserEmulator {
         emu::register_intercepted_application_id(application_id);
         
         Ok(Self {
-            handler: EmulationHandler::new(application_id)?,
-            dummy_session: sf::Session::new()
+            handler: EmulationHandler::new(application_id)?
         })
     }
 }
@@ -38,19 +33,12 @@ impl Drop for UserEmulator {
     }
 }
 
-impl sf::IObject for UserEmulator {
-
-    fn get_session(&self) -> &sf::Session {
-        &self.dummy_session
-    }
-
-    fn get_session_mut(&mut self) -> &mut sf::Session {
-        &mut self.dummy_session
-    }
-}
-
 impl IUserServer for UserEmulator {
     fn initialize(&mut self, aruid: applet::AppletResourceUserId, mcu_data: sf::InMapAliasBuffer<nfp::McuVersionData>) -> Result<()> {
+        self.handler.initialize(aruid, mcu_data)
+    }
+
+    fn initialize_2(&mut self, aruid: applet::AppletResourceUserId, mcu_data: sf::InMapAliasBuffer<nfp::McuVersionData>) -> Result<()> {
         self.handler.initialize(aruid, mcu_data)
     }
 
@@ -158,27 +146,13 @@ impl server::ISessionObject for UserEmulator {
 }
 
 pub struct UserManager {
-    info: sm::mitm::MitmProcessInfo,
-    dummy_session: sf::Session
+    info: sm::mitm::MitmProcessInfo
 }
 
-impl sf::IObject for UserManager {
-    //ipc_sf_object_impl_default_command_metadata!();
-
-    fn get_session(&self) -> &sf::Session {
-        &self.dummy_session
-    }
-
-    fn get_session_mut(&mut self) -> &mut sf::Session {
-        &mut self.dummy_session
-    }
-}
-
-use crate::nx::ipc::client::IClientObject;
 impl IUserManagerServer for UserManager {
-    fn create_user_interface(&mut self) -> Result<User> {
+    fn create_user_interface(&mut self) -> Result<impl IUserServer + 'static> {
         emu::register_intercepted_application_id(self.info.program_id);
-        Ok(User::new(sf::Session::new()))
+        UserEmulator::new(self.info.program_id)
     }
 }
 
@@ -191,8 +165,7 @@ impl server::ISessionObject for UserManager {
 impl server::IMitmServerObject for UserManager {
     fn new(info: sm::mitm::MitmProcessInfo) -> Self {
         Self {
-            info,
-            dummy_session: sf::Session::new()
+            info
         }
     }
 }

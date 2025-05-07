@@ -5,47 +5,35 @@ use nx::result::*;
 use nx::ipc::sf;
 use nx::ipc::server;
 use nx::ipc::sf::nfp;
+use nx::service;
 use nx::version;
 use crate::rc;
 use crate::emu;
 use crate::amiibo;
 use crate::amiibo::VirtualAmiiboFormat;
 
+ipc_sf_define_default_client_for_interface!(EmulationService);
 ipc_sf_define_interface_trait! {
     trait EmulationService {
-        get_version [0, version::VersionInterval::all()]: () => (version: emu::Version);
-        get_virtual_amiibo_directory [1, version::VersionInterval::all()]: (out_path: sf::OutMapAliasBuffer<u8>) => ();
-        get_emulation_status [2, version::VersionInterval::all()]: () => (status: emu::EmulationStatus);
-        set_emulation_status [3, version::VersionInterval::all()]: (status: emu::EmulationStatus) => ();
-        get_active_virtual_amiibo [4, version::VersionInterval::all()]: (out_path: sf::OutMapAliasBuffer<u8>) => (virtual_amiibo: amiibo::fmt::VirtualAmiiboData);
-        set_active_virtual_amiibo [5, version::VersionInterval::all()]: (path: sf::InMapAliasBuffer<u8>) => ();
-        reset_active_virtual_amiibo [6, version::VersionInterval::all()]: () => ();
-        get_active_virtual_amiibo_status [7, version::VersionInterval::all()]: () => (status: emu::VirtualAmiiboStatus);
-        set_active_virtual_amiibo_status [8, version::VersionInterval::all()]: (status: emu::VirtualAmiiboStatus) => ();
-        is_application_id_intercepted [9, version::VersionInterval::all()]: (application_id: ncm::ProgramId) => (is_intercepted: bool);
-        try_parse_virtual_amiibo [10, version::VersionInterval::all()]: (path: sf::InMapAliasBuffer<u8>) => (virtual_amiibo: amiibo::fmt::VirtualAmiiboData);
-        get_active_virtual_amiibo_areas [11, version::VersionInterval::all()]: (out_areas: sf::OutMapAliasBuffer<amiibo::fmt::VirtualAmiiboAreaEntry>) => (count: u32);
-        get_active_virtual_amiibo_current_area [12, version::VersionInterval::all()]: () => (access_id: nfp::AccessId);
-        set_active_virtual_amiibo_current_area [13, version::VersionInterval::all()]: (access_id: nfp::AccessId) => ();
-        set_active_virtual_amiibo_uuid_info [14, version::VersionInterval::all()]: (uuid_info: amiibo::fmt::VirtualAmiiboUuidInfo) => ();
+        get_version [0, version::VersionInterval::all()]: () => (version: emu::Version) (version: emu::Version);
+        get_virtual_amiibo_directory [1, version::VersionInterval::all()]: (out_path: sf::OutMapAliasBuffer<u8>) => () ();
+        get_emulation_status [2, version::VersionInterval::all()]: () => (status: emu::EmulationStatus) (status: emu::EmulationStatus);
+        set_emulation_status [3, version::VersionInterval::all()]: (status: emu::EmulationStatus) => () ();
+        get_active_virtual_amiibo [4, version::VersionInterval::all()]: (out_path: sf::OutMapAliasBuffer<u8>) => (virtual_amiibo: amiibo::fmt::VirtualAmiiboData) (virtual_amiibo: amiibo::fmt::VirtualAmiiboData);
+        set_active_virtual_amiibo [5, version::VersionInterval::all()]: (path: sf::InMapAliasBuffer<u8>) => () ();
+        reset_active_virtual_amiibo [6, version::VersionInterval::all()]: () => () ();
+        get_active_virtual_amiibo_status [7, version::VersionInterval::all()]: () => (status: emu::VirtualAmiiboStatus) (status: emu::VirtualAmiiboStatus);
+        set_active_virtual_amiibo_status [8, version::VersionInterval::all()]: (status: emu::VirtualAmiiboStatus) => () ();
+        is_application_id_intercepted [9, version::VersionInterval::all()]: (application_id: ncm::ProgramId) => (is_intercepted: bool) (is_intercepted: bool);
+        try_parse_virtual_amiibo [10, version::VersionInterval::all()]: (path: sf::InMapAliasBuffer<u8>) => (virtual_amiibo: amiibo::fmt::VirtualAmiiboData) (virtual_amiibo: amiibo::fmt::VirtualAmiiboData);
+        get_active_virtual_amiibo_areas [11, version::VersionInterval::all()]: (out_areas: sf::OutMapAliasBuffer<amiibo::fmt::VirtualAmiiboAreaEntry>) => (count: u32) (count: u32);
+        get_active_virtual_amiibo_current_area [12, version::VersionInterval::all()]: () => (access_id: nfp::AccessId) (access_id: nfp::AccessId);
+        set_active_virtual_amiibo_current_area [13, version::VersionInterval::all()]: (access_id: nfp::AccessId) => () ();
+        set_active_virtual_amiibo_uuid_info [14, version::VersionInterval::all()]: (uuid_info: amiibo::fmt::VirtualAmiiboUuidInfo) => () ();
     }
 }
 
-pub struct EmulationServer {
-    dummy_session: sf::Session
-}
-
-impl sf::IObject for EmulationServer {
-    //ipc_sf_object_impl_default_command_metadata!();
-
-    fn get_session_mut(&mut self) -> &mut sf::Session {
-        &mut self.dummy_session
-    }
-
-    fn get_session(&self) -> &sf::Session {
-        &self.dummy_session
-    }
-}
+pub struct EmulationServer;
 
 impl IEmulationServiceServer for EmulationServer {
     fn get_version(&mut self) -> Result<emu::Version> {
@@ -133,7 +121,7 @@ impl IEmulationServiceServer for EmulationServer {
 
         let amiibo = amiibo.as_ref().unwrap();
 
-        let areas = out_areas.get_mut_slice();
+        let areas = unsafe { out_areas.get_mut_slice()};
         
         let count = areas.len().min(amiibo.areas.areas.len());
         for i in 0..count {
@@ -184,9 +172,7 @@ impl server::ISessionObject for EmulationServer {
 
 impl server::IServerObject for EmulationServer {
     fn new() -> Self {
-        Self {
-            dummy_session: sf::Session::new()
-        }
+        Self
     }
 }
 
@@ -197,5 +183,18 @@ impl server::IService for EmulationServer {
 
     fn get_max_sesssions() -> i32 {
         20
+    }
+}
+
+impl service::IService for EmulationService {
+    fn get_name() -> sm::ServiceName {
+        sm::ServiceName::new("emuiibo")
+    }
+
+    fn as_domain() -> bool {
+        false
+    }
+
+    fn post_initialize(&mut self) -> Result<()> {Ok(())
     }
 }

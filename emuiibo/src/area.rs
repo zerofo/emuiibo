@@ -1,7 +1,7 @@
 use nx::result::*;
 use nx::fs;
 use nx::ipc::sf::nfp;
-use alloc::string::{String, ToString};
+use alloc::string::String;
 use alloc::vec::Vec;
 use serde::{Serialize, Deserialize};
 use crate::{amiibo, fsext};
@@ -30,7 +30,7 @@ impl ApplicationArea {
 
     pub fn delete(&mut self) -> Result<()> {
         if self.is_valid() {
-            fs::delete_file(self.area_file.as_str())?;
+            fs::remove_file(self.area_file.as_str())?;
             self.area_file.clear();
         }
 
@@ -56,13 +56,15 @@ impl ApplicationArea {
         self.write(data, data_size)
     }
 
+    /// SAFETY: `data` must be a valid, non-null pointer
     pub unsafe fn write(&self, data: *const u8, data_size: usize) -> Result<()> {
-        let _ = fs::delete_file(self.area_file.as_str());
+        let _ = fs::remove_file(self.area_file.as_str());
         let mut file = fs::open_file(self.area_file.as_str(), fs::FileOpenOption::Create() | fs::FileOpenOption::Write() | fs::FileOpenOption::Append())?;
         file.write_array(core::slice::from_raw_parts(data,data_size))?;
         Ok(())
     }
 
+    /// SAFETY: `data` must be a valid, non-null pointer
     pub unsafe fn read(&self, data: *mut u8, data_size: usize) -> Result<()> {
         let mut file = fs::open_file(self.area_file.as_str(), fs::FileOpenOption::Read())?;
         file.read_array(core::slice::from_raw_parts_mut(data, data_size))?;

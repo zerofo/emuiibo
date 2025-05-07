@@ -2,7 +2,7 @@ use nx::{result::*, fs};
 use crate::amiibo::bin;
 
 use super::{v1, v2, v3, fmt, VirtualAmiiboFormat};
-use alloc::string::{String, ToString};
+use alloc::string::String;
 
 pub(crate) const RETAIL_KEY_SET_FILE: &str = "sdmc:/switch/key_retail.bin";
 

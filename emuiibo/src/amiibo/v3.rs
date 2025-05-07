@@ -188,9 +188,9 @@ impl compat::DeprecatedVirtualAmiiboFormat for VirtualAmiibo {
         {
             Some(uuid) => uuid,
             None => {
-                let mut uuid = vec![0u8; 10];
+                let mut uuid = [0u8; 10];
                 super::generate_random_uuid(&mut uuid)?;
-                uuid
+                uuid.to_vec()
             }
         };
         let mut amiibo = fmt::VirtualAmiibo {
@@ -255,7 +255,7 @@ impl compat::DeprecatedVirtualAmiiboFormat for VirtualAmiibo {
             )?;
         }
         if self.path != path {
-            fs::delete_directory_recursively(self.path.as_str())?;
+            fs::remove_dir_all(self.path.as_str())?;
         }
 
         Ok(amiibo)
