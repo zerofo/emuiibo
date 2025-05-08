@@ -121,7 +121,7 @@ impl IEmulationServiceServer for EmulationServer {
 
         let amiibo = amiibo.as_ref().unwrap();
 
-        let areas = unsafe { out_areas.get_mut_slice()};
+        let areas = out_areas.as_slice_mut()?;
         
         let count = areas.len().min(amiibo.areas.areas.len());
         for i in 0..count {

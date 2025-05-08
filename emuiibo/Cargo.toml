@@ -5,20 +5,25 @@ authors = ["XorTroll"]
 edition = "2021"
 
 [dependencies]
-nx = { git = "https://github.com/pantsman0/nx", branch = "getting_ready_for_merge", features = [
-    "services",
-    "fs",
-    "crypto",
-    "input",
-    "rand",
-] }
-#nx = { path = "../../nx", features = ["services", "fs", "crypto", "input", "rand"] }
+#nx = { git = "https://github.com/pantsman0/nx", branch = "getting_ready_for_merge", features = [
+#    "services",
+#    "fs",
+#    "crypto",
+#    "input",
+#    "rand",
+#] }
+nx = { path = "/mnt/c/code/nx", features = ["services", "fs", "input", "rand"] }
+
 paste = "1.0"
 static_assertions = "1.1.0"
 serde = { version = "1.0", default-features = false, features = ["derive"] }
 serde_json = { version = "1.0", default-features = false, features = ["alloc"] }
 atomic_enum = "0.3.0"
 generic_once_cell = { version = "0.1.1", default-features = false }
+aes = {version = "0.8.4", features = ["zeroize"] }
+ctr = {version = "0.9.2", features = ["zeroize"] }
+hmac = "0.12.1"
+sha2 = {version = "0.10.9", default-features = false}
 
 [package.metadata.nx.nsp.npdm]
 name = "emuiibo"

@@ -1,8 +1,6 @@
 #![no_std]
 #![no_main]
 
-#![feature(try_blocks)]
-
 #[macro_use]
 extern crate nx;
 
@@ -12,11 +10,11 @@ extern crate alloc;
 #[macro_use]
 extern crate emuiibo;
 
+use nx::diag::abort;
+use nx::fs;
+use nx::ipc::server;
 use nx::result::*;
 use nx::util;
-use nx::diag::abort;
-use nx::ipc::server;
-use nx::fs;
 
 use emuiibo::*;
 
@@ -53,12 +51,12 @@ pub fn main() -> Result<()> {
         return Ok(());
     }
 
-    if let Err(e) = miiext::initialize()  {
+    if let Err(e) = miiext::initialize() {
         log!("Error initlializing mii module provider: {:?}", e);
         return Ok(());
     }
 
-    if let Err(e)  = miiext::export_miis() {
+    if let Err(e) = miiext::export_miis() {
         log!("Error exporting mii module provider: {:?}", e);
         return Ok(());
     }
@@ -75,15 +73,9 @@ pub fn main() -> Result<()> {
     type Manager = server::ServerManager<POINTER_BUF_SIZE>;
 
     let mut manager = Manager::new()?;
-    let res: nx::result::Result<()> = try {
-        manager.register_mitm_service_server::<ipc::nfp::user::UserManager>()?;
-        manager.register_mitm_service_server::<ipc::nfp::sys::SystemManager>()?;
-        manager.register_service_server::<ipc::emu::EmulationServer>()?;
-    };
-    
-    if let Err(e)= res {
-        log!("Error configuring the server manager: {:?}", e);
-    }
+    manager.register_mitm_service_server::<ipc::nfp::user::UserManager>()?;
+    manager.register_mitm_service_server::<ipc::nfp::sys::SystemManager>()?;
+    manager.register_service_server::<ipc::emu::EmulationServer>()?;
 
     if let Err(e) = manager.loop_process() {
         log!("Error occured running server manager loop: {:?}", e);

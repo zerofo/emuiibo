@@ -159,7 +159,7 @@ impl EmulationHandler {
             }
         };
 
-        let devices = unsafe {out_devices.get_mut_slice()};
+        let devices = out_devices.as_slice_mut()?;
         devices[0].id = fake_device_npad_id as u32;
         Ok(1)
     }
