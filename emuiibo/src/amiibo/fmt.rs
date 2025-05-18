@@ -11,21 +11,21 @@ use crate::{rc, area, fsext, miiext};
 
 // Current virtual amiibo format, used since emuiibo v0.5 (with slight modifications)
 
-#[derive(Copy, Clone, PartialEq, Eq, Debug, Default)]
+#[derive(nx::ipc::sf::Request, nx::ipc::sf::Response, Copy, Clone, PartialEq, Eq, Debug, Default)]
 #[repr(C)]
 pub struct VirtualAmiiboUuidInfo {
-    use_random_uuid: bool,
-    uuid: [u8; 10]
+    pub use_random_uuid: bool,
+    pub uuid: [u8; 10]
 }
 
-#[derive(Copy, Clone, PartialEq, Eq, Debug, Default)]
+#[derive(nx::ipc::sf::Request, nx::ipc::sf::Response, Copy, Clone, PartialEq, Eq, Debug, Default)]
 #[repr(C)]
 pub struct VirtualAmiiboData {
-    uuid_info: VirtualAmiiboUuidInfo,
-    name: util::CString<41>,
-    first_write_date: nfp::Date,
-    last_write_date: nfp::Date,
-    mii_charinfo: mii::CharInfo
+    pub uuid_info: VirtualAmiiboUuidInfo,
+    pub name: util::ArrayString<41>,
+    pub first_write_date: nfp::Date,
+    pub last_write_date: nfp::Date,
+    pub mii_charinfo: mii::CharInfo
 }
 
 // Note: actual amiibo ID in amiibos (nfp services have a different ID type)
@@ -53,10 +53,6 @@ pub struct VirtualAmiiboDate {
 }
 
 impl VirtualAmiiboDate {
-    pub const fn empty() -> Self {
-        Self { y: 0, m: 0, d: 0 }
-    }
-
     pub const fn from_date(date: nfp::Date) -> Self {
         Self { y: date.year, m: date.month, d: date.day }
     }
@@ -77,22 +73,6 @@ pub struct VirtualAmiiboInfo {
     pub use_random_uuid: bool,
     pub version: u8,
     pub write_counter: u16
-}
-
-impl VirtualAmiiboInfo {
-    pub const fn empty() -> Self {
-        Self {
-            first_write_date: VirtualAmiiboDate::empty(),
-            id: VirtualAmiiboId::empty(),
-            last_write_date: VirtualAmiiboDate::empty(),
-            mii_charinfo_file: String::new(),
-            name: String::new(),
-            uuid: Vec::new(),
-            use_random_uuid: false,
-            version: 0,
-            write_counter: 0
-        }
-    }
 }
 
 // Note: temporary fix
@@ -126,7 +106,7 @@ impl VirtualAmiiboInfoOptional {
     }
 }
 
-#[derive(Copy, Clone, Serialize, Deserialize, Debug)]
+#[derive(nx::ipc::sf::Request, nx::ipc::sf::Response, Copy, Clone, Serialize, Deserialize, Debug)]
 #[repr(C)]
 pub struct VirtualAmiiboAreaEntry {
     pub program_id: u64,
@@ -156,7 +136,7 @@ pub fn generate_areas_json(path: String) -> Result<Option<nfp::AccessId>> {
 
     let areas_dir = format!("{}/areas", path);
     log!("Analyzing areas dir: {}\n", areas_dir);
-    if let Ok(mut dir) = fs::open_directory(areas_dir, fs::DirectoryOpenMode::ReadFiles()) {
+    if let Ok(mut dir) = fs::open_directory(areas_dir.as_str(), fs::DirectoryOpenMode::ReadFiles()) {
         loop {
             if let Ok(Some(entry)) = dir.read_next() {
                 if let Ok(name) = entry.name.get_str() {
@@ -189,7 +169,7 @@ pub fn generate_areas_json(path: String) -> Result<Option<nfp::AccessId>> {
     }
 
     let areas_json_path= format!("{}/areas.json", path);
-    write_serialize_json!(areas_json_path, &areas)?;
+    write_serialize_json!(areas_json_path.as_str(), &areas)?;
 
     Ok(access_id)
 }
@@ -203,16 +183,6 @@ pub struct VirtualAmiibo {
 }
 
 impl VirtualAmiibo {
-    pub const fn empty() -> Self {
-        // Can't use Default with charinfo here as the function MUST be const - waiting for const traits...
-        Self {
-            info: VirtualAmiiboInfo::empty(),
-            mii_charinfo: unsafe { core::mem::MaybeUninit::zeroed().assume_init() },
-            areas: VirtualAmiiboAreaInfo::empty(),
-            path: String::new()
-        }
-    }
-
     pub fn new(info: VirtualAmiiboInfo, areas: VirtualAmiiboAreaInfo, path: String) -> Result<Self> {
         let mut amiibo = Self {
             info: info,
@@ -231,12 +201,12 @@ impl VirtualAmiibo {
     pub fn load_mii_charinfo(&self) -> Result<mii::CharInfo> {
         let mii_charinfo_path = format!("{}/{}", self.path, self.info.mii_charinfo_file);
         if fsext::exists_file(mii_charinfo_path.clone()) {
-            let mut mii_charinfo_file = fs::open_file(mii_charinfo_path, fs::FileOpenOption::Read())?;
+            let mut mii_charinfo_file = fs::open_file(mii_charinfo_path.as_str(), fs::FileOpenOption::Read())?;
             Ok(mii_charinfo_file.read_val()?)
         }
         else {
             let random_mii = miiext::generate_random_mii()?;
-            let mut mii_charinfo_file = fs::open_file(mii_charinfo_path, fs::FileOpenOption::Create() | fs::FileOpenOption::Write() | fs::FileOpenOption::Append())?;
+            let mut mii_charinfo_file = fs::open_file(mii_charinfo_path.as_str(), fs::FileOpenOption::Create() | fs::FileOpenOption::Write() | fs::FileOpenOption::Append())?;
             mii_charinfo_file.write_val(&random_mii)?;
             Ok(random_mii)
         }
@@ -345,7 +315,7 @@ impl VirtualAmiibo {
             data.uuid_info.uuid[i] = self.info.uuid[i];
         }
         data.uuid_info.use_random_uuid = self.info.use_random_uuid;
-        data.name.set_string(self.info.name.clone());
+        data.name.set_str(self.info.name.as_str())?;
         data.first_write_date = self.info.first_write_date.to_date();
         data.last_write_date = self.info.last_write_date.to_date();
         data.mii_charinfo = self.mii_charinfo;
@@ -381,7 +351,7 @@ impl VirtualAmiibo {
         Ok(nfp::RegisterInfo {
             mii_charinfo: self.mii_charinfo,
             first_write_date: self.info.first_write_date.to_date(),
-            name: util::CString::from_str(&self.info.name.clone()[0..self.info.name.len().min(10)]),
+            name: util::ArrayString::from_str(&self.info.name[0..self.info.name.len().min(10)]),
             font_region: 0,
             reserved: [0; 0x7A]
         })
@@ -413,7 +383,7 @@ impl VirtualAmiibo {
         Ok(nfp::RegisterInfoPrivate {
             mii_store_data: mii::StoreData::from_charinfo(self.mii_charinfo)?,
             first_write_date: self.info.first_write_date.to_date(),
-            name: util::CString::from_str(&self.info.name.clone()[0..self.info.name.len().min(10)]),
+            name: util::ArrayString::from_str(&self.info.name.clone()[0..self.info.name.len().min(10)]),
             unk: 0,
             reserved: [0; 0x8E]
         })
@@ -464,18 +434,18 @@ impl VirtualAmiibo {
 
     pub fn save(&self) -> Result<()> {
         let amiibo_json_path = format!("{}/amiibo.json", self.path);
-        write_serialize_json!(amiibo_json_path, &self.info)?;
+        write_serialize_json!(amiibo_json_path.as_str(), &self.info)?;
 
         let amiibo_flag_path = format!("{}/amiibo.flag", self.path);
-        let _ = fs::create_file(amiibo_flag_path, 0, fs::FileAttribute::None());
+        let _ = fs::create_file(amiibo_flag_path.as_str(), 0, fs::FileAttribute::None());
 
         let mii_charinfo_path = format!("{}/{}", self.path, self.info.mii_charinfo_file);
-        let _ = fs::delete_file(mii_charinfo_path.clone());
-        let mut mii_charinfo_file = fs::open_file(mii_charinfo_path.clone(), fs::FileOpenOption::Create() | fs::FileOpenOption::Write() | fs::FileOpenOption::Append())?;
+        let _ = fs::remove_file(mii_charinfo_path.as_str());
+        let mut mii_charinfo_file = fs::open_file(mii_charinfo_path.as_str(), fs::FileOpenOption::Create() | fs::FileOpenOption::Write() | fs::FileOpenOption::Append())?;
         mii_charinfo_file.write_val(&self.mii_charinfo)?;
 
         let areas_json_path = format!("{}/areas.json", self.path);
-        write_serialize_json!(areas_json_path, &self.areas)?;
+        write_serialize_json!(areas_json_path.as_str(), &self.areas)?;
 
         Ok(())
     }
@@ -505,12 +475,12 @@ impl super::VirtualAmiiboFormat for VirtualAmiibo {
 
         let mut needs_save = false;
 
-        let mut amiibo_json_opt = read_deserialize_json!(amiibo_json_path => VirtualAmiiboInfoOptional)?;
+        let mut amiibo_json_opt = read_deserialize_json!(amiibo_json_path.as_str() => VirtualAmiiboInfoOptional)?;
         // Fix for those which lack uuids
         if amiibo_json_opt.uuid.is_none() {
-            let mut uuid = vec![0u8; 10];
+            let mut uuid = [0u8; 10];
             super::generate_random_uuid(&mut uuid)?;
-            amiibo_json_opt.uuid = Some(uuid);
+            amiibo_json_opt.uuid = Some(uuid.to_vec());
             amiibo_json_opt.use_random_uuid = Some(true);
             needs_save = true;
         }
@@ -519,7 +489,7 @@ impl super::VirtualAmiiboFormat for VirtualAmiibo {
             needs_save = true;
         }
 
-        let areas_json = read_deserialize_json!(areas_json_path => VirtualAmiiboAreaInfo)?;
+        let areas_json = read_deserialize_json!(areas_json_path.as_str() => VirtualAmiiboAreaInfo)?;
         for entry in areas_json.areas.iter() {
             area::push_access_id_cache(entry.program_id, entry.access_id)?;
         }

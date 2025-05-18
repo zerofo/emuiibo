@@ -1,46 +1,25 @@
 #![no_std]
 #![no_main]
-#![feature(const_trait_impl)]
 
 #[macro_use]
 extern crate nx;
 
 #[macro_use]
-extern crate static_assertions;
-
-#[macro_use]
 extern crate alloc;
 
-extern crate paste;
+#[macro_use]
+extern crate emuiibo;
 
+use nx::diag::abort;
+use nx::fs;
+use nx::ipc::server;
 use nx::result::*;
 use nx::util;
-use nx::thread;
-use nx::diag::abort;
-use nx::diag::log;
-use nx::ipc::server;
-use nx::fs;
+
+use emuiibo::*;
+
 use core::panic;
-
-#[macro_use]
-mod logger;
-
-mod rc;
-
-#[macro_use]
-mod fsext;
-
-mod miiext;
-
-mod ipc;
-
-mod emu;
-
-mod amiibo;
-
-mod area;
-
-mod rand;
+use core::ptr::addr_of_mut;
 
 rrt0_define_default_module_name!();
 
@@ -48,31 +27,47 @@ const CUSTOM_HEAP_SIZE: usize = 0x8000;
 static mut CUSTOM_HEAP: [u8; CUSTOM_HEAP_SIZE] = [0; CUSTOM_HEAP_SIZE];
 
 #[no_mangle]
+#[allow(static_mut_refs)]
 pub fn initialize_heap(_hbl_heap: util::PointerAndSize) -> util::PointerAndSize {
     unsafe {
-        util::PointerAndSize::new(CUSTOM_HEAP.as_mut_ptr(), CUSTOM_HEAP.len())
+        // SAFETY: CUSTOM_HEAP must only ever be referenced from here, and nowhere else.
+        util::PointerAndSize::new(addr_of_mut!(CUSTOM_HEAP) as _, CUSTOM_HEAP.len())
     }
 }
 
 #[no_mangle]
 pub fn main() -> Result<()> {
-    thread::get_current_thread().name.set_str("emuiibo.Main");
     fs::initialize_fspsrv_session()?;
     fs::mount_sd_card("sdmc")?;
-
     fsext::ensure_directories()?;
-    logger::initialize()?;
-    log!("Hello world!\n");
 
-    rand::initialize()?;
+    if let Err(rc) = logger::initialize() {
+        let _a = rc;
+    }
+    log!("Logging Initialized!\n");
 
-    miiext::initialize()?;
-    miiext::export_miis()?;
+    if let Err(e) = nx::rand::initialize() {
+        log!("Error initlializing rand provider: {:?}", e);
+        return Ok(());
+    }
+
+    if let Err(e) = miiext::initialize() {
+        log!("Error initlializing mii module provider: {:?}", e);
+        return Ok(());
+    }
+
+    if let Err(e) = miiext::export_miis() {
+        log!("Error exporting mii module provider: {:?}", e);
+        return Ok(());
+    }
 
     amiibo::compat::convert_deprecated_virtual_amiibos();
     emu::load_emulation_status();
 
-    ipc::nfp::initialize()?;
+    if let Err(e) = ipc::nfp::initialize() {
+        log!("Error initializing nfp module provider: {:?}", e);
+        return Ok(());
+    }
 
     const POINTER_BUF_SIZE: usize = 0x1000;
     type Manager = server::ServerManager<POINTER_BUF_SIZE>;
@@ -80,17 +75,16 @@ pub fn main() -> Result<()> {
     let mut manager = Manager::new()?;
     manager.register_mitm_service_server::<ipc::nfp::user::UserManager>()?;
     manager.register_mitm_service_server::<ipc::nfp::sys::SystemManager>()?;
-    manager.register_service_server::<ipc::emu::EmulationService>()?;
-    manager.loop_process()?;
+    manager.register_service_server::<ipc::emu::EmulationServer>()?;
 
-    miiext::finalize();
-    rand::finalize();
-    fs::finalize_fspsrv_session();
-    fs::unmount_all();
-    Ok(())
+    if let Err(e) = manager.loop_process() {
+        log!("Error occured running server manager loop: {:?}", e);
+    }
+
+    panic!("exiting MitM Servers is not supported.");
 }
 
 #[panic_handler]
 fn panic_handler(info: &panic::PanicInfo) -> ! {
-    util::simple_panic_handler::<log::lm::LmLogger>(info, abort::AbortLevel::SvcBreak())
+    util::simple_panic_handler::<nx::diag::log::lm::LmLogger>(info, abort::AbortLevel::SvcBreak())
 }

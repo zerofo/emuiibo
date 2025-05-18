@@ -1,13 +1,12 @@
 use alloc::string::ToString;
-use alloc::vec::Vec;
 use nx::result::*;
 use nx::fs;
 use alloc::string::String;
 use crate::{amiibo, miiext};
 
 #[inline]
-pub fn exists_file(path: String) -> bool {
-    match fs::get_entry_type(path) {
+pub fn exists_file(path: impl AsRef<str>) -> bool {
+    match fs::get_entry_type(path.as_ref()) {
         Ok(ent_type) => ent_type == fs::DirectoryEntryType::File,
         Err(_) => false
     }
@@ -29,22 +28,25 @@ pub fn has_flag(name: &str) -> bool {
 pub fn set_flag(name: &str, enabled: bool) {
     let flag_path = make_flag_path(name);
     if enabled {
-        let _ = fs::create_file(flag_path, 0, fs::FileAttribute::None());
+        let _ = fs::create_file(flag_path.as_str(), 0, fs::FileAttribute::None());
     }
     else {
-        let _ = fs::delete_file(flag_path);
+        let _ = fs::remove_file(flag_path.as_str());
     }
 }
 
-pub fn get_path_without_extension(path: String) -> String {
-    let mut path_items: Vec<&str> = path.split_terminator('.').collect();
-    path_items.pop();
-    path_items.join(".")
+pub fn get_path_without_extension(path: impl AsRef<str>) -> String {
+    let path = path.as_ref();
+    match path.rfind('.') {
+        Some(offset) => {
+            path[..offset].to_string()
+        },
+        None => path.to_string()
+    }
 }
 
-pub fn get_path_file_name(path: String) -> String {
-    let path_items: Vec<&str> = path.split_terminator('/').collect();
-    String::from(*path_items.last().unwrap_or(&""))
+pub fn get_path_file_name(path: impl AsRef<str>) -> String {
+    path.as_ref().split('/').last().unwrap_or("").to_string()
 }
 
 #[inline]
@@ -53,10 +55,11 @@ pub fn get_path_file_name_without_extension(path: String) -> String {
 }
 
 #[inline]
-pub fn recreate_directory(path: String) -> Result<()> {
+pub fn recreate_directory(path: impl AsRef<str>) -> Result<()> {
+    let path = path.as_ref();
     // The directory might not already exist, thus this attempt to delete it could fail
-    let _ = fs::delete_directory_recursively(path.clone());
-    fs::create_directory(path.clone())?;
+    let _ = fs::remove_dir_all(path);
+    fs::create_directory(path)?;
     Ok(())
 }
 
@@ -78,8 +81,8 @@ macro_rules! read_deserialize_json {
 macro_rules! write_serialize_json {
     ($path:expr, $t:expr) => {{
         if let Ok(json_data) = serde_json::to_vec_pretty($t) {
-            let _ = nx::fs::delete_file($path.clone());
-            let mut file = nx::fs::open_file($path.clone(), nx::fs::FileOpenOption::Create() | nx::fs::FileOpenOption::Write() | nx::fs::FileOpenOption::Append())?;
+            let _ = nx::fs::remove_file($path);
+            let mut file = nx::fs::open_file($path, nx::fs::FileOpenOption::Create() | nx::fs::FileOpenOption::Write() | nx::fs::FileOpenOption::Append())?;
             file.write_array(&json_data)?;
             Ok(())
         }
@@ -90,10 +93,10 @@ macro_rules! write_serialize_json {
 }
 
 pub fn ensure_directories() -> Result<()> {
-    let _ = fs::create_directory(BASE_DIR.to_string());
-    let _ = fs::create_directory(amiibo::VIRTUAL_AMIIBO_DIR.to_string());
-    let _ = fs::create_directory(FLAGS_DIR.to_string());
-    recreate_directory(miiext::EXPORTED_MIIS_DIR.to_string())?;
+    let _ = fs::create_directory(BASE_DIR);
+    let _ = fs::create_directory(amiibo::VIRTUAL_AMIIBO_DIR);
+    let _ = fs::create_directory(FLAGS_DIR);
+    recreate_directory(miiext::EXPORTED_MIIS_DIR)?;
 
     Ok(())
 }
