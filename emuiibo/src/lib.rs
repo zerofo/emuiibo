@@ -29,5 +29,4 @@ pub mod amiibo;
 
 pub mod area;
 
-
 pub use ipc::emu::{EmulationService, IEmulationServiceClient};

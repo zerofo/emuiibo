@@ -39,9 +39,9 @@ checksum = "ace50bade8e6234aa140d9a2f552bbee1db4d353f69b8217bc503490fc1a9f26"
 
 [[package]]
 name = "bitfield-struct"
-version = "0.10.1"
+version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2be5a46ba01b60005ae2c51a36a29cfe134bcacae2dd5cedcd4615fbaad1494b"
+checksum = "d3ca019570363e800b05ad4fd890734f28ac7b72f563ad8a35079efb793616f8"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -245,6 +245,7 @@ dependencies = [
 [[package]]
 name = "nx"
 version = "0.2.0"
+source = "git+https://github.com/aarch64-switch-rs/nx#695865b3cad9e6cc89a12d17cfc7bd15d28d45de"
 dependencies = [
  "arrayvec",
  "atomic_enum",
@@ -265,6 +266,7 @@ dependencies = [
 [[package]]
 name = "nx-derive"
 version = "0.1.0"
+source = "git+https://github.com/aarch64-switch-rs/nx#695865b3cad9e6cc89a12d17cfc7bd15d28d45de"
 dependencies = [
  "quote",
  "syn",

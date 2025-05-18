@@ -7,36 +7,41 @@ extern crate nx;
 #[macro_use]
 extern crate alloc;
 
-#[macro_use]
 extern crate emuiibo;
 
+use nx::diag;
 use nx::diag::abort;
 use nx::fs;
 use nx::ipc::server;
 use nx::result::*;
+use nx::svc;
+use nx::thread;
 use nx::util;
 
 use emuiibo::*;
 
 use core::panic;
-use core::ptr::addr_of_mut;
 
 rrt0_define_default_module_name!();
 
 const CUSTOM_HEAP_SIZE: usize = 0x8000;
 static mut CUSTOM_HEAP: [u8; CUSTOM_HEAP_SIZE] = [0; CUSTOM_HEAP_SIZE];
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 #[allow(static_mut_refs)]
 pub fn initialize_heap(_hbl_heap: util::PointerAndSize) -> util::PointerAndSize {
     unsafe {
         // SAFETY: CUSTOM_HEAP must only ever be referenced from here, and nowhere else.
-        util::PointerAndSize::new(addr_of_mut!(CUSTOM_HEAP) as _, CUSTOM_HEAP.len())
+        util::PointerAndSize::new(&raw mut CUSTOM_HEAP as _, CUSTOM_HEAP.len())
     }
 }
 
-#[no_mangle]
+use nx::diag::log::lm::LmLogger;
+use nx::diag::log::LogSeverity;
+
+#[unsafe(no_mangle)]
 pub fn main() -> Result<()> {
+    thread::set_current_thread_name("emuiibo.Main");
     fs::initialize_fspsrv_session()?;
     fs::mount_sd_card("sdmc")?;
     fsext::ensure_directories()?;
