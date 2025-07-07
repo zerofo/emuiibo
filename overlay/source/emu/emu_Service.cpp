@@ -87,8 +87,10 @@ namespace emu {
         serviceDispatchIn(&g_EmuiiboService, 8, status);
     }
 
-    void IsApplicationIdIntercepted(const u64 app_id, bool *out_intercepted) {
-        serviceDispatchInOut(&g_EmuiiboService, 9, app_id, *out_intercepted);
+    bool IsApplicationIdIntercepted(const u64 app_id) {
+        bool intercepted;
+        serviceDispatchInOut(&g_EmuiiboService, 9, app_id, intercepted);
+        return intercepted;
     }
 
     Result TryParseVirtualAmiibo(const char *path, const size_t path_size, VirtualAmiiboData *out_amiibo_data) {
@@ -119,6 +121,10 @@ namespace emu {
 
     Result SetActiveVirtualAmiiboCurrentArea(const u32 access_id) {
         return serviceDispatchIn(&g_EmuiiboService, 13, access_id);
+    }
+
+    Result SetActiveVirtualAmiiboUuidInfo(const VirtualAmiiboUuidInfo uuid_info) {
+        return serviceDispatchIn(&g_EmuiiboService, 14, uuid_info);
     }
 
 }

@@ -1,96 +1,124 @@
-use nx::sync;
-use alloc::vec::Vec;
 use crate::amiibo;
+use crate::fsext;
+use alloc::vec::Vec;
+use nx::ipc::sf::ncm;
+use nx::sync;
 
-#[derive(Copy, Clone)]
+use atomic_enum::atomic_enum;
+
+use core::sync::atomic::Ordering;
+
+#[derive(nx::ipc::sf::Request, nx::ipc::sf::Response, Copy, Clone)]
 #[repr(C)]
 pub struct Version {
     pub major: u8,
     pub minor: u8,
     pub micro: u8,
-    pub is_dev_build: bool
+    pub is_dev_build: bool,
 }
 
 impl Version {
     pub const fn from(major: u8, minor: u8, micro: u8, is_dev_build: bool) -> Self {
-        Self { major: major, minor: minor, micro: micro, is_dev_build: is_dev_build }
+        Self {
+            major: major,
+            minor: minor,
+            micro: micro,
+            is_dev_build: is_dev_build,
+        }
     }
 }
 
-#[derive(Copy, Clone, PartialEq, Eq, Debug)]
+#[atomic_enum]
+#[derive(nx::ipc::sf::Request, nx::ipc::sf::Response, PartialEq, Eq)]
 #[repr(u32)]
 pub enum EmulationStatus {
     On,
-    Off
+    Off,
 }
 
-#[derive(Copy, Clone, PartialEq, Eq, Debug)]
+
+#[atomic_enum]
+#[derive(nx::ipc::sf::Request, nx::ipc::sf::Response, PartialEq, Eq)]
 #[repr(u32)]
 #[allow(dead_code)]
 pub enum VirtualAmiiboStatus {
     Invalid,
     Connected,
-    Disconnected
+    Disconnected,
 }
 
-pub const CURRENT_VERSION: Version = Version::from(1, 0, 0, true);
+#[cfg(debug_assertions)]
+pub const IS_DEV_BUILD: bool = true;
 
-static mut G_EMULATION_STATUS: sync::Locked<EmulationStatus> = sync::Locked::new(false, EmulationStatus::Off);
-static mut G_ACTIVE_VIRTUAL_AMIIBO_STATUS: sync::Locked<VirtualAmiiboStatus> = sync::Locked::new(false, VirtualAmiiboStatus::Invalid);
-static mut G_INTERCEPTED_APPLICATION_IDS: sync::Locked<Vec<u64>> = sync::Locked::new(false, Vec::new());
-static mut G_ACTIVE_VIRTUAL_AMIIBO: sync::Locked<amiibo::fmt::VirtualAmiibo> = sync::Locked::new(false, amiibo::fmt::VirtualAmiibo::empty());
+#[cfg(not(debug_assertions))]
+pub const IS_DEV_BUILD: bool = false;
+
+pub const CURRENT_VERSION: Version = Version::from(1, 1, 1, IS_DEV_BUILD);
+
+static G_EMULATION_STATUS: AtomicEmulationStatus = AtomicEmulationStatus::new(EmulationStatus::Off);
+static G_ACTIVE_VIRTUAL_AMIIBO_STATUS: AtomicVirtualAmiiboStatus =
+    AtomicVirtualAmiiboStatus::new(VirtualAmiiboStatus::Invalid);
+static G_INTERCEPTED_APPLICATION_IDS: sync::Mutex<Vec<u64>> = sync::Mutex::new(Vec::new());
+static G_ACTIVE_VIRTUAL_AMIIBO: sync::Mutex<Option<amiibo::fmt::VirtualAmiibo>> =
+    sync::Mutex::new(None);
+
+const STATUS_ON_FLAG: &str = "status_on";
 
 pub fn get_emulation_status() -> EmulationStatus {
-    unsafe {
-        G_EMULATION_STATUS.get_val()
-    }
+    G_EMULATION_STATUS.load(Ordering::SeqCst)
+}
+
+pub fn load_emulation_status() {
+    let status = if fsext::has_flag(STATUS_ON_FLAG) {
+        EmulationStatus::On
+    } else {
+        EmulationStatus::Off
+    };
+
+    G_EMULATION_STATUS.store(status, Ordering::SeqCst);
 }
 
 pub fn set_emulation_status(status: EmulationStatus) {
-    unsafe {
-        G_EMULATION_STATUS.set(status);
-    }
+    G_EMULATION_STATUS.store(status, Ordering::SeqCst);
+    fsext::set_flag(STATUS_ON_FLAG, status == EmulationStatus::On);
 }
 
 pub fn get_active_virtual_amiibo_status() -> VirtualAmiiboStatus {
-    unsafe {
-        G_ACTIVE_VIRTUAL_AMIIBO_STATUS.get_val()
-    }
+    G_ACTIVE_VIRTUAL_AMIIBO_STATUS.load(Ordering::SeqCst)
 }
 
 pub fn set_active_virtual_amiibo_status(status: VirtualAmiiboStatus) {
-    unsafe {
-        G_ACTIVE_VIRTUAL_AMIIBO_STATUS.set(status);
-    }
+    G_ACTIVE_VIRTUAL_AMIIBO_STATUS.store(status, Ordering::SeqCst);
 }
 
-pub fn register_intercepted_application_id(application_id: u64) {
-    unsafe {
-        G_INTERCEPTED_APPLICATION_IDS.get().push(application_id);
-    }
+pub fn register_intercepted_application_id(application_id: ncm::ProgramId) {
+    G_INTERCEPTED_APPLICATION_IDS.lock().push(application_id.0);
 }
 
-pub fn unregister_intercepted_application_id(application_id: u64) {
-    unsafe {
-        G_INTERCEPTED_APPLICATION_IDS.get().retain(|&id| id != application_id);
-    }
+pub fn unregister_intercepted_application_id(application_id: ncm::ProgramId) {
+    G_INTERCEPTED_APPLICATION_IDS
+        .lock()
+        .retain(|&id| id != application_id.0);
 }
 
-pub fn is_application_id_intercepted(application_id: u64) -> bool {
-    unsafe {
-        G_INTERCEPTED_APPLICATION_IDS.get().contains(&application_id)
-    }
+pub fn is_application_id_intercepted(application_id: ncm::ProgramId) -> bool {
+    G_INTERCEPTED_APPLICATION_IDS
+        .lock()
+        .contains(&application_id.0)
 }
 
-pub fn get_active_virtual_amiibo() -> &'static mut amiibo::fmt::VirtualAmiibo {
-    unsafe {
-        G_ACTIVE_VIRTUAL_AMIIBO.get()
-    }
+pub fn get_active_virtual_amiibo<'a>() -> sync::MutexGuard<'a, Option<amiibo::fmt::VirtualAmiibo>> {
+    G_ACTIVE_VIRTUAL_AMIIBO.lock()
 }
 
-pub fn set_active_virtual_amiibo(virtual_amiibo: amiibo::fmt::VirtualAmiibo) {
-    unsafe {
-        G_ACTIVE_VIRTUAL_AMIIBO.set(virtual_amiibo);
-        set_active_virtual_amiibo_status(VirtualAmiiboStatus::Connected);
-    }
+pub fn set_active_virtual_amiibo(virtual_amiibo: Option<amiibo::fmt::VirtualAmiibo>) {
+    G_ACTIVE_VIRTUAL_AMIIBO_STATUS.store(
+        if virtual_amiibo.is_some() {
+            VirtualAmiiboStatus::Connected
+        } else {
+            VirtualAmiiboStatus::Invalid
+        },
+        Ordering::SeqCst,
+    );
+    *G_ACTIVE_VIRTUAL_AMIIBO.lock() = virtual_amiibo;
 }

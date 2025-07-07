@@ -1,16 +1,25 @@
+use aes::cipher::KeyIvInit;
+use aes::cipher::StreamCipher;
 use alloc::string::String;
 use alloc::vec::Vec;
-use nx::crypto::hmac;
-use nx::crypto::sha256;
-use nx::crypto::aes;
-use nx::crypto::rc;
+use hmac::digest::FixedOutput;
 use nx::service::mii;
+use nx::svc::rc::ResultInvalidSize;
 use nx::util;
-use nx::rand::RandomGenerator;
+use nx::rand::RngCore;
 use nx::result::*;
+use nx::util::Uuid;
+use crate::fsext;
+use crate::miiext;
 use super::ntag::Manufacturer1;
 use super::ntag::Manufacturer2;
 use super::{ntag, fmt};
+
+use sha2::Sha256;
+use hmac::{Hmac, Mac};
+
+type Aes128Ctr= ctr::Ctr128LE<aes::Aes128>;
+type HmacSha256 = Hmac<Sha256>;
 
 pub trait Buffer: Sized {
     fn get_buf(&self) -> &[u8] {
@@ -37,17 +46,15 @@ impl DrbgContext {
     pub const MAX_SEED_SIZE: usize = 480;
 
     pub fn new(hmac_key: &[u8], seed: &[u8]) -> Result<Self> {
-        result_return_unless!(seed.len() <= Self::MAX_SEED_SIZE, rc::ResultInvalidSize);
-
         let mut ctx = Self {
             hmac_key: hmac_key.to_vec(),
             iteration: 0,
             buf: [0; core::mem::size_of::<u16>() + Self::MAX_SEED_SIZE],
-            buf_size: core::mem::size_of::<u16>() + seed.len()
+            buf_size: core::mem::size_of::<u16>() + seed.len().min(Self::MAX_SEED_SIZE)
         };
 
         unsafe {
-            core::ptr::copy(seed.as_ptr(), ctx.buf.as_mut_ptr().add(core::mem::size_of::<u16>()), seed.len());
+            core::ptr::copy(seed.as_ptr(), ctx.buf.as_mut_ptr().add(core::mem::size_of::<u16>()), seed.len().min(Self::MAX_SEED_SIZE));
         }
 
         Ok(ctx)
@@ -59,7 +66,9 @@ impl DrbgContext {
         }
         self.iteration += 1;
 
-        hmac::sha256::calculate_mac(&self.hmac_key, &self.buf[0..self.buf_size], out_mac)?;
+        let mut mac = HmacSha256::new_from_slice(&self.hmac_key).expect("HMAC-SHA256 allows keys of any size");
+        mac.update(&self.buf[0..self.buf_size]);
+        mac.finalize_into(out_mac.into());
         Ok(())
     }
 
@@ -69,11 +78,11 @@ impl DrbgContext {
         let mut remaining_size = out_data.len();
         let mut cur_buf = out_data.as_mut_ptr();
 
-        let mut tmp_buf = [0u8; sha256::HASH_SIZE];
+        let mut tmp_buf = [0u8; 0x20];
         while remaining_size > 0 {
             ctx.step(&mut tmp_buf)?;
 
-            let step_size = remaining_size.min(sha256::HASH_SIZE);
+            let step_size = remaining_size.min(0x20);
             unsafe {
                 core::ptr::copy(tmp_buf.as_ptr(), cur_buf, step_size);
                 cur_buf = cur_buf.add(step_size);
@@ -89,7 +98,7 @@ impl DrbgContext {
 #[repr(C)]
 pub struct RetailKey {
     pub hmac_key: [u8; 0x10],
-    pub phrase: util::CString<0xE>,
+    pub phrase: util::ArrayString<0xE>,
     pub reserved: u8,
     pub seed_size: u8,
     pub seed: [u8; Self::MAX_SEED_SIZE],
@@ -117,31 +126,31 @@ impl DerivedKey {
         let mut prepared_seed = [0u8; DrbgContext::MAX_SEED_SIZE];
 
         let prepared_seed_buf_start = prepared_seed.as_mut_ptr();
-        let mut prepared_seed_buf_cur = prepared_seed_buf_start;
+        let mut prepared_seed_buf_cursor = prepared_seed_buf_start;
 
         unsafe {
-            let phrase_len = key.phrase.c_str.len();
-            core::ptr::copy(key.phrase.c_str.as_ptr(), prepared_seed_buf_cur, phrase_len);
-            prepared_seed_buf_cur = prepared_seed_buf_cur.add(phrase_len);
+            let phrase = key.phrase.as_bytes();
+            core::ptr::copy(phrase.as_ptr(), prepared_seed_buf_cursor, phrase.len());
+            prepared_seed_buf_cursor = prepared_seed_buf_cursor.add(phrase.len());
 
             let seed_size = key.seed_size as usize;
             let leading_seed_bytes = RetailKey::MAX_SEED_SIZE - seed_size;
-            core::ptr::copy(base_seed.as_ptr(), prepared_seed_buf_cur, leading_seed_bytes);
-            prepared_seed_buf_cur = prepared_seed_buf_cur.add(leading_seed_bytes);
+            core::ptr::copy(base_seed.as_ptr(), prepared_seed_buf_cursor, leading_seed_bytes);
+            prepared_seed_buf_cursor = prepared_seed_buf_cursor.add(leading_seed_bytes);
 
-            core::ptr::copy(key.seed.as_ptr(), prepared_seed_buf_cur, seed_size);
-            prepared_seed_buf_cur = prepared_seed_buf_cur.add(seed_size);
+            core::ptr::copy(key.seed.as_ptr(), prepared_seed_buf_cursor, seed_size);
+            prepared_seed_buf_cursor = prepared_seed_buf_cursor.add(seed_size);
 
             let seed_step_size = 0x10usize;
-            core::ptr::copy(base_seed.as_ptr().add(0x10), prepared_seed_buf_cur, seed_step_size);
-            prepared_seed_buf_cur = prepared_seed_buf_cur.add(seed_step_size);
+            core::ptr::copy(base_seed.as_ptr().add(0x10), prepared_seed_buf_cursor, seed_step_size);
+            prepared_seed_buf_cursor = prepared_seed_buf_cursor.add(seed_step_size);
 
             for i in 0..key.xor_pad.len() {
-                *prepared_seed_buf_cur.add(i) = base_seed[0x20 + i] ^ key.xor_pad[i];
+                *prepared_seed_buf_cursor.add(i) = base_seed[0x20 + i] ^ key.xor_pad[i];
             }
-            prepared_seed_buf_cur = prepared_seed_buf_cur.add(key.xor_pad.len());
+            prepared_seed_buf_cursor = prepared_seed_buf_cursor.add(key.xor_pad.len());
 
-            let prepared_seed_size = prepared_seed_buf_cur.offset_from(prepared_seed_buf_start) as usize;
+            let prepared_seed_size = prepared_seed_buf_cursor.offset_from(prepared_seed_buf_start) as usize;
             let mut derived_key: Self = Default::default();
             DrbgContext::gen_bytes(&key.hmac_key, &prepared_seed[0..prepared_seed_size], derived_key.get_buf_mut())?;
 
@@ -436,7 +445,7 @@ pub struct MiiFormat {
     pub mac_addr: [u8; 6],
     pub pad: [u8; 2],
     pub info_4_bf: u16,
-    pub name: util::CString16<10>,
+    pub name: util::ArrayWideString<10>,
     pub height: u8,
     pub build: u8,
     pub faceline_info_1_bf: u8,
@@ -451,12 +460,13 @@ pub struct MiiFormat {
     pub mustache_beard_info_bf: u16,
     pub glass_info_bf: u16,
     pub mole_info_bf: u16,
-    pub author_name: util::CString16<10>,
+    pub author_name: util::ArrayWideString<10>,
     pub unk: u16,
     pub crc16: u16
 }
 const_assert!(core::mem::size_of::<MiiFormat>() == 0x60);
 
+#[allow(dead_code)]
 impl MiiFormat {
     // Info1
     #[inline]
@@ -1067,12 +1077,13 @@ impl MiiFormat {
     pub unsafe fn to_charinfo(&self) -> Result<mii::CharInfo> {
         Ok(mii::CharInfo {
             id: {
-                let mut random = nx::rand::SplCsrngGenerator::new()?;
-                random.random()?
+                let mut uuid: Uuid = Default::default();
+                nx::rand::get_rng()?.fill_bytes(&mut uuid.uuid);
+                uuid
             },
             name: {
                 let name = self.name;
-                util::CString16::from_string(name.get_string()?)?
+                util::ArrayWideString::from_string(name.get_string()?)
             },
             font_region: mii::FontRegion::Standard,
             faceline_color: core::mem::transmute(self.get_favorite_color()),
@@ -1137,7 +1148,7 @@ pub struct Settings {
     pub first_write_date_be: Date,
     pub last_write_date_be: Date,
     pub crc32_be: u32,
-    pub name_be: util::CString16<10>,
+    pub name_be: util::ArrayWideString<10>,
     pub mii_be: MiiFormat,
     pub program_id_be: u64,
     pub write_counter_be: u16,
@@ -1147,16 +1158,19 @@ pub struct Settings {
 }
 const_assert!(core::mem::size_of::<Settings>() == 0xB0);
 
+// Easter egg default date: amiibo's first release
+pub const DEFAULT_SETTINGS_WRITE_DATE: Date = Date::new(2014, 6, 10);
+
 impl Default for Settings {
     fn default() -> Self {
         Self {
             flags: Flags::None(),
             country_code: CountryCode::Spain,
             crc32_write_counter_be: 0,
-            first_write_date_be: Date::new(2001, 9, 11),
-            last_write_date_be: Date::new(2001, 9, 11),
+            first_write_date_be: DEFAULT_SETTINGS_WRITE_DATE,
+            last_write_date_be: DEFAULT_SETTINGS_WRITE_DATE,
             crc32_be: 0,
-            name_be: util::CString16::from_str("emuiibo").unwrap().swap_chars(),
+            name_be: util::ArrayWideString::new(),
             mii_be: Default::default(),
             program_id_be: 0,
             write_counter_be: 0,
@@ -1214,9 +1228,9 @@ pub struct RawFormat {
     pub man_info_2: ntag::Manufacturer2,
     pub st_2: Struct2,
     pub enc_section_1: [u8; 0x20],
-    pub tag_sha256_hmac_hash: [u8; sha256::HASH_SIZE],
+    pub tag_sha256_hmac_hash: [u8; 0x20],
     pub st_1: Struct1,
-    pub data_sha256_hmac_hash: [u8; sha256::HASH_SIZE],
+    pub data_sha256_hmac_hash: [u8; 0x20],
     pub enc_section_2: [u8; 0x114],
     pub enc_section_3: [u8; 0x54],
     pub dyn_lock: ntag::DynamicLock,
@@ -1246,10 +1260,10 @@ impl Default for RawFormat {
 #[repr(C)]
 pub struct ConvertedFormat {
     pub man_info_2: ntag::Manufacturer2,
-    pub data_sha256_hmac_hash: [u8; sha256::HASH_SIZE],
+    pub data_sha256_hmac_hash: [u8; 0x20],
     pub st_2: Struct2,
     pub enc_data: EncryptedData,
-    pub tag_sha256_hmac_hash: [u8; sha256::HASH_SIZE],
+    pub tag_sha256_hmac_hash: [u8; 0x20],
     pub man_info_1: ntag::Manufacturer1,
     pub st_1: Struct1
 }
@@ -1277,10 +1291,10 @@ impl ConvertedFormat {
 #[repr(C)]
 pub struct PlainFormat {
     pub man_info_2: ntag::Manufacturer2,
-    pub data_sha256_hmac_hash: [u8; sha256::HASH_SIZE],
+    pub data_sha256_hmac_hash: [u8; 0x20],
     pub st_2: Struct2,
     pub dec_data: DecryptedData,
-    pub tag_sha256_hmac_hash: [u8; sha256::HASH_SIZE],
+    pub tag_sha256_hmac_hash: [u8; 0x20],
     pub man_info_1: ntag::Manufacturer1,
     pub st_1: Struct1
 }
@@ -1309,22 +1323,32 @@ impl PlainFormat {
 
         let derived_key_set = DerivedKeySet::derive_from(key_set, base_seed.get_buf())?;
 
-        let mut aes_ctr_ctx = aes::ctr::a128::Context::new(&derived_key_set.data_key.aes_key, &derived_key_set.data_key.aes_iv)?;
-        aes_ctr_ctx.crypt(conv.enc_data.get_buf(), plain_bin.dec_data.get_buf_mut())?;
+        let mut aes_ctr_ctx = <Aes128Ctr as KeyIvInit>::new(&derived_key_set.data_key.aes_key.into(), &derived_key_set.data_key.aes_iv.into());
+        aes_ctr_ctx.apply_keystream_b2b(conv.enc_data.get_buf(), plain_bin.dec_data.get_buf_mut()).map_err(|_| ResultInvalidSize::make())?;
 
+        if plain_bin.dec_data.settings.flags == Flags::None() {
+            // Dumps with this set to none might be from retail amiibos with no usage, thus the rest of settings might be garbage data
+            plain_bin.dec_data.settings = Default::default();
+        }
+
+        let mut mac = HmacSha256::new_from_slice(&key_set.tag_key.hmac_key).unwrap();
         let tag_data_start = &plain_bin.man_info_1 as *const _ as *const u8;
         let tag_data_size = core::mem::size_of::<Manufacturer1>() + core::mem::size_of::<Struct1>();
         let tag_data = unsafe {
             core::slice::from_raw_parts(tag_data_start, tag_data_size)
         };
-        hmac::sha256::calculate_mac(&key_set.tag_key.hmac_key, tag_data, &mut plain_bin.tag_sha256_hmac_hash)?;
+        mac.update(tag_data);
+        mac.finalize_into(&mut plain_bin.tag_sha256_hmac_hash.into());
 
         let data_data_start = &plain_bin.st_2.unk_1 as *const _ as *const u8;
-        let data_data_size = core::mem::size_of::<PlainFormat>() - core::mem::size_of::<Manufacturer2>() - sha256::HASH_SIZE - core::mem::size_of::<u8>();
+        let data_data_size = core::mem::size_of::<PlainFormat>() - core::mem::size_of::<Manufacturer2>() - 0x20 - core::mem::size_of::<u8>();
         let data_data = unsafe {
             core::slice::from_raw_parts(data_data_start, data_data_size)
         };
-        hmac::sha256::calculate_mac(&key_set.data_key.hmac_key, data_data, &mut plain_bin.data_sha256_hmac_hash)?;
+
+        let mut mac = HmacSha256::new_from_slice(&key_set.tag_key.hmac_key).unwrap();
+        mac.update(data_data);
+        mac.finalize_into(&mut plain_bin.data_sha256_hmac_hash.into());
 
         // assert_eq!(plain_bin.tag_sha256_hmac_hash, conv.tag_sha256_hmac_hash);
         // assert_eq!(plain_bin.data_sha256_hmac_hash, conv.data_sha256_hmac_hash);
@@ -1357,13 +1381,13 @@ impl PlainFormat {
                     let name_be = self.dec_data.settings.name_be;
                     let name_str = name_be.get_string()?;
                     if name_str.is_empty() {
-                        String::from("emuiibo")
+                        fsext::get_path_file_name(&path)
                     }
                     else {
                         name_str
                     }
                 },
-                uuid: Some(vec! [
+                uuid: vec! [
                     self.man_info_1.uid_p1[0],
                     self.man_info_1.uid_p1[1],
                     self.man_info_1.uid_p1[2],
@@ -1374,14 +1398,15 @@ impl PlainFormat {
                     self.man_info_1.uid_p2[3],
                     self.man_info_2.check_byte_2,
                     self.man_info_2.internal
-                ]),
+                ],
+                use_random_uuid: false,
                 version: 0,
                 write_counter: {
                     let write_counter_be = self.dec_data.settings.write_counter_be;
                     write_counter_be.swap_bytes()
                 }
             },
-            mii_charinfo: Default::default(), // TODO: convert from 3DS format!
+            mii_charinfo: miiext::generate_random_mii()?, // TODO: convert from 3DS format! meanwhile set a random mii
             areas: {
                 let flags = self.dec_data.settings.flags; 
                 let access_id_be = self.dec_data.settings.access_id_be;

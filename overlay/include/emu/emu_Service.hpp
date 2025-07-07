@@ -6,7 +6,7 @@
 namespace emu {
 
     struct VirtualAmiiboUuidInfo {
-        bool random_uuid;
+        bool use_random_uuid;
         u8 uuid[10];
     };
 
@@ -17,7 +17,7 @@ namespace emu {
     };
 
     struct VirtualAmiiboData {
-        VirtualAmiiboUuidInfo uuid;
+        VirtualAmiiboUuidInfo uuid_info;
         char name[40 + 1];
         VirtualAmiiboDate first_write_date;
         VirtualAmiiboDate last_write_date;
@@ -74,15 +74,15 @@ namespace emu {
     VirtualAmiiboStatus GetActiveVirtualAmiiboStatus();
     void SetActiveVirtualAmiiboStatus(const VirtualAmiiboStatus status);
 
-    void IsApplicationIdIntercepted(const u64 app_id, bool *out_intercepted);
+    bool IsApplicationIdIntercepted(const u64 app_id);
 
     inline bool IsCurrentApplicationIdIntercepted() {
         bool intercepted = false;
         u64 process_id = 0;
         if(R_SUCCEEDED(pmdmntGetApplicationProcessId(&process_id))) {
             u64 program_id = 0;
-            if(R_SUCCEEDED(pminfoGetProgramId(&program_id, process_id))) {
-                IsApplicationIdIntercepted(program_id, &intercepted);
+            if(R_SUCCEEDED(pmdmntGetProgramId(&program_id, process_id))) {
+                intercepted = IsApplicationIdIntercepted(program_id);
             }
         }
         return intercepted;
@@ -92,5 +92,6 @@ namespace emu {
     Result GetActiveVirtualAmiiboAreas(VirtualAmiiboAreaEntry *out_area_buf, const size_t out_area_size, u32 *out_area_count);
     Result GetActiveVirtualAmiiboCurrentArea(u32 *out_access_id);
     Result SetActiveVirtualAmiiboCurrentArea(const u32 access_id);
+    Result SetActiveVirtualAmiiboUuidInfo(const VirtualAmiiboUuidInfo uuid_info);
 
 }

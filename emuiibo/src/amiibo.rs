@@ -23,3 +23,12 @@ pub const DEPRECATED_VIRTUAL_AMIIBO_DIR: &'static str = "sdmc:/emuiibo";
 pub trait VirtualAmiiboFormat {
     fn try_load(path: String) -> Result<Self> where Self: Sized;
 }
+
+pub fn generate_random_uuid(uuid: &mut [u8;10]) -> Result<()> {
+    use nx::rand::RngCore;
+    nx::rand::get_rng()?.fill_bytes(&mut uuid[..7]);
+    uuid[7] = 0;
+    uuid[8] = 0;
+    uuid[9] = 0;
+    Ok(())
+}
