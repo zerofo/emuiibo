@@ -14,7 +14,7 @@ jobs:
 
     steps:
     - name: Checkout 
-      uses: actions/checkout@v3
+      uses: actions/checkout@master
       with:
         submodules: recursive
       
@@ -49,7 +49,7 @@ jobs:
       run: make emuiibo -j$(nproc)
 
     - name: Upload
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@master
       with:
         name: SdOut
         path: SdOut
