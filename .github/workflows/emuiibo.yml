@@ -47,20 +47,20 @@ jobs:
 
     - name: Build
       run: |
+        make -C overlay
         make dist -j$(nproc)
         cd SdOut
-        zip -r emuiibo.zip *
+        zip -r ../emuiibo.zip *
 
     - name: Upload
       uses: actions/upload-artifact@master
       with:
-        name: SdOut
-        path: SdOut
+        path: emuiibo.zip
     - name: Upload binaries to release
       uses: svenstaro/upload-release-action@v2
       with:
         repo_token: ${{ secrets.release_token }}
-        file: ./hbl.nsp
+        file: ./emuiibo.zip
         tag: ${{ github.ref }}
         overwrite: true
         file_glob: true
