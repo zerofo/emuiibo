@@ -149,7 +149,7 @@ impl super::VirtualAmiiboFormat for VirtualAmiibo {
                         | fs::FileOpenOption::Write()
                         | fs::FileOpenOption::Append(),
                 )?;
-                file.write_val(&mii_charinfo)?;
+                file.write_val::<_, false>(&mii_charinfo)?;
                 mii_charinfo
             }
             false => {

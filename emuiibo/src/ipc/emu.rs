@@ -26,7 +26,7 @@ ipc_sf_define_interface_trait! {
         set_active_virtual_amiibo_status [8, version::VersionInterval::all()]: (status: emu::VirtualAmiiboStatus) => () ();
         is_application_id_intercepted [9, version::VersionInterval::all()]: (application_id: ncm::ProgramId) => (is_intercepted: bool) (is_intercepted: bool);
         try_parse_virtual_amiibo [10, version::VersionInterval::all()]: (path: sf::InMapAliasBuffer<u8>) => (virtual_amiibo: amiibo::fmt::VirtualAmiiboData) (virtual_amiibo: amiibo::fmt::VirtualAmiiboData);
-        get_active_virtual_amiibo_areas [11, version::VersionInterval::all()]: (out_areas: sf::OutMapAliasBuffer<amiibo::fmt::VirtualAmiiboAreaEntry>) => (count: u32) (count: u32);
+        get_active_virtual_amiibo_areas [11, version::VersionInterval::all()]: (out_areas: sf::Buffer<'_, true, true, false, false, false, false, false, false, amiibo::fmt::VirtualAmiiboAreaEntry>) => (count: u32) (count: u32);
         get_active_virtual_amiibo_current_area [12, version::VersionInterval::all()]: () => (access_id: nfp::AccessId) (access_id: nfp::AccessId);
         set_active_virtual_amiibo_current_area [13, version::VersionInterval::all()]: (access_id: nfp::AccessId) => () ();
         set_active_virtual_amiibo_uuid_info [14, version::VersionInterval::all()]: (uuid_info: amiibo::fmt::VirtualAmiiboUuidInfo) => () ();
@@ -114,7 +114,7 @@ impl IEmulationServiceServer for EmulationServer {
         Ok(data)
     }
 
-    fn get_active_virtual_amiibo_areas(&mut self, mut out_areas: sf::OutMapAliasBuffer<amiibo::fmt::VirtualAmiiboAreaEntry>) -> Result<u32> {
+    fn get_active_virtual_amiibo_areas(&mut self, mut out_areas: sf::Buffer<'_, true, true, false, false, false, false, false, false, amiibo::fmt::VirtualAmiiboAreaEntry>) -> Result<u32> {
         log!("GetActiveVirtualAmiiboAreas -- (...)\n");
         let amiibo = emu::get_active_virtual_amiibo();
         result_return_unless!(amiibo.is_some(), rc::ResultInvalidActiveVirtualAmiibo);

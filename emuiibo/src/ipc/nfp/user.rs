@@ -34,12 +34,8 @@ impl Drop for UserEmulator {
 }
 
 impl IUserServer for UserEmulator {
-    fn initialize(&mut self, aruid: applet::AppletResourceUserId, mcu_data: sf::InMapAliasBuffer<nfp::McuVersionData>) -> Result<()> {
-        self.handler.initialize(aruid, mcu_data)
-    }
-
-    fn initialize_2(&mut self, aruid: applet::AppletResourceUserId, mcu_data: sf::InMapAliasBuffer<nfp::McuVersionData>) -> Result<()> {
-        self.handler.initialize(aruid, mcu_data)
+    fn initialize(&mut self, aruid: applet::AppletResourceUserId, process_id: sf::ProcessId, mcu_data: sf::InMapAliasBuffer<nfp::McuVersionData>) -> Result<()> {
+        self.handler.initialize(aruid, process_id, mcu_data)
     }
 
     fn finalize(&mut self) -> Result<()> {

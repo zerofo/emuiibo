@@ -1,10 +1,11 @@
-use nx::mem::Shared;
+use alloc::sync::Arc;
 use nx::result::*;
 use nx::ipc::sf;
 use nx::ipc::sf::nfp;
 use nx::ipc::sf::ncm;
 use nx::wait;
 use nx::sync;
+use nx::sync::Mutex;
 use nx::service::hid;
 use nx::input;
 use nx::thread;
@@ -27,7 +28,7 @@ pub fn get_input_context() -> &'static input::Context {
 
 pub struct EmulationHandler {
     application_id: ncm::ProgramId,
-    emulation_state: Shared<EmulationState>,
+    emulation_state: Arc<Mutex<EmulationState>>,
     current_opened_area: area::ApplicationArea,
     emu_handler_thread: Option<thread::JoinHandle<()>>
 }
@@ -71,7 +72,7 @@ impl EmulationHandler {
     pub fn new(application_id: ncm::ProgramId) -> Result<Self> {
         log!("\n[{:#X}] New handler!\n", application_id.0);
         
-        Ok(Self { application_id, emulation_state: Shared::new(EmulationState::new()?), emu_handler_thread: None, current_opened_area: area::ApplicationArea::new() })
+        Ok(Self { application_id, emulation_state: Arc::new(Mutex::new(EmulationState::new()?)), emu_handler_thread: None, current_opened_area: area::ApplicationArea::new() })
     }
 
     #[inline]
@@ -87,7 +88,7 @@ impl EmulationHandler {
         self.emulation_state.lock().device_state == device_state
     }
 
-    fn emu_handler_thread_fn(handler: Shared<EmulationState>) {
+    fn emu_handler_thread_fn(handler: Arc<Mutex<EmulationState>>) {
         loop {
             {
                 let handle_handle = handler.lock();
@@ -104,7 +105,7 @@ impl EmulationHandler {
 
     }
 
-    pub fn initialize(&mut self, aruid: sf::AppletResourceUserId, mcu_data: sf::InMapAliasBuffer<nfp::McuVersionData>) -> Result<()> {
+    pub fn initialize(&mut self, aruid: sf::AppletResourceUserId, _process_id: sf::ProcessId, mcu_data: sf::InMapAliasBuffer<nfp::McuVersionData>) -> Result<()> {
         // TODO: make use of aruid or mcu data?
         result_return_unless!(self.is_state(nfp::State::NonInitialized), nfp::rc::ResultDeviceNotFound);
         log!("[{:#X}] Initialize -- aruid: {}, process_id: {}, mcu_version_data: (count: {})\n", self.application_id.0, aruid.aruid, aruid.process_id, mcu_data.get_count());
@@ -134,11 +135,11 @@ impl EmulationHandler {
 
         let mut emulation_state_handle = self.emulation_state.lock();
         emulation_state_handle.state = nfp::State::NonInitialized;
-        emulation_state_handle.device_state = nfp::DeviceState::Finalized;
+        emulation_state_handle.device_state = nfp::DeviceState::Unavailable;
         Ok(())
     }
 
-    pub fn list_devices(&mut self, mut out_devices: sf::OutPointerBuffer<nfp::DeviceHandle>) -> Result<u32> {
+    pub fn list_devices(&mut self, out_devices: sf::OutPointerBuffer<nfp::DeviceHandle>) -> Result<u32> {
         result_return_unless!(self.is_state(nfp::State::Initialized), nfp::rc::ResultDeviceNotFound);
         log!("[{:#X}] ListDevices -- out_devices: (count: {})\n", self.application_id.0, out_devices.get_count());
 
@@ -146,21 +147,20 @@ impl EmulationHandler {
         // Official nfp would store the npad_id somewhere else for the command below which retrieves it
         // Send a single fake device handle
 
-        let fake_device_npad_id = {
-            let p1 = get_input_context().get_player(hid::NpadIdType::No1);
-            if p1.get_style_tag_attributes(hid::NpadStyleTag::FullKey()).contains(hid::NpadAttribute::IsConnected())
-                || p1.get_style_tag_attributes(hid::NpadStyleTag::JoyDual()).contains(hid::NpadAttribute::IsConnected())
-                || p1.get_style_tag_attributes(hid::NpadStyleTag::JoyLeft()).contains(hid::NpadAttribute::IsConnected()) 
-                || p1.get_style_tag_attributes(hid::NpadStyleTag::JoyRight()).contains(hid::NpadAttribute::IsConnected()) {
-                hid::NpadIdType::No1
-            }
-            else {
-                hid::NpadIdType::Handheld
-            }
+        let p1 = get_input_context().get_player(hid::NpadIdType::No1);
+        let fake_npad_id: hid::NpadIdType = if p1.get_style_tag_attributes(hid::NpadStyleTag::FullKey()).contains(hid::NpadAttribute::IsConnected())
+            || p1.get_style_tag_attributes(hid::NpadStyleTag::JoyDual()).contains(hid::NpadAttribute::IsConnected())
+            || p1.get_style_tag_attributes(hid::NpadStyleTag::JoyLeft()).contains(hid::NpadAttribute::IsConnected()) 
+            || p1.get_style_tag_attributes(hid::NpadStyleTag::JoyRight()).contains(hid::NpadAttribute::IsConnected()) {
+            hid::NpadIdType::No1
+        }
+        else {
+            hid::NpadIdType::Handheld
         };
+        let fake_device_npad_id: u32 = unsafe { core::mem::transmute::<hid::NpadIdType, u32>(fake_npad_id) };
 
-        let devices = out_devices.as_slice_mut()?;
-        devices[0].id = fake_device_npad_id as u32;
+        let devices = unsafe { core::slice::from_raw_parts_mut(out_devices.get_address() as *mut nfp::DeviceHandle, 1) };
+        devices[0].id = fake_device_npad_id;
         Ok(1)
     }
 
@@ -458,7 +458,8 @@ impl EmulationHandler {
 
         match emu::get_active_virtual_amiibo().as_mut() {
             Some(amiibo) => {
-                amiibo.update_from_register_info_private(register_info_private.get_var())?;
+                let register_info_private = register_info_private.get_var()?;
+                amiibo.update_from_register_info_private(&register_info_private)?;
             },
             None => {
                 return Err(nfp::rc::ResultDeviceNotFound::make());

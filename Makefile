@@ -14,7 +14,7 @@ emuiibo: sysmodule overlay dist
 
 emuiibo-dev: sysmodule-dev overlay dist-dev
 
-sysmodule:
+sysmodule overlay:
 	@cd emuiibo && cargo update && cargo nx build --release
 
 sysmodule-dev:
@@ -23,7 +23,7 @@ sysmodule-dev:
 overlay:
 	@$(MAKE) -C overlay/
 
-dist: sysmodule overlay
+dist: sysmodule 
 	@rm -rf $(CURDIR)/SdOut
 	@mkdir -p $(CURDIR)/SdOut/atmosphere/contents/$(PROGRAM_ID)/flags
 	@touch $(CURDIR)/SdOut/atmosphere/contents/$(PROGRAM_ID)/flags/boot2.flag

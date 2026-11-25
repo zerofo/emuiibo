@@ -4,17 +4,13 @@
 #[macro_use]
 extern crate nx;
 
-#[macro_use]
 extern crate alloc;
-
 extern crate emuiibo;
 
-use nx::diag;
 use nx::diag::abort;
 use nx::fs;
 use nx::ipc::server;
 use nx::result::*;
-use nx::svc;
 use nx::thread;
 use nx::util;
 
@@ -36,8 +32,6 @@ pub fn initialize_heap(_hbl_heap: util::PointerAndSize) -> util::PointerAndSize 
     }
 }
 
-use nx::diag::log::lm::LmLogger;
-use nx::diag::log::LogSeverity;
 
 #[unsafe(no_mangle)]
 pub fn main() -> Result<()> {

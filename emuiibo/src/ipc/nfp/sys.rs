@@ -3,6 +3,7 @@ use nx::ipc::sf::ncm;
 use nx::result::*;
 use nx::ipc::sf;
 use nx::ipc::server;
+use nx::ipc::sf::applet;
 use nx::ipc::sf::nfp;
 use nx::ipc::sf::nfp::ISystemServer;
 use nx::ipc::sf::nfp::ISystemManagerServer;
@@ -24,11 +25,11 @@ impl SystemEmulator {
 }
 
 impl ISystemServer for SystemEmulator {
-    fn initialize_system(&mut self, process_id: sf::AppletResourceUserId, _reserved: u64, mcu_data: sf::InMapAliasBuffer<nfp::McuVersionData>) -> Result<()> {
-        self.handler.initialize(process_id, mcu_data)
+    fn initialize(&mut self, aruid: applet::AppletResourceUserId, process_id: sf::ProcessId, mcu_data: sf::InMapAliasBuffer<nfp::McuVersionData>) -> Result<()> {
+        self.handler.initialize(aruid, process_id, mcu_data)
     }
 
-    fn finalize_system(&mut self) -> Result<()> {
+    fn finalize(&mut self) -> Result<()> {
         self.handler.finalize()
     }
 
