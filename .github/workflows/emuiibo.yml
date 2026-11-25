@@ -2,10 +2,10 @@
 name: Build emuiibo
 
 on:
+  workflow_dispatch:
   push:
-    paths:
-      - 'emuiibo/**'
-      - 'overlay/**'
+    branches:
+      - master
 
 jobs:
   emuiibo:
