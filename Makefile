@@ -10,11 +10,11 @@ dev: emuiibo-dev emuiigen
 
 clean: emuiibo-clean emuiigen-clean
 
-emuiibo: sysmodule overlay dist
+emuiibo: dist
 
 emuiibo-dev: sysmodule-dev overlay dist-dev
 
-sysmodule overlay:
+sysmodule: overlay
 	@cd emuiibo && cargo update && cargo nx build --release
 
 sysmodule-dev:
